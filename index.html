@@ -1,0 +1,2475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>LUCKY TITO PG TRANNING CENTER MANAGEMENT</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f4f8;color:#1a202c;font-size:14px;min-height:100vh}
+.nav{background:#0b3d5e;color:white;padding:0 16px;display:flex;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2);gap:0;height:54px}
+.nav-brand{font-size:15px;font-weight:700;margin-right:16px;white-space:nowrap;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.nav-tabs{display:flex;flex:1;overflow:hidden;height:54px}
+.nav-tab{padding:0 13px;height:54px;display:flex;align-items:center;color:rgba(255,255,255,.65);cursor:pointer;border-bottom:3px solid transparent;font-size:13px;font-weight:500;transition:all .15s;white-space:nowrap}
+.nav-tab:hover{color:white;background:rgba(255,255,255,.07)}
+.nav-tab.active{color:white;border-bottom-color:#38bdf8}
+.nav-tools{display:flex;gap:6px;align-items:center;margin-left:8px;flex-shrink:0}
+.nav-btn{background:rgba(255,255,255,.12);color:white;border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
+.nav-btn:hover{background:rgba(255,255,255,.22)}
+.sync-pill{display:flex;align-items:center;gap:5px;font-size:12px;color:rgba(255,255,255,.75);cursor:pointer;padding:5px 9px;border-radius:20px;transition:all .15s;white-space:nowrap}
+.sync-pill:hover{background:rgba(255,255,255,.1)}
+.sync-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-ok{background:#10b981}.dot-fail{background:#ef4444}.dot-none{background:#64748b}.dot-ing{background:#f59e0b;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.page{display:none;max-width:900px;margin:0 auto;padding:20px 14px 60px}
+.page.active{display:block}
+.card{background:white;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:14px;overflow:hidden}
+.card-header{padding:11px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:700;color:#0b3d5e;display:flex;align-items:center;gap:7px}
+.card-body{padding:16px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg.full{grid-column:1/-1}
+label{font-size:11px;font-weight:700;color:#64748b;letter-spacing:.4px;text-transform:uppercase}
+label .req{color:#e53e3e}
+input[type=text],input[type=number],input[type=date],input[type=email],input[type=datetime-local],select,textarea{padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;color:#1a202c;transition:border-color .15s,box-shadow .15s;outline:none;background:white;width:100%}
+input:focus,select:focus,textarea:focus{border-color:#0ea5e9;box-shadow:0 0 0 3px rgba(14,165,233,.12)}
+textarea{resize:vertical;min-height:60px}
+.rg{display:flex;gap:16px;padding-top:3px;flex-wrap:wrap}
+.rl{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;color:#374151;font-weight:400;letter-spacing:0;text-transform:none}
+input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:pointer}
+.cbg{display:flex;flex-wrap:wrap;gap:8px;padding-top:3px}
+.cbl{display:flex;align-items:center;gap:5px;font-size:13px;color:#374151;cursor:pointer;font-weight:400;letter-spacing:0;text-transform:none;background:#f8fafc;border:1.5px solid #e2e8f0;padding:4px 10px;border-radius:20px;transition:all .15s}
+.cbl:has(input:checked){background:#e0f2fe;border-color:#0ea5e9;color:#0284c7;font-weight:600}
+.sec-div{display:flex;align-items:center;gap:10px;margin:12px 0 10px}
+.sec-div-label{font-size:11px;font-weight:800;color:#94a3b8;letter-spacing:.8px;text-transform:uppercase;white-space:nowrap}
+.sec-div-line{flex:1;height:1px;background:#f1f5f9}
+.custno-bar{background:linear-gradient(135deg,#e0f2fe,#ede9fe);border:1.5px solid #bae6fd;border-radius:10px;padding:10px 15px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.custno-label{font-size:11px;font-weight:800;color:#0284c7;text-transform:uppercase;letter-spacing:.6px}
+.custno-val{font-size:20px;font-weight:800;color:#0b3d5e;letter-spacing:2px;font-family:'Courier New',monospace}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(11,61,94,.55);z-index:200;overflow-y:auto;padding:24px 14px}
+.modal-box{background:white;max-width:700px;margin:0 auto;border-radius:16px;padding:28px;position:relative}
+.modal-sm{background:white;max-width:560px;margin:0 auto;border-radius:16px;padding:26px;position:relative}
+.btn{padding:8px 15px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-family:inherit;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.btn-primary{background:#0ea5e9;color:white}.btn-primary:hover{background:#0284c7}
+.btn-secondary{background:#f8fafc;color:#475569;border:1.5px solid #e2e8f0}.btn-secondary:hover{background:#f1f5f9}
+.btn-danger{background:#fff1f1;color:#dc2626;border:1px solid #fecaca}.btn-danger:hover{background:#fee2e2}
+.btn-ghost{background:transparent;color:#64748b;border:1.5px solid #e2e8f0}.btn-ghost:hover{background:#f8fafc}
+.btn-sm{padding:4px 10px;font-size:12px;border-radius:6px}
+.btn-success{background:#10b981;color:white}.btn-success:hover{background:#059669}
+.btn-paste{background:#7c3aed;color:white;border:none}.btn-paste:hover{background:#6d28d9}
+.btn-hol{background:#f59e0b;color:white;border:none}.btn-hol:hover{background:#d97706}
+.quick-add-bar{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:12px}
+.quick-add-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.quick-add-row .fg{flex:1;min-width:140px}
+.dive-cat-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.dcp{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid #e2e8f0;background:#f8fafc;color:#64748b;transition:all .15s}
+.dcp.active{background:#0ea5e9;border-color:#0ea5e9;color:white}
+.it{width:100%;border-collapse:collapse}
+.it th{text-align:left;font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;padding:7px 8px;border-bottom:2px solid #f1f5f9}
+.it td{padding:6px 6px;border-bottom:1px solid #f8fafc;vertical-align:middle}
+.it td input{padding:6px 8px;font-size:13px}
+.it tfoot td{padding-top:11px;font-weight:700;font-size:14px;color:#0b3d5e}
+.rsub{font-size:13px;font-weight:600;color:#0b3d5e}
+.cc{background:white;border:1px solid #e2e8f0;border-radius:10px;padding:12px 15px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.cc:hover{border-color:#0ea5e9;box-shadow:0 2px 10px rgba(14,165,233,.13);transform:translateY(-1px)}
+.ava{width:40px;height:40px;border-radius:50%;background:#e0f2fe;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#0284c7;flex-shrink:0}
+.ci{flex:1;min-width:0}
+.cn{font-weight:700;font-size:14px;color:#0f172a;margin-bottom:3px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.cm{font-size:12px;color:#94a3b8;display:flex;gap:8px;flex-wrap:wrap}
+.ca{display:flex;gap:6px;flex-shrink:0}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700}
+.bp{background:#d1fae5;color:#065f46}.bd{background:#fef3c7;color:#92400e}.bu{background:#fee2e2;color:#991b1b}
+.badge-no{background:#f1f5f9;color:#64748b}
+.sb{background:white;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 14px;width:100%;font-size:14px;font-family:inherit;outline:none;margin-bottom:14px;transition:border-color .15s}
+.sb:focus{border-color:#0ea5e9;box-shadow:0 0 0 3px rgba(14,165,233,.12)}
+.sch-nav{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.sch-date{padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:inherit;outline:none;background:white;transition:border-color .15s}
+.sch-date:focus{border-color:#0ea5e9}
+.sch-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:18px}
+.sch-stat{background:white;border:1px solid #e2e8f0;border-radius:10px;padding:11px 13px;text-align:center}
+.sch-stat-num{font-size:24px;font-weight:800;color:#0b3d5e;line-height:1}
+.sch-stat-lbl{font-size:11px;color:#94a3b8;margin-top:4px;font-weight:600}
+.sch-section{margin-bottom:20px}
+.sch-stitle{font-size:13px;font-weight:800;color:#0b3d5e;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sch-cnt{background:#e0f2fe;color:#0284c7;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:700}
+.sch-card{background:white;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;transition:all .15s}
+.sch-card:hover{border-color:#0ea5e9;transform:translateY(-1px);box-shadow:0 2px 8px rgba(14,165,233,.12)}
+.sch-time-block{text-align:center;min-width:48px;flex-shrink:0}
+.sch-time{font-size:19px;font-weight:800;color:#0b3d5e;line-height:1}
+.sch-tlbl{font-size:10px;color:#94a3b8;font-weight:600;margin-top:2px}
+.sch-info{flex:1;min-width:0}
+.sch-name{font-weight:700;font-size:14px;color:#0f172a;margin-bottom:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.sch-meta{font-size:12px;color:#64748b;display:flex;flex-wrap:wrap;gap:8px;line-height:1.7}
+.tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700}
+.tc{background:#d1fae5;color:#065f46}.ts{background:#fef3c7;color:#92400e}.tn{background:#ede9fe;color:#5b21b6}.tr{background:#e0f2fe;color:#0369a1}.th{background:#fee2e2;color:#991b1b}
+.carpool-header{background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:8px 12px;margin-bottom:6px;font-size:12px;font-weight:700;color:#065f46}
+.scal-wrap{background:white;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;margin-top:20px}
+.scal-head{padding:11px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.scal-row{display:flex;align-items:flex-start;gap:10px;padding:7px 14px;border-bottom:1px solid #f8fafc;min-height:34px}
+.scal-row:last-child{border-bottom:none}
+.scal-hol{background:#fff9f9}
+.scal-today-row{background:#f0f9ff}
+.scal-date{font-size:12px;font-weight:700;color:#64748b;min-width:88px;flex-shrink:0;padding-top:3px}
+.scal-hol .scal-date{color:#dc2626}
+.scal-today-row .scal-date{color:#0284c7}
+.scal-today-dot{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;background:#0284c7;color:white;border-radius:50%;font-size:9px;font-weight:800;margin-right:3px;vertical-align:middle}
+.scal-guests{display:flex;flex-wrap:wrap;gap:5px;flex:1;padding-top:2px}
+.scal-chip{font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;line-height:1.6;transition:opacity .12s}
+.scal-chip:hover{opacity:.75}
+.scal-badge{font-size:10px;font-weight:800;opacity:.8}
+.bw{background:white;border-radius:12px;border:1px solid #e2e8f0;padding:38px 42px;max-width:720px;margin:0 auto}
+.bh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:20px;border-bottom:2.5px solid #0b3d5e}
+.bsn{font-size:21px;font-weight:800;color:#0b3d5e;margin-bottom:3px}
+.bss{font-size:12px;color:#94a3b8}
+.bnum{font-size:20px;font-weight:800;color:#0b3d5e;text-align:right}
+.blbl{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.6px;text-align:right;margin-bottom:3px}
+.bdate{font-size:12px;color:#94a3b8;text-align:right;margin-top:3px}
+.bs{margin-bottom:18px}
+.bst{font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;padding-bottom:4px;border-bottom:1px solid #f1f5f9}
+.br{display:flex;justify-content:space-between;padding:4px 0;font-size:13px}
+.brl{color:#64748b}.brv{color:#0f172a;font-weight:500}
+.big{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
+.bit{width:100%;border-collapse:collapse;font-size:13px}
+.bit th{text-align:left;padding:7px 9px;background:#f8fafc;font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e2e8f0}
+.bit th:not(:first-child){text-align:right}
+.bit td{padding:8px 9px;border-bottom:1px solid #f1f5f9;color:#1a202c}
+.bit td:not(:first-child){text-align:right}
+.btb{background:#f8fafc;border-radius:10px;padding:13px 16px;margin-top:16px}
+.btr{display:flex;justify-content:space-between;padding:3px 0;font-size:13px;color:#475569}
+.btf{display:flex;justify-content:space-between;padding:11px 0 0;border-top:2px solid #e2e8f0;margin-top:8px;font-size:17px;font-weight:800;color:#0b3d5e}
+.bfoot{text-align:center;font-size:12px;color:#cbd5e1;margin-top:30px;padding-top:14px;border-top:1px solid #f1f5f9}
+.form-footer{display:flex;gap:10px;justify-content:flex-end;padding-top:4px}
+.alert{padding:10px 15px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:14px}
+.alert-success{background:#d1fae5;color:#065f46}
+.divider{border:none;border-top:1px solid #f1f5f9;margin:4px 0 14px}
+.bill-controls{margin-bottom:14px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.bill-select{flex:1;min-width:200px;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:inherit;background:white;outline:none}
+.empty-state{text-align:center;padding:48px 20px;color:#94a3b8}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:.45}
+.hol-chip{display:inline-flex;align-items:center;gap:5px;background:#fee2e2;border:1px solid #fecaca;color:#991b1b;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;margin:3px}
+.hol-chip button{background:none;border:none;cursor:pointer;font-size:14px;color:#dc2626;line-height:1;padding:0 0 0 2px}
+.parse-results{margin-top:12px;max-height:260px;overflow-y:auto}
+.pr-row{display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px solid #f8fafc;font-size:13px}
+.pr-check{color:#10b981;font-size:13px;flex-shrink:0}
+.pr-label{color:#64748b;font-weight:600;min-width:90px;flex-shrink:0}
+.pr-val{color:#0f172a;font-weight:500;word-break:break-all}
+.pr-none{color:#94a3b8;font-size:13px;text-align:center;padding:18px 0}
+.room-info-tip{font-size:12px;color:#64748b;margin-top:4px;font-style:italic}
+.hol-badge{display:inline-flex;align-items:center;gap:4px;background:#fee2e2;border:1px solid #fecaca;color:#991b1b;border-radius:6px;padding:3px 9px;font-size:12px;font-weight:700;margin-top:6px}
+.step-row{display:flex;gap:14px;margin-bottom:20px}
+.step-num{width:26px;height:26px;border-radius:50%;background:#e0f2fe;color:#0284c7;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step-body{flex:1}
+.step-body h3{font-size:14px;font-weight:700;color:#0b3d5e;margin-bottom:7px}
+.step-body p,.step-body li{font-size:13px;color:#475569;line-height:1.75}
+.step-body ol{padding-left:16px}
+.step-body a{color:#0ea5e9}
+.gs-code{width:100%;height:190px;font-family:'Courier New',monospace;font-size:11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:11px;resize:none;color:#374151;margin-top:9px;line-height:1.6}
+.warn-box{background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:9px 13px;margin-top:9px;font-size:12px;color:#713f12;line-height:1.65}
+.modal-status{padding:9px 13px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:20px}
+.modal-footer{border-top:1px solid #f1f5f9;padding-top:13px;display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+/* Booking sheet */
+.bk-sheet{background:white;max-width:760px;margin:0 auto;padding:36px 44px;border:1px solid #e2e8f0;border-radius:12px;font-family:'Arial',sans-serif}
+.bk-section-hd{background:#4a90c4;color:white;text-align:center;font-weight:800;font-size:13px;padding:7px 12px;letter-spacing:2px}
+.bk-section-hd.orange{background:#e8a86a}
+.bk-th{background:#dbe9f7;padding:7px 8px;font-size:11px;font-weight:800;text-align:center;border-bottom:2px solid #4a90c4;color:#1a3a5c}
+.bk-td{padding:8px 8px;border-bottom:1px solid #eee;font-size:12px;vertical-align:middle}
+.bk-logo-title{font-size:33px;font-weight:900;color:#1a6bb5;font-family:Georgia,serif;letter-spacing:1px;line-height:1.1}
+@media print{
+  .no-print{display:none!important}
+  body{background:white}
+  .nav{display:none}
+  .page{padding:0;max-width:100%}
+  .bw{box-shadow:none;border:none;padding:20px}
+  .bk-sheet{box-shadow:none;border:none;padding:20px}
+}
+</style>
+</head>
+<body>
+<div class="nav no-print">
+  <div class="nav-brand">🤿 LUCKY TITO PG TRANNING CENTER</div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="switchTab('form')" id="tab-form">＋ New Guest</div>
+    <div class="nav-tab" onclick="switchTab('schedule')" id="tab-schedule">📅 Schedule</div>
+    <div class="nav-tab" onclick="switchTab('list')" id="tab-list">📋 Guest List</div>
+    <div class="nav-tab" onclick="switchTab('bill')" id="tab-bill">🧾 Bill</div>
+    <div class="nav-tab" onclick="switchTab('booking')" id="tab-booking">📄 Booking</div>
+    <div class="nav-tab" onclick="switchTab('elearning')" id="tab-elearning">📚 eLearning</div>
+  </div>
+  <div class="nav-tools">
+    <button class="nav-btn btn-hol" onclick="openHolModal()" style="background:#f59e0b;border-color:#f59e0b">📅 Holidays</button>
+    <div class="sync-pill" onclick="openSyncModal()" title="Cloud Sync"><span class="sync-dot dot-none" id="sync-dot"></span><span id="sync-text">Offline</span></div>
+    <button class="nav-btn" onclick="openSyncModal()">☁️ Cloud</button>
+    <button class="nav-btn" onclick="exportData()">📤 Export</button>
+    <label class="nav-btn" style="cursor:pointer">📥 Import<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+  </div>
+</div>
+
+<!-- 节假日管理 MODAL -->
+<div class="modal-overlay no-print" id="hol-modal" onclick="if(event.target===this)closeHolModal()">
+<div class="modal-sm">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <h2 style="font-size:16px;font-weight:800;color:#d97706">📅 节假日管理 · Holiday Settings</h2>
+    <button onclick="closeHolModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#94a3b8;line-height:1;padding:2px 5px">✕</button>
+  </div>
+  <p style="font-size:13px;color:#64748b;margin-bottom:14px">标记节假日后，客户住宿日期中含节假日时将自动提示，且住宿不享受学员折扣。<br><span style="color:#94a3b8">Marked holidays will be flagged on guest stays; student discounts don't apply on holiday nights.</span></p>
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <input type="date" id="hol-from" style="flex:1">
+    <span style="align-self:center;color:#94a3b8;font-size:13px">至</span>
+    <input type="date" id="hol-to" style="flex:1">
+    <button class="btn btn-primary btn-sm" onclick="addHolRange()">➕ Add</button>
+  </div>
+  <div style="margin-bottom:12px;font-size:12px;color:#94a3b8">或快速添加：
+    <button class="btn btn-sm btn-secondary" style="margin:2px" onclick="addPreset('2026-10-01','2026-10-07')">National Day 2026</button>
+    <button class="btn btn-sm btn-secondary" style="margin:2px" onclick="addPreset('2027-01-01','2027-01-03')">New Year 2027</button>
+    <button class="btn btn-sm btn-secondary" style="margin:2px" onclick="addPreset('2027-01-28','2027-02-04')">CNY 2027</button>
+    <button class="btn btn-sm btn-secondary" style="margin:2px" onclick="addPreset('2026-05-01','2026-05-05')">Labor Day 2026</button>
+    <button class="btn btn-sm btn-secondary" style="margin:2px" onclick="addPreset('2026-06-19','2026-06-21')">Dragon Boat 2026</button>
+  </div>
+  <div id="hol-list" style="min-height:60px;max-height:200px;overflow-y:auto;background:#f8fafc;border-radius:8px;padding:10px"></div>
+  <div style="margin-top:14px;text-align:right">
+    <button class="btn btn-ghost btn-sm" onclick="closeHolModal()">Close</button>
+  </div>
+</div>
+</div>
+
+
+<!-- 云端同步 MODAL -->
+<div class="modal-overlay no-print" id="sync-modal" onclick="if(event.target===this)closeSyncModal()">
+<div class="modal-box">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <h2 style="font-size:16px;font-weight:800;color:#0b3d5e">☁️ Google Drive 云端同步</h2>
+    <button onclick="closeSyncModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#94a3b8;line-height:1;padding:2px 5px">✕</button>
+  </div>
+  <div class="modal-status" id="modal-status-bar"></div>
+  <div class="step-row">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h3>打开 Google Apps Script 粘贴代码</h3>
+      <p>前往 <a href="https://script.google.com" target="_blank">script.google.com</a> → 新建项目 → 全选删除 → 粘贴：</p>
+      <textarea class="gs-code" id="gs-code" readonly>const FILE='潜水店客户数据.json';
+function doGet(e){const p=e.parameter||{},cb=p.callback||'';try{const r=JSON.stringify({ok:true,data:read()});return out(cb?cb+'('+r+')':r,cb?'JAVASCRIPT':'JSON')}catch(err){const r=JSON.stringify({ok:false,error:''+err});return out(cb?cb+'('+r+')':r,cb?'JAVASCRIPT':'JSON')}}
+function doPost(e){try{write(JSON.parse(e.postData.contents));return out(JSON.stringify({ok:true}),'JSON')}catch(err){return out(JSON.stringify({ok:false,error:''+err}),'JSON')}}
+function read(){const f=DriveApp.getFilesByName(FILE);return f.hasNext()?JSON.parse(f.next().getBlob().getDataAsString('UTF-8')):[]}
+function write(d){const f=DriveApp.getFilesByName(FILE);const j=JSON.stringify(d,null,2);if(f.hasNext())f.next().setContent(j);else DriveApp.createFile(FILE,j,MimeType.PLAIN_TEXT)}
+function out(t,tp){return ContentService.createTextOutput(t).setMimeType(ContentService.MimeType[tp])}</textarea>
+      <div style="display:flex;align-items:center;gap:9px;margin-top:8px">
+        <button class="btn btn-secondary btn-sm" onclick="copyGsCode()">📋 Copy</button>
+        <span id="copy-tip" style="font-size:12px;color:#10b981;display:none">已复制 ✓</span>
+      </div>
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h3>部署为网络应用</h3>
+      <ol><li>点「部署」→「新建部署」→ 类型选「网络应用」</li><li>执行身份：我；谁可访问：所有人</li><li>点「部署」→ 授权 → 复制网络应用网址</li></ol>
+      <div class="warn-box">⚠️ 若提示「未经验证」：点「高级」→「转到（不安全）」→「允许」</div>
+    </div>
+  </div>
+  <div class="step-row" style="margin-bottom:0">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h3>粘贴网址完成连接</h3>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <input type="text" id="sync-url-input" placeholder="https://script.google.com/macros/s/…/exec" style="flex:1;font-size:13px">
+        <button class="btn btn-primary" onclick="testAndConnect()">Connect</button>
+      </div>
+      <div id="test-result" style="margin-top:7px;font-size:13px;min-height:18px"></div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <div id="conn-info" style="font-size:12px;color:#94a3b8"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary btn-sm" onclick="manualSyncLoad()" id="btn-manual" style="display:none">🔄 Sync Now</button>
+      <button class="btn btn-danger btn-sm" onclick="disconnectSync()" id="btn-disconnect" style="display:none">Disconnect</button>
+    </div>
+  </div>
+</div>
+</div>
+<!-- PAGE: FORM -->
+<div id="page-form" class="page active">
+  <div id="save-alert" class="alert alert-success" style="display:none">✅ 客户资料已保存！</div>
+
+  <!-- 新建/编辑状态栏 -->
+  <div class="no-print" style="display:flex;align-items:center;justify-content:space-between;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:10px 14px;margin-bottom:14px;gap:10px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span id="form-mode-icon" style="font-size:20px">📝</span>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#15803d;letter-spacing:.3px;text-transform:uppercase">Current Status</div>
+        <div id="form-mode-label" style="font-size:13px;font-weight:700;color:#14532d">New Guest — Form Empty</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="background:#16a34a;border-color:#15803d;white-space:nowrap;font-weight:700" onclick="newGuest()">＋ New Guest</button>
+  </div>
+
+  <!-- Smart Paste (always visible) -->
+  <div class="no-print" style="background:linear-gradient(135deg,#faf5ff,#fff);border:2px solid #ede9fe;border-radius:12px;margin-bottom:14px;padding:14px 16px">
+    <div style="font-size:13px;font-weight:700;color:#7c3aed;margin-bottom:8px">📋 Smart Paste</div>
+    <p style="font-size:12px;color:#94a3b8;margin:0 0 10px">Paste a WeChat message or booking form — fields are auto-detected and filled</p>
+    <textarea id="paste-input" rows="5" style="width:100%;font-size:13px;line-height:1.6;border:1px solid #d8b4fe;border-radius:8px;padding:10px 12px;resize:vertical;box-sizing:border-box;font-family:inherit;background:#fff" placeholder="姓名：张三&#10;邮箱：zhangsan@gmail.com&#10;到达航班：MU2345 6月14日14:30 T2&#10;返程：CA1234 6月18日10:00&#10;身高：175cm  体重：70kg  鞋码：42&#10;PADI 证书编号：P12345&#10;房型：双床房"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-paste" style="flex:1" onclick="parseAndApply()">✅ Fill Form</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('paste-input').value='';document.getElementById('paste-msg').textContent=''">Clear</button>
+    </div>
+    <div id="paste-msg" style="margin-top:8px;font-size:12px;color:#059669;min-height:16px"></div>
+  </div>
+
+  <div class="custno-bar no-print">
+    <div><div class="custno-label">客户编号</div><div class="custno-val" id="custno-display">————</div></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button style="background:none;border:none;font-size:16px;cursor:pointer;color:#0284c7;padding:3px 7px;border-radius:6px" onclick="regenCustNo()" title="Regenerate No.">🔄</button>
+    </div>
+  </div>
+
+  <!-- 1. 基本信息 (FIRST) -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">👤 基本信息 Basic Info</span></div>
+    <div class="card-body">
+      <div class="g3">
+        <div class="fg"><label>姓名 Name <span class="req">*</span></label><input type="text" id="f-name" placeholder="客户姓名 Full Name" oninput="this.value=this.value.toUpperCase();updateCustNo()"></div>
+        <div class="fg"><label>出生日期 Date of Birth</label><input type="date" id="f-dob"></div>
+        <div class="fg"><label>邮箱 Email</label><input type="email" id="f-email" placeholder="example@email.com" oninput="this.value=this.value.toLowerCase()"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 航班 & 接送 -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">✈️ 航班 & 接送 Flights & Transfers</span></div>
+    <div class="card-body">
+      <div class="sec-div"><span class="sec-div-label">到达 Arrival</span><div class="sec-div-line"></div></div>
+      <div class="g3">
+        <div class="fg"><label>到达航班 Arrival Flight</label><input type="text" id="f-af" placeholder="MU2345"></div>
+        <div class="fg"><label>落地时间 Arrival Time</label>
+          <div style="display:flex;gap:5px;align-items:center">
+            <input type="date" id="f-at-date" onchange="updateCustNo()" style="flex:1;min-width:0">
+            <select id="f-at-h" onchange="updateCustNo()" style="width:56px"></select>
+            <span style="color:#94a3b8">:</span>
+            <select id="f-at-m" onchange="updateCustNo()" style="width:56px"></select>
+          </div>
+        </div>
+        <div class="fg"><label>航站楼</label>
+          <select id="f-term"><option value="">请选择 Select</option><option>T1</option><option>T2</option><option>T3</option><option>T4</option><option>其他</option></select></div>
+      </div>
+      <div style="margin:11px 0 8px">
+        <div class="fg"><label>过夜酒店 Airport Hotel</label><input type="text" id="f-ovhot" placeholder="机场附近酒店名称 Hotel name near airport"></div>
+      </div>
+      <div class="sec-div"><span class="sec-div-label">到达接送 Arrival Transfer</span><div class="sec-div-line"></div></div>
+      <div class="g3">
+        <div class="fg"><label>拼车/船时间 Transfer Time</label><input type="text" id="f-arr-ct" placeholder="14:30 东港出发"></div>
+        <div class="fg"><label>费用 Fee (元)</label><input type="number" id="f-arr-cf" placeholder="0" min="0"></div>
+        <div class="fg"><label>船号 Boat No.</label><input type="text" id="f-arr-boat" placeholder="船号"></div>
+      </div>
+      <div class="g3" style="margin-top:10px">
+        <div class="fg"><label>车牌号 License Plate</label><input type="text" id="f-arr-plate" placeholder="粤B 12345"></div>
+        <div class="fg"><label>司机/船长电话 Driver/Captain Tel</label><input type="text" id="f-arr-drv" placeholder="联系电话"></div>
+        <div class="fg"></div>
+      </div>
+      <div class="sec-div"><span class="sec-div-label">返程 Departure</span><div class="sec-div-line"></div></div>
+      <div class="g3">
+        <div class="fg"><label>返程航班 Departure Flight</label><input type="text" id="f-df" placeholder="CA1234"></div>
+        <div class="fg"><label>离港时间 Departure Time</label>
+          <div style="display:flex;gap:5px;align-items:center">
+            <input type="date" id="f-dt-date" style="flex:1;min-width:0">
+            <select id="f-dt-h" style="width:56px"></select>
+            <span style="color:#94a3b8">:</span>
+            <select id="f-dt-m" style="width:56px"></select>
+          </div>
+        </div>
+        <div class="fg"></div>
+      </div>
+      <div class="sec-div"><span class="sec-div-label">返程送机 Departure Transfer</span><div class="sec-div-line"></div></div>
+      <div class="g3">
+        <div class="fg"><label>拼车/船时间 Transfer Time</label><input type="text" id="f-dep-ct" placeholder="08:00 酒店出发"></div>
+        <div class="fg"><label>费用 Fee (元)</label><input type="number" id="f-dep-cf" placeholder="0" min="0"></div>
+        <div class="fg"><label>船号 Boat No.</label><input type="text" id="f-dep-boat" placeholder="船号"></div>
+      </div>
+      <div class="g3" style="margin-top:10px">
+        <div class="fg"><label>车牌号 License Plate</label><input type="text" id="f-dep-plate" placeholder="粤B 12345"></div>
+        <div class="fg"><label>司机/船长电话 Driver/Captain Tel</label><input type="text" id="f-dep-drv" placeholder="联系电话"></div>
+        <div class="fg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 住宿 -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">🏨 住宿 Accommodation</span></div>
+    <div class="card-body">
+      <div class="g4">
+        <div class="fg"><label>入住日期 Check-in</label><input type="date" id="f-ci" onchange="onCheckinChange()"></div>
+        <div class="fg"><label>退房日期 Check-out</label><input type="date" id="f-co" onchange="onCheckinChange()"></div>
+        <div class="fg"><label>房型 Room Type</label>
+          <select id="f-rtype" onchange="onRoomTypeChange()">
+            <option value="">请选择 Select</option>
+            <option value="Single Bed Room 单大床房" data-rate="375">单大床房 Single — ¥375/晚</option>
+            <option value="Twin Bed Room 双床房" data-rate="420">双床房 Twin — ¥420/晚</option>
+            <option value="Family Room A 双床房A" data-rate="420">双床房A Family A — ¥420/晚</option>
+            <option value="Family Room B 双床房B" data-rate="450">双床房B Family B — ¥450/晚</option>
+            <option value="Student Dorm 学员宿舍" data-rate="125">学员宿舍 Student Dorm — ¥125/晚</option>
+          </select>
+          <div id="room-type-tip" class="room-info-tip"></div>
+        </div>
+        <div class="fg"><label>房间号 Room No.</label><input type="text" id="f-rnum" placeholder="301" oninput="updateCustNo()"></div>
+      </div>
+      <div id="hol-alert" style="display:none;margin-top:10px"></div>
+      <div class="g2" style="margin-top:12px">
+        <div class="fg" id="room-disc-wrap">
+          <label>折扣 Discount</label>
+          <select id="f-rdisc" onchange="toggleDiscCustom();updateRoomFeePreview()">
+            <option value="">无折扣 None</option>
+            <option value="9折">学员 9折 Student 10%off</option>
+            <option value="85折">8.5折 15%off</option>
+            <option value="8折">8折 20%off</option>
+            <option value="custom">自定义 Custom</option>
+          </select>
+        </div>
+        <div class="fg" id="room-rate-wrap">
+          <label>单价/晚 Rate/Night (元)</label>
+          <input type="number" id="f-rrate" placeholder="自动填充或手动输入" min="0" oninput="updateRoomFeePreview()">
+        </div>
+      </div>
+      <div id="room-disc-custom-wrap" style="display:none;margin-top:10px">
+        <div class="fg" style="max-width:200px"><label>自定义折率 Custom Rate (0.1–1.0)</label>
+          <input type="number" id="f-rdisc-custom" placeholder="0.90" min="0.1" max="1" step="0.01"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 装备 & 潜水资料 -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">🤿 装备 & 潜水资料 Gear & Diver Info</span></div>
+    <div class="card-body">
+      <div class="sec-div"><span class="sec-div-label">身体数据 Body Measurements</span><div class="sec-div-line"></div></div>
+      <div class="g4">
+        <div class="fg"><label>身高 Height (cm)</label><input type="number" id="f-ht" placeholder="170"></div>
+        <div class="fg"><label>体重 Weight (kg)</label><input type="number" id="f-wt" placeholder="65"></div>
+        <div class="fg"><label>衣服尺码 Cloth Size</label>
+          <select id="f-cs"><option value="">请选择</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>XXXL</option></select></div>
+        <div class="fg"><label>鞋码 Shoe Size</label><input type="text" id="f-shoe" placeholder="42"></div>
+      </div>
+      <div class="g2" style="margin-top:10px">
+        <div class="fg"><label>近视度数 Myopia</label><input type="text" id="f-myopia" placeholder="左 200，右 250（无填无）"></div>
+        <div class="fg"><label>性别 Gender</label>
+          <select id="f-gender"><option value="">请选择</option><option value="男">男 Male</option><option value="女">女 Female</option><option value="其他">其他 Other</option></select>
+        </div>
+      </div>
+      <div class="sec-div"><span class="sec-div-label">装备尺寸 Equipment Sizes</span><div class="sec-div-line"></div></div>
+      <div class="g3">
+        <div class="fg"><label>潜水服 Wetsuit</label>
+          <select id="f-ws"><option value="">请选择</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>XXXL</option></select></div>
+        <div class="fg"><label>脚蹼 Fins</label><select id="f-fs"><option value="">请选择</option><option>S</option><option>M</option><option>L</option></select></div>
+        <div class="fg"><label>BCD</label>
+          <select id="f-bs"><option value="">请选择</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option></select></div>
+      </div>
+      <div class="sec-div"><span class="sec-div-label">证书 & 经验 Cert & Experience</span><div class="sec-div-line"></div></div>
+      <div class="g3">
+        <div class="fg"><label>认证系统 Cert. System</label>
+          <select id="f-certsys"><option value="">无/未知 None</option><option>PADI</option><option>SSI</option><option>SDI</option><option>NAUI</option><option>AIDA</option><option>其他</option></select></div>
+        <div class="fg"><label>证书编号 Cert. No.</label><input type="text" id="f-certno" placeholder="P12345…"></div>
+        <div class="fg"><label>潜水经验 Experience</label><input type="text" id="f-divexp" placeholder="零基础 / OW / AOW / 50潜…"></div>
+      </div>
+      <div class="sec-div"><span class="sec-div-label">自有装备 Own Gear</span><div class="sec-div-line"></div></div>
+      <div class="cbg">
+        <label class="cbl"><input type="checkbox" name="owngear" value="潜水服"> 潜水服 Wetsuit</label>
+        <label class="cbl"><input type="checkbox" name="owngear" value="BCD"> BCD</label>
+        <label class="cbl"><input type="checkbox" name="owngear" value="调节器"> 调节器 Regulator</label>
+        <label class="cbl"><input type="checkbox" name="owngear" value="脚蹼"> 脚蹼 Fins</label>
+        <label class="cbl"><input type="checkbox" name="owngear" value="面镜"> 面镜 Mask</label>
+        <label class="cbl"><input type="checkbox" name="owngear" value="电脑表"> 电脑表 Dive Computer</label>
+      </div>
+      <div class="fg" style="margin-top:12px"><label>装备备注 Gear Notes</label><textarea id="f-gn" placeholder="其他装备需求…"></textarea></div>
+    </div>
+  </div>
+
+  <!-- 5. 潜水安排 (renamed, with quick-add) -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">🌊 潜水安排 Dive Schedule</span>
+    </div>
+    <div class="card-body">
+      <div class="g2">
+        <div class="fg"><label>教练/DM Instructor/DM</label><input type="text" id="f-inst" placeholder="负责教练或 DM 姓名"></div>
+        <div class="fg" style="display:flex;flex-direction:column;gap:6px">
+          <label class="cbl" style="margin:0"><input type="checkbox" id="f-multi-student" onchange="autoApplyMultiStudentDisc()"> 多人课程折扣 Multiple Student Discount</label>
+          <div style="position:relative;display:inline-flex;align-items:center;gap:6px">
+            <span style="font-size:12px;color:#64748b;font-weight:600">同学 Classmates:</span>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="toggleClassmatePicker()" id="classmate-btn" style="padding:2px 10px;font-size:12px">＋ 同学</button>
+            <div id="classmate-picker" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;background:white;border:1.5px solid #e2e8f0;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:50;min-width:220px;max-height:260px;overflow-y:auto;padding:6px 0"></div>
+          </div>
+          <div id="classmate-tags" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+        </div>
+      </div>
+      <div class="g2" style="margin-top:8px">
+        <div class="fg"><label>📅 Course Start Date</label><input type="date" id="f-cstart"></div>
+        <div class="fg"><label>📅 Est. Course End Date</label><input type="date" id="f-cend"></div>
+      </div>
+      <div class="sec-div"><span class="sec-div-label">快速添加 Quick Add</span><div class="sec-div-line"></div></div>
+      <div class="quick-add-bar">
+        <div class="dive-cat-pills" id="dive-cat-pills"></div>
+        <div class="quick-add-row">
+          <div class="fg"><label>选择项目</label>
+            <select id="dive-item-sel"><option value="">— 选择课程/活动 —</option></select></div>
+          <div class="fg" style="max-width:80px"><label>单价</label><input type="number" id="dive-item-price" placeholder="0" min="0"></div>
+          <div class="fg" style="max-width:70px"><label>数量</label><input type="number" id="dive-item-qty" value="1" min="1"></div>
+          <button class="btn btn-success" onclick="addDiveItemToFees()" style="align-self:flex-end">➕ Add</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. 费用明细 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">💰 费用明细 Fee Details</span>
+      <button class="btn btn-secondary btn-sm no-print" onclick="addItem()">＋ Add Item</button>
+    </div>
+    <div class="card-body">
+      <table class="it">
+        <thead><tr>
+          <th style="width:42%">项目名称</th><th style="width:17%">单价 (元)</th>
+          <th style="width:12%">数量</th><th style="width:19%">小计</th>
+          <th style="width:10%" class="no-print"></th>
+        </tr></thead>
+        <tbody id="items-body"></tbody>
+        <tfoot><tr>
+          <td colspan="3" style="text-align:right;font-size:12px;color:#64748b;font-weight:600;padding-right:7px">项目合计</td>
+          <td id="items-sub" class="rsub">¥ 0.00</td><td class="no-print"></td>
+        </tr></tfoot>
+      </table>
+      <div id="room-fee-preview" style="display:none;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 14px;margin-top:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="color:#0284c7;font-weight:600;font-size:13px">🏨 客房费用 Room Fee</span>
+          <span id="room-fee-preview-amt" style="font-weight:700;color:#0369a1;font-size:14px">¥ 0.00</span>
+        </div>
+        <div id="room-fee-preview-note" style="font-size:11px;color:#64748b;margin-top:3px"></div>
+      </div>
+      <hr class="divider" style="margin-top:14px">
+      <div class="g2" style="margin-top:4px">
+        <div class="fg"><label>已付定金 Deposit Paid (元)</label><input type="number" id="f-deposit" placeholder="0" min="0" oninput="updateSub();updateFormTotal()"></div>
+        <div class="fg full"><label>备注 Notes</label><textarea id="f-note" placeholder="特殊要求、内部备注…"></textarea></div>
+      </div>
+      <div id="form-total-summary" style="display:none;margin-top:12px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+        <div class="btr" style="padding:8px 14px;background:#f8fafc;font-size:13px"><span>应付总额 Total</span><span id="fts-total" style="font-weight:700">¥ 0.00</span></div>
+        <div id="fts-dep-row" style="display:none;padding:7px 14px;font-size:13px;color:#059669;border-top:1px dashed #e2e8f0"><span>已付定金 Deposit</span><span id="fts-dep">− ¥ 0.00</span></div>
+        <div id="fts-bal-row" style="display:none;padding:8px 14px;font-size:14px;font-weight:700;color:#dc2626;background:#fff5f5;border-top:1px solid #fecaca"><span>待付余额 Balance</span><span id="fts-bal">¥ 0.00</span></div>
+      </div>
+    </div>
+  </div>
+
+  <input type="hidden" id="f-id" value="">
+  <input type="hidden" id="f-custno-stored" value="">
+  <div class="form-footer no-print">
+    <button class="btn btn-ghost" onclick="resetForm()">Clear</button>
+    <button class="btn btn-primary" onclick="saveCustomer()">💾 Save</button>
+  </div>
+</div>
+
+<!-- PAGE: SCHEDULE -->
+<div id="page-schedule" class="page">
+  <div class="sch-nav no-print">
+    <button class="btn btn-ghost btn-sm" onclick="shiftDate(-1)">← Prev</button>
+    <input type="date" class="sch-date" id="sch-date" onchange="renderSchedule()">
+    <button class="btn btn-ghost btn-sm" onclick="shiftDate(1)">Next →</button>
+    <button class="btn btn-secondary btn-sm" onclick="setToday()">Today</button>
+  </div>
+  <div class="sch-stats" id="sch-stats"></div>
+  <div id="sch-content"></div>
+  <!-- Instructor Timetable -->
+  <div class="scal-wrap no-print" style="margin-top:16px">
+    <div class="scal-head">
+      <span class="card-title">👨‍🏫 教练排课 Instructor Schedule (15天)</span>
+    </div>
+    <div id="inst-cal"></div>
+  </div>
+</div>
+
+<!-- PAGE: LIST -->
+<div id="page-list" class="page">
+  <input type="text" class="sb no-print" placeholder="🔍 Search name, email, ID, location, instructor, room…" oninput="renderList(this.value)">
+  <div id="customer-list"></div>
+</div>
+
+<!-- PAGE: BOOKING -->
+<div id="page-booking" class="page">
+  <!-- 15-day in-house overview -->
+  <div class="scal-wrap no-print" style="margin-bottom:16px">
+    <div class="scal-head">
+      <span class="card-title">📅 15天在店客人一览 · 15-Day In-House Overview</span>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">
+        <span style="background:#bbf7d0;color:#15803d;font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px">OW+AOW</span>
+        <span style="background:#fecaca;color:#991b1b;font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px">OW</span>
+        <span style="background:#fef9c3;color:#854d0e;font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px">AOW</span>
+        <span style="background:#bfdbfe;color:#1e40af;font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px">FD 自由潜</span>
+        <span style="background:#e9d5ff;color:#6b21a8;font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px">Other 其他课程</span>
+        <span style="background:#f1f5f9;color:#475569;font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px">Stay 住店</span>
+      </div>
+    </div>
+    <div id="semi-cal"></div>
+  </div>
+  <!-- Booking sheet generator -->
+  <div class="bill-controls no-print">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%">
+      <input type="text" id="bk-name" placeholder="🔍 Search guest name…" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;min-width:180px" oninput="renderBooking()">
+      <label style="font-size:13px;font-weight:600;color:#475569">Check-in Date:</label>
+      <input type="date" id="bk-ci" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit" onchange="renderBooking()">
+      <button class="btn btn-primary" id="booking-img-btn" onclick="generateBookingImage(this)">📸 Generate Image</button>
+    </div>
+  </div>
+  <div id="booking-out"><div class="empty-state"><div class="empty-icon">📄</div><p>Search by guest name or check-in date to generate the booking sheet</p></div></div>
+</div>
+
+<!-- PAGE: ELEARNING -->
+<div id="page-elearning" class="page">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">📚 eLearning &amp; Certification Tracker</div>
+      <button class="btn btn-secondary btn-sm" onclick="renderElearning()">🔄 Refresh</button>
+    </div>
+    <div class="card-body" style="padding:0">
+      <div id="el-out"><div class="empty-state"><div class="empty-icon">📚</div><p>No course students found</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: BILL -->
+<div id="page-bill" class="page">
+  <div class="bill-controls no-print">
+    <select class="bill-select" id="bill-sel" onchange="renderBill()"><option value="">— Select Guest —</option></select>
+    <button class="btn btn-secondary" onclick="window.print()">🖨️ Print</button>
+    <button class="btn btn-primary" id="bill-img-btn" onclick="generateBillImage(this)">📸 Image</button>
+  </div>
+  <div id="bill-out"><div class="empty-state"><div class="empty-icon">🧾</div><p>Select a guest to generate their invoice</p></div></div>
+</div>
+<script>
+// ====== CONSTANTS ======
+const ROOM_TYPES=[
+  {val:'Single Bed Room 单大床房',rate:375,bed:'One Queen Bed 1.5米床型',note:'含双早，可入住两位成人'},
+  {val:'Twin Bed Room 双床房',rate:420,bed:'Two Single Bed 1.2米双床',note:'含双早，可入住两位成人'},
+  {val:'Family Room A 双床房A',rate:420,bed:'1.5米大床+1.2米单人床',note:'含双早，可入住两位成人'},
+  {val:'Family Room B 双床房B',rate:450,bed:'Two Queen Bed 1.5米大床双床',note:'含双早，可入住两位成人'},
+  {val:'Student Dorm 学员宿舍',rate:125,bed:'Bunk bed 青旅单人上下床',note:'含单早，一位宿舍床位（仅限学员）'},
+]
+const DIVE_ITEMS=[
+  {cat:'🤸 自由潜',name:'AIDA/PADI FreeDive L1',price:1800,unit:'人'},
+  {cat:'🤸 自由潜',name:'AIDA/PADI FreeDive L2',price:2800,unit:'人'},
+  {cat:'🤸 自由潜',name:'AIDA/PADI FreeDive L3',price:3000,unit:'人'},
+  {cat:'🤸 自由潜',name:'AIDA/PADI FreeDive L4',price:3400,unit:'人'},
+  {cat:'🎓 PADI课程',name:'PADI Open Water (OW)',price:2900,unit:'人'},
+  {cat:'🎓 PADI课程',name:'PADI Advanced Open Water (AOW)',price:2650,unit:'人'},
+  {cat:'🎓 PADI课程',name:'PADI Deep Dive 深潜专长',price:2800,unit:'人'},
+  {cat:'🎓 PADI课程',name:'PADI Sidemount 侧挂',price:2800,unit:'人'},
+  {cat:'🎓 PADI课程',name:'PADI Self-Reliant Diver 独行侠',price:2200,unit:'人'},
+  {cat:'🎓 PADI课程',name:'PADI Rescue 救援潜水员',price:2750,unit:'人'},
+  {cat:'🎓 PADI课程',name:'PADI DPV 水下推进器专长',price:2200,unit:'人'},
+  {cat:'🎓 PADI课程',name:'EFR 第一应急反应员',price:800,unit:'人'},
+  {cat:'🎓 PADI课程',name:'PADI Enriched Air 高氧专长',price:900,unit:'人'},
+  {cat:'🎓 PADI课程',name:'PADI Tech Basics 技潜基础',price:2800,unit:'人'},
+  {cat:'🎓 PADI课程',name:'CCR 体验',price:4900,unit:'人'},
+  {cat:'🎓 PADI课程',name:'Reactivate 再激活课程',price:500,unit:'人'},
+  {cat:'🌊 潜水活动',name:'DSD 体验潜水',price:500,unit:'人'},
+  {cat:'🌊 潜水活动',name:'Regular Fun Dive 平日欢乐潜',price:175,unit:'潜'},
+  {cat:'🌊 潜水活动',name:'Regular Night Dive 平日夜潜',price:235,unit:'潜'},
+  {cat:'🌊 潜水活动',name:'FD 住店单人 1-8潜',price:160,unit:'潜'},
+  {cat:'🌊 潜水活动',name:'FD 住店双人+ 1-8潜',price:155,unit:'潜'},
+  {cat:'🌊 潜水活动',name:'FD 住店单人 8潜以上',price:155,unit:'潜'},
+  {cat:'🌊 潜水活动',name:'FD 住店双人+ 8潜以上',price:150,unit:'潜'},
+  {cat:'🌊 潜水活动',name:'节假日FD套餐 Holiday FD (8潜)',price:1560,unit:'套'},
+  {cat:'🎒 装备租赁',name:'Backmount BCD 背飞/天',price:65,unit:'天'},
+  {cat:'🎒 装备租赁',name:'Sidemount BCD 侧挂/天',price:150,unit:'天'},
+  {cat:'🎒 装备租赁',name:'Dive Computer 电脑表/天',price:40,unit:'天'},
+]
+
+// ====== HOLIDAYS ======
+function getHolidays(){try{return JSON.parse(localStorage.getItem('dv_holidays')||'[]')}catch{return[]}}
+function saveHolidays(h){localStorage.setItem('dv_holidays',JSON.stringify(h))}
+function isHolidayDate(d){return getHolidays().includes(d)}
+function addHolRange(){
+  const from=document.getElementById('hol-from').value
+  const to=document.getElementById('hol-to').value||from
+  if(!from)return
+  const h=getHolidays();const s=new Set(h)
+  const d=new Date(from);const e=new Date(to)
+  while(d<=e){s.add(d.toISOString().split('T')[0]);d.setDate(d.getDate()+1)}
+  saveHolidays([...s].sort());renderHolList()
+}
+function addPreset(from,to){
+  document.getElementById('hol-from').value=from
+  document.getElementById('hol-to').value=to
+  addHolRange()
+}
+function removeHolDate(d){const h=getHolidays().filter(x=>x!==d);saveHolidays(h);renderHolList()}
+function renderHolList(){
+  const h=getHolidays();const el=document.getElementById('hol-list')
+  if(!h.length){el.innerHTML='<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">暂无节假日设置</div>';return}
+  // Group consecutive dates into ranges for display
+  const ranges=[];let start=h[0],prev=h[0]
+  for(let i=1;i<=h.length;i++){
+    const cur=h[i]
+    const nextDay=new Date(prev);nextDay.setDate(nextDay.getDate()+1)
+    const nextStr=nextDay.toISOString().split('T')[0]
+    if(cur!==nextStr){ranges.push({from:start,to:prev});start=cur;prev=cur}
+    else prev=cur
+  }
+  el.innerHTML=ranges.map(r=>'<span class="hol-chip">'+r.from+(r.from!==r.to?' ~ '+r.to:'')+'<button onclick="removeHolRange(\''+r.from+'\',\''+r.to+'\')">×</button></span>').join('')
+}
+function removeHolRange(from,to){
+  let h=getHolidays();const d=new Date(from);const e=new Date(to)
+  while(d<=e){const s=d.toISOString().split('T')[0];h=h.filter(x=>x!==s);d.setDate(d.getDate()+1)}
+  saveHolidays(h);renderHolList()
+}
+function openHolModal(){renderHolList();document.getElementById('hol-modal').style.display='block'}
+function closeHolModal(){document.getElementById('hol-modal').style.display='none'}
+function checkStayHasHoliday(ci,co){
+  if(!ci||!co)return[]
+  const h=getHolidays();const res=[]
+  const d=new Date(ci);const e=new Date(co)
+  while(d<e){const s=d.toISOString().split('T')[0];if(h.includes(s))res.push(s);d.setDate(d.getDate()+1)}
+  return res
+}
+
+// ====== DATA ======
+function getAll(){try{return JSON.parse(localStorage.getItem('dv_c')||'[]')}catch{return[]}}
+function saveAll(a){localStorage.setItem('dv_c',JSON.stringify(a))}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+
+// ====== NAV ======
+function switchTab(n){
+  ['form','schedule','list','bill','booking','elearning'].forEach(t=>{
+    document.getElementById('page-'+t).classList.toggle('active',t===n)
+    document.getElementById('tab-'+t).classList.toggle('active',t===n)
+  })
+  if(n==='list')renderList()
+  if(n==='bill')fillBillSel()
+  if(n==='schedule')renderSchedule()
+  if(n==='elearning')renderElearning()
+  if(n==='booking'){renderSemiCal()}
+}
+
+// ====== CLOUD SYNC ======
+const SK='dv_sync_url',TK='dv_sync_ts'
+function getSyncUrl(){return localStorage.getItem(SK)||''}
+function setNavSync(s,t){document.getElementById('sync-dot').className='sync-dot dot-'+s;document.getElementById('sync-text').textContent=t}
+function openSyncModal(){document.getElementById('sync-url-input').value=getSyncUrl();document.getElementById('test-result').textContent='';refreshModalUI();document.getElementById('sync-modal').style.display='block'}
+function closeSyncModal(){document.getElementById('sync-modal').style.display='none'}
+function refreshModalUI(){
+  const url=getSyncUrl(),ts=localStorage.getItem(TK)
+  const bar=document.getElementById('modal-status-bar'),ci=document.getElementById('conn-info')
+  const bm=document.getElementById('btn-manual'),bd=document.getElementById('btn-disconnect')
+  if(url){bar.style.background='#d1fae5';bar.style.color='#065f46';bar.textContent='✅ Connected to Google Drive';ci.textContent=ts?'Last sync: '+new Date(ts).toLocaleString():'';bm.style.display=bd.style.display='inline-flex';setNavSync('ok','Online')}
+  else{bar.style.background='#f1f5f9';bar.style.color='#64748b';bar.textContent='Not connected — data stored locally only';ci.textContent='';bm.style.display=bd.style.display='none';setNavSync('none','Offline')}
+}
+function copyGsCode(){const ta=document.getElementById('gs-code');ta.select();document.execCommand('copy');const tip=document.getElementById('copy-tip');tip.style.display='inline';setTimeout(()=>tip.style.display='none',2200)}
+function testAndConnect(){
+  const url=document.getElementById('sync-url-input').value.trim()
+  if(!url||!url.includes('script.google.com')){setTR('❌ Please enter a valid Apps Script URL','red');return}
+  setTR('⏳ Testing…','blue');setNavSync('ing','Connecting…')
+  const cb='dvt'+Date.now(),s=document.createElement('script');let done=false
+  window[cb]=function(res){done=true;cleanup();if(res&&res.ok){localStorage.setItem(SK,url);setTR('✅ Connected!','green');refreshModalUI();cloudLoad()}else{setTR('❌ Script returned error','red');setNavSync('none','Offline')}}
+  function cleanup(){if(s.parentNode)document.head.removeChild(s);delete window[cb]}
+  s.onerror=function(){if(done)return;cleanup();setTR('❌ Cannot connect — check URL and permissions','red');setNavSync('none','Offline')}
+  setTimeout(()=>{if(!done){cleanup();setTR('❌ Timeout','red');setNavSync('none','Offline')}},12000)
+  s.src=url+'?action=load&callback='+cb;document.head.appendChild(s)
+}
+function setTR(msg,color){const e=document.getElementById('test-result');e.textContent=msg;e.style.color={green:'#065f46',red:'#dc2626',blue:'#0284c7'}[color]||'#64748b'}
+function disconnectSync(){if(!confirm('Disconnect cloud sync?'))return;localStorage.removeItem(SK);localStorage.removeItem(TK);refreshModalUI()}
+function manualSyncLoad(){cloudLoad()}
+function cloudLoad(){
+  const url=getSyncUrl();if(!url)return;setNavSync('ing','Syncing…')
+  const cb='dvl'+Date.now(),s=document.createElement('script');let done=false
+  window[cb]=function(res){
+    done=true;if(s.parentNode)document.head.removeChild(s);delete window[cb]
+    if(res&&res.ok&&Array.isArray(res.data)){
+      const cloud=res.data,local=getAll();const ids=new Set(cloud.map(c=>c.id))
+      local.forEach(c=>{if(!ids.has(c.id))cloud.push(c)});saveAll(cloud)
+      localStorage.setItem(TK,new Date().toISOString())
+      setNavSync('ok','Synced '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));refreshModalUI()
+      const ac=['form','schedule','list','bill'].find(t=>document.getElementById('page-'+t).classList.contains('active'))
+      if(ac==='list')renderList();if(ac==='schedule')renderSchedule();if(ac==='bill')fillBillSel()
+    }else setNavSync('fail','Sync failed')
+  }
+  s.onerror=function(){if(done)return;if(s.parentNode)document.head.removeChild(s);delete window[cb];setNavSync('fail','Sync failed')}
+  setTimeout(()=>{if(!done&&s.parentNode){document.head.removeChild(s);delete window[cb];setNavSync('fail','Timeout')}},15000)
+  s.src=url+'?action=load&callback='+cb;document.head.appendChild(s)
+}
+function cloudSave(){
+  const url=getSyncUrl();if(!url)return;setNavSync('ing','Saving…')
+  fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(getAll())})
+    .then(()=>{localStorage.setItem(TK,new Date().toISOString());setNavSync('ok','Synced '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));refreshModalUI()})
+    .catch(()=>setNavSync('fail','Save failed'))
+}
+
+// ====== CUSTOMER NUMBER ======
+function getFlightTime(dId,hId,mId){
+  const d=v(dId),h=v(hId),m=v(mId)
+  if(!d)return ''
+  if(!h&&!m)return d
+  return d+'T'+String(parseInt(h)||0).padStart(2,'0')+':'+(m||'00')
+}
+function setFlightTime(val,dId,hId,mId){
+  if(!val)return
+  const pts=val.split('T')
+  if(pts[0])sv(dId,pts[0])  // only set date when present (T-prefix means time-only)
+  if(pts[1]){
+    const [hh,mm]=pts[1].split(':')
+    sv(hId,parseInt(hh||'0',10).toString())
+    const mNum=parseInt(mm||'0',10)
+    sv(mId,String(Math.round(mNum/10)*10%60).padStart(2,'0'))
+  }
+}
+function initTimeSelects(){
+  ;['f-at-h','f-dt-h'].forEach(id=>{
+    const s=document.getElementById(id);if(!s)return
+    s.innerHTML='<option value="">--</option>'
+    for(let i=0;i<24;i++)s.innerHTML+=`<option value="${i}">${i}</option>`
+  });
+  ;['f-at-m','f-dt-m'].forEach(id=>{
+    const s=document.getElementById(id);if(!s)return
+    s.innerHTML='<option value="">--</option>'
+    for(let m=0;m<60;m+=10)s.innerHTML+=`<option value="${String(m).padStart(2,'0')}">${String(m).padStart(2,'0')}</option>`
+  })
+}
+function genCustNo(name,arriveTime,checkin,roomNum){
+  let dp='XXXX';const dt=arriveTime||checkin
+  if(dt){const m=dt.match(/(\d{4})-(\d{2})-(\d{2})/);if(m)dp=m[2]+m[3]}
+  const rm=(roomNum||'').trim()||'XX'
+  let ini='X';if((name||'').trim()){const ch=name.trim().charAt(0);ini=/[a-zA-Z]/.test(ch)?ch.toUpperCase():ch}
+  return dp+'-'+rm+'-'+ini
+}
+function updateCustNo(){
+  const stored=v('f-custno-stored')
+  document.getElementById('custno-display').textContent=stored||genCustNo(v('f-name'),getFlightTime('f-at-date','f-at-h','f-at-m'),v('f-ci'),v('f-rnum'))
+}
+function regenCustNo(){sv('f-custno-stored','');updateCustNo()}
+
+// ====== ROOM TYPE ======
+function onRoomTypeChange(){
+  const sel=document.getElementById('f-rtype')
+  const opt=sel.options[sel.selectedIndex]
+  const rate=opt.dataset.rate
+  if(rate){sv('f-rrate',rate);document.getElementById('room-type-tip').textContent=ROOM_TYPES.find(r=>r.val===opt.value)?.note||''}
+  else{document.getElementById('room-type-tip').textContent=''}
+  updateRoomFeePreview()
+}
+function onCheckinChange(){
+  updateCustNo()
+  const ci=v('f-ci'),co=v('f-co');if(!ci||!co){updateRoomFeePreview();return}
+  const hols=checkStayHasHoliday(ci,co)
+  const el=document.getElementById('hol-alert')
+  if(hols.length){
+    el.style.display='block'
+    el.innerHTML='<div class="hol-badge">🎉 Holiday dates: '+hols.join(', ')+'&nbsp;&nbsp;<button onclick="setHolidayYes()" style="background:none;border:1px solid #991b1b;border-radius:4px;color:#991b1b;cursor:pointer;font-size:11px;font-weight:700;padding:1px 7px;margin-left:4px">Mark as Holiday</button></div>'
+  }else el.style.display='none'
+  updateRoomFeePreview()
+}
+function setHolidayYes(){
+  const ci=v('f-ci'),co=v('f-co');if(!ci||!co)return
+  const h=getHolidays()
+  const n=Math.round((new Date(co)-new Date(ci))/(1000*3600*24))
+  for(let i=0;i<n;i++){const ds=new Date(new Date(ci).getTime()+i*86400000).toISOString().slice(0,10);if(!h.includes(ds))h.push(ds)}
+  saveHolidays(h.sort());onCheckinChange()
+}
+
+// ====== DIVE CATEGORY TABS ======
+function initDiveCats(){
+  const cats=[...new Set(DIVE_ITEMS.map(d=>d.cat))]
+  const bar=document.getElementById('dive-cat-pills')
+  bar.innerHTML=cats.map((c,i)=>'<div class="dcp'+(i===0?' active':'')+'" onclick="selectDiveCat(this,\''+c+'\')">'+c+'</div>').join('')
+  renderDiveItems(cats[0])
+}
+function selectDiveCat(el,cat){
+  document.querySelectorAll('.dcp').forEach(d=>d.classList.remove('active'))
+  el.classList.add('active');renderDiveItems(cat)
+}
+function renderDiveItems(cat){
+  const sel=document.getElementById('dive-item-sel')
+  const items=DIVE_ITEMS.filter(d=>d.cat===cat)
+  sel.innerHTML='<option value="">— 选择项目 —</option>'+items.map(d=>'<option value="'+d.price+'" data-name="'+d.name+'" data-unit="'+d.unit+'">'+d.name+' ¥'+d.price+'/'+d.unit+'</option>').join('')
+  sel.onchange=function(){const opt=sel.options[sel.selectedIndex];sv('dive-item-price',opt.dataset.price||opt.value||'');sv('dive-item-qty',1)}
+}
+function addDiveItemToFees(){
+  const sel=document.getElementById('dive-item-sel')
+  const opt=sel.options[sel.selectedIndex]
+  if(!opt.value||!opt.dataset.name){alert('请先选择项目');return}
+  const price=parseFloat(document.getElementById('dive-item-price').value)||parseFloat(opt.value)||0
+  const qty=parseFloat(document.getElementById('dive-item-qty').value)||1
+  addItem(opt.dataset.name,price,qty)
+  autoUpdateDiscount()
+}
+
+// ====== TOGGLES ======
+function toggleOvernightHotel(){}
+
+// Names that DO trigger student discount (courses, excluding 高氧/EFR/再激活)
+const NO_DISC_COURSES=new Set(['EFR 第一应急反应员','PADI Enriched Air 高氧专长','Reactivate 再激活课程'])
+function getStudentCourseNames(){
+  return new Set(DIVE_ITEMS.filter(d=>d.cat==='🎓 PADI课程'&&!NO_DISC_COURSES.has(d.name)).map(d=>d.name))
+}
+function hasStudentCourse(){
+  const valid=getStudentCourseNames()
+  for(const tr of document.querySelectorAll('#items-body tr')){
+    const name=(tr.querySelector('input[type=text]')?.value||'').trim()
+    if(valid.has(name))return true
+  }
+  return false
+}
+function isDorm(){return(v('f-rtype')||'').includes('学员宿舍')}
+const MULTI_COURSE_DISC_NAME='课程连学折扣 Multiple Courses Discount'
+const MULTI_COURSE_DISC_AMT=-100
+const MULTI_STU_DISC_NAME='Multiple Student Discount'
+const MULTI_STU_DISC_AMT=-100
+function countHighCourses(){
+  // Count items in fee table that are courses with price ≥2000
+  let n=0
+  document.querySelectorAll('#items-body tr').forEach(tr=>{
+    const ins=tr.querySelectorAll('input')
+    const name=(ins[0]?.value||'').trim()
+    const price=parseFloat(ins[1]?.value)||0
+    // Exclude the discount line itself and non-course items
+    if(name===MULTI_COURSE_DISC_NAME)return
+    if(price>=2000&&name)n++
+  })
+  return n
+}
+function autoApplyMultiCourseDisc(){
+  // Remove existing multi-course discount line
+  document.querySelectorAll('#items-body tr').forEach(tr=>{
+    const name=(tr.querySelector('input[type=text]')?.value||'').trim()
+    if(name===MULTI_COURSE_DISC_NAME)tr.remove()
+  })
+  rowIds=rowIds.filter(id=>document.getElementById('ir-'+id))
+  const count=countHighCourses()
+  // Auto-add ONLY when 2+ items ≥2000
+  if(count>=2){
+    addItem(MULTI_COURSE_DISC_NAME,MULTI_COURSE_DISC_AMT,1)
+  }
+  updateSub()
+}
+function applyMSDToClassmates(apply){
+  if(!_classmateEntries.length)return
+  const all=getAll();let changed=false
+  _classmateEntries.forEach(entry=>{
+    const idx=all.findIndex(c=>c.id===entry.id);if(idx<0)return
+    const items=all[idx].items||[]
+    const hasMSD=items.some(i=>(i.name||'').trim()===MULTI_STU_DISC_NAME)
+    if(apply&&!hasMSD){all[idx].items=[...items,{name:MULTI_STU_DISC_NAME,price:MULTI_STU_DISC_AMT,qty:1}];changed=true}
+    else if(!apply&&hasMSD){all[idx].items=items.filter(i=>(i.name||'').trim()!==MULTI_STU_DISC_NAME);changed=true}
+  })
+  if(changed){saveAll(all);cloudSave()}
+}
+function autoApplyMultiStudentDisc(){
+  const checked=document.getElementById('f-multi-student')?.checked
+  // Remove existing multiple student discount line
+  document.querySelectorAll('#items-body tr').forEach(tr=>{
+    const name=(tr.querySelector('input[type=text]')?.value||'').trim()
+    if(name===MULTI_STU_DISC_NAME)tr.remove()
+  })
+  rowIds=rowIds.filter(id=>document.getElementById('ir-'+id))
+  // Add only when checkbox is checked
+  if(checked)addItem(MULTI_STU_DISC_NAME,MULTI_STU_DISC_AMT,1)
+  updateSub()
+  // Also save/remove MSD from all linked classmates in stored data
+  applyMSDToClassmates(!!checked)
+}
+function autoUpdateDiscount(){
+  // Student Dorm never gets any room discount
+  const sel=document.getElementById('f-rdisc')
+  if(isDorm()){sel.value='';toggleDiscCustom();updateRoomFeePreview();return}
+  if(hasStudentCourse()){
+    if(!sel.value){sel.value='9折';toggleDiscCustom()}
+  }
+  autoApplyMultiCourseDisc()
+  updateRoomFeePreview()
+}
+
+function toggleHoliday(){
+  // isHoliday flag is now just a tag — discount UI always available (per-night calc handles holidays)
+  autoUpdateDiscount()
+}
+function toggleDiscCustom(){document.getElementById('room-disc-custom-wrap').style.display=v('f-rdisc')==='custom'?'block':'none'}
+
+// Returns {nights, holNights, normNights} by checking each night against the holidays list
+function getRoomNightBreakdown(ci,co){
+  const nights=Math.round((new Date(co)-new Date(ci))/(1000*3600*24))
+  if(nights<=0)return{nights:0,holNights:0,normNights:0}
+  const hols=new Set(getHolidays())
+  let holNights=0,normNights=0
+  for(let i=0;i<nights;i++){
+    const ds=new Date(new Date(ci).getTime()+i*86400000).toISOString().slice(0,10)
+    if(hols.has(ds))holNights++;else normNights++
+  }
+  return{nights,holNights,normNights}
+}
+
+// Returns Set of date strings where another customer shares the same room
+function getSharedNights(c){
+  if(!c.roomNum||!c.checkin||!c.checkout)return new Set()
+  const rn=c.roomNum.trim()
+  const others=getAll().filter(x=>x.id!==c.id&&(x.roomNum||'').trim()===rn&&x.checkin&&x.checkout)
+  if(!others.length)return new Set()
+  const nights=Math.round((new Date(c.checkout)-new Date(c.checkin))/(1000*3600*24))
+  const shared=new Set()
+  for(let i=0;i<nights;i++){
+    const ds=new Date(new Date(c.checkin).getTime()+i*86400000).toISOString().slice(0,10)
+    if(others.some(o=>ds>=o.checkin&&ds<o.checkout))shared.add(ds)
+  }
+  return shared
+}
+
+function updateRoomFeePreview(){
+  const ci=v('f-ci'),co=v('f-co'),rate=v('f-rrate'),rnum=v('f-rnum').trim()
+  const el=document.getElementById('room-fee-preview')
+  if(!ci||!co||!rate){el.style.display='none';return}
+  const nights=Math.round((new Date(co)-new Date(ci))/(1000*3600*24))
+  if(nights<=0){el.style.display='none';return}
+  const rateN=parseFloat(rate)
+  const hols=new Set(getHolidays())
+  const tempC={id:v('f-id')||'__preview__',roomNum:rnum,checkin:ci,checkout:co}
+  const sharedSet=rnum?getSharedNights(tempC):new Set()
+  const disc=v('f-rdisc')
+  let f=1,discLabel=''
+  if(!isDorm()){
+    if(disc==='9折'){f=0.9;discLabel='学员9折'}
+    else if(disc==='85折'){f=0.85;discLabel='8.5折'}
+    else if(disc==='8折'){f=0.8;discLabel='8折'}
+    else if(disc==='custom'){f=parseFloat(v('f-rdisc-custom'))||1;discLabel='自定义折扣'}
+  }
+  let holSolo=0,holShare=0,normSolo=0,normShare=0,total=0
+  for(let i=0;i<nights;i++){
+    const ds=new Date(new Date(ci).getTime()+i*86400000).toISOString().slice(0,10)
+    const isH=hols.has(ds),isS=sharedSet.has(ds)
+    total+=rateN*(isH?1:f)*(isS?0.5:1)
+    if(isH&&isS)holShare++;else if(isH)holSolo++;else if(isS)normShare++;else normSolo++
+  }
+  _formRoomFee=total
+  el.style.display='block'
+  document.getElementById('room-fee-preview-amt').textContent='¥ '+total.toFixed(2)
+  const parts=[]
+  if(holSolo>0)parts.push(holSolo+'晚节假日原价')
+  if(holShare>0)parts.push(holShare+'晚节假日均摊50%')
+  if(normSolo>0)parts.push(normSolo+'晚'+(f<1?' '+discLabel:'普通'))
+  if(normShare>0)parts.push(normShare+'晚'+(f<1?' '+discLabel:'普通')+'均摊50%')
+  let noteText=parts.join(' + ')
+  if(sharedSet.size>0)noteText+=' · 🏠 与同房客户均摊'
+  document.getElementById('room-fee-preview-note').textContent=noteText
+  updateFormTotal()
+}
+
+// ====== ITEMS ======
+let rowIds=[],_formRoomFee=0
+function updateFormTotal(){
+  let iT=0
+  document.querySelectorAll('#items-body tr').forEach(tr=>{
+    const ins=tr.querySelectorAll('input[type=number]')
+    iT+=(parseFloat(ins[0]?.value)||0)*(parseFloat(ins[1]?.value)||1)
+  })
+  const arrCar=parseFloat(document.getElementById('f-arr-cf')?.value)||0
+  const depCar=parseFloat(document.getElementById('f-dep-cf')?.value)||0
+  const dep=parseFloat(document.getElementById('f-deposit')?.value)||0
+  const tot=iT+arrCar+depCar+_formRoomFee
+  const el=document.getElementById('form-total-summary')
+  if(tot<=0){el.style.display='none';return}
+  el.style.display='block'
+  document.getElementById('fts-total').textContent='¥ '+tot.toFixed(2)
+  const depRow=document.getElementById('fts-dep-row')
+  const balRow=document.getElementById('fts-bal-row')
+  if(dep>0){
+    depRow.style.display='flex';depRow.style.justifyContent='space-between'
+    document.getElementById('fts-dep').textContent='− ¥ '+dep.toFixed(2)
+    balRow.style.display='flex';balRow.style.justifyContent='space-between'
+    document.getElementById('fts-bal').textContent='¥ '+(tot-dep).toFixed(2)
+  }else{depRow.style.display='none';balRow.style.display='none'}
+}
+function addItem(name,price,qty){
+  const id=uid();rowIds.push(id)
+  const tr=document.createElement('tr');tr.id='ir-'+id
+  tr.innerHTML='<td><input type="text" value="'+(name||'')+'" placeholder="项目名称" oninput="updateSub()"></td><td><input type="number" value="'+(price||'')+'" placeholder="0" min="0" oninput="updateSub()" style="text-align:right"></td><td><input type="number" value="'+(qty||1)+'" min="1" oninput="updateSub()" style="text-align:center;max-width:60px"></td><td class="rsub">¥ 0.00</td><td class="no-print"><button class="btn btn-danger btn-sm" onclick="rmItem(\''+id+'\')">✕</button></td>'
+  document.getElementById('items-body').appendChild(tr);updateSub()
+}
+function rmItem(id){document.getElementById('ir-'+id)?.remove();rowIds=rowIds.filter(r=>r!==id);updateSub();autoUpdateDiscount()}
+function updateSub(){
+  let tot=0
+  document.querySelectorAll('#items-body tr').forEach(tr=>{
+    const ins=tr.querySelectorAll('input[type=number]')
+    const sub=(parseFloat(ins[0]?.value)||0)*(parseFloat(ins[1]?.value)||0)
+    tot+=sub;const c=tr.querySelector('.rsub');if(c)c.textContent='¥ '+sub.toFixed(2)
+  })
+  document.getElementById('items-sub').textContent='¥ '+tot.toFixed(2)
+  updateFormTotal()
+}
+function getItems(){
+  const r=[]
+  document.querySelectorAll('#items-body tr').forEach(tr=>{const c=tr.querySelectorAll('input');const n=(c[0]?.value||'').trim();if(n)r.push({name:n,price:parseFloat(c[1]?.value)||0,qty:parseFloat(c[2]?.value)||1})})
+  return r
+}
+function loadItems(rows){document.getElementById('items-body').innerHTML='';rowIds=[];(rows||[]).forEach(r=>addItem(r.name,r.price,r.qty));if(!rows||!rows.length)addItem()}
+function getOwnGear(){return[...document.querySelectorAll('input[name=owngear]:checked')].map(c=>c.value)}
+function setOwnGear(arr){document.querySelectorAll('input[name=owngear]').forEach(c=>{c.checked=!!(arr&&arr.includes(c.value))})}
+
+// ====== FORM HELPERS ======
+function v(id){return document.getElementById(id)?.value||''}
+function sv(id,val){const e=document.getElementById(id);if(e)e.value=val??''}
+function collect(){
+  const custno=v('f-custno-stored')||genCustNo(v('f-name'),getFlightTime('f-at-date','f-at-h','f-at-m'),v('f-ci'),v('f-rnum'))
+  return{id:v('f-id')||uid(),custNo:custno,name:v('f-name').trim(),dob:v('f-dob'),email:v('f-email').trim(),
+    arriveFlight:v('f-af').trim(),arriveTime:getFlightTime('f-at-date','f-at-h','f-at-m'),terminal:v('f-term'),
+    overnightHotel:v('f-ovhot').trim(),
+    arrCarTime:v('f-arr-ct').trim(),arrCarFee:v('f-arr-cf'),arrBoat:v('f-arr-boat').trim(),arrPlate:v('f-arr-plate').trim(),arrDriverPhone:v('f-arr-drv').trim(),
+    departFlight:v('f-df').trim(),departTime:getFlightTime('f-dt-date','f-dt-h','f-dt-m'),
+    depCarTime:v('f-dep-ct').trim(),depCarFee:v('f-dep-cf'),depBoat:v('f-dep-boat').trim(),depPlate:v('f-dep-plate').trim(),depDriverPhone:v('f-dep-drv').trim(),
+    checkin:v('f-ci'),checkout:v('f-co'),roomType:v('f-rtype'),roomNum:v('f-rnum').trim(),
+    roomRate:v('f-rrate'),
+    isHoliday:checkStayHasHoliday(v('f-ci'),v('f-co')).length>0?'是':'否',
+    roomDiscount:v('f-rdisc'),roomDiscountCustom:v('f-rdisc-custom'),
+    gender:v('f-gender'),height:v('f-ht'),weight:v('f-wt'),clothSize:v('f-cs'),shoeSize:v('f-shoe').trim(),myopia:v('f-myopia').trim(),
+    wetsuitSize:v('f-ws'),finSize:v('f-fs').trim(),bcdSize:v('f-bs'),
+    certSystem:v('f-certsys'),certNumber:v('f-certno').trim(),divingExp:v('f-divexp').trim(),
+    ownGear:getOwnGear(),gearNote:v('f-gn').trim(),
+    instructor:v('f-inst').trim(),multiStudentDisc:document.getElementById('f-multi-student')?.checked||false,classmates:getClassmates(),courseStart:v('f-cstart'),courseEnd:v('f-cend'),
+    items:getItems(),deposit:v('f-deposit'),notes:v('f-note').trim(),savedAt:new Date().toISOString()}
+}
+function fillForm(c){
+  sv('f-id',c.id);sv('f-custno-stored',c.custNo||'')
+  sv('f-name',c.name);sv('f-dob',c.dob);sv('f-email',c.email)
+  sv('f-af',c.arriveFlight);setFlightTime(c.arriveTime,'f-at-date','f-at-h','f-at-m');sv('f-term',c.terminal)
+  sv('f-ovhot',c.overnightHotel)
+  sv('f-arr-ct',c.arrCarTime);sv('f-arr-cf',c.arrCarFee);sv('f-arr-boat',c.arrBoat);sv('f-arr-plate',c.arrPlate);sv('f-arr-drv',c.arrDriverPhone)
+  sv('f-df',c.departFlight);setFlightTime(c.departTime,'f-dt-date','f-dt-h','f-dt-m')
+  sv('f-dep-ct',c.depCarTime);sv('f-dep-cf',c.depCarFee);sv('f-dep-boat',c.depBoat);sv('f-dep-plate',c.depPlate);sv('f-dep-drv',c.depDriverPhone)
+  sv('f-ci',c.checkin);sv('f-co',c.checkout);sv('f-rtype',c.roomType);sv('f-rnum',c.roomNum);sv('f-rrate',c.roomRate)
+  if(c.roomType){const opt=[...document.getElementById('f-rtype').options].find(o=>o.value===c.roomType);if(opt)document.getElementById('room-type-tip').textContent=ROOM_TYPES.find(r=>r.val===c.roomType)?.note||''}
+  sv('f-rdisc',c.roomDiscount);sv('f-rdisc-custom',c.roomDiscountCustom)
+  document.getElementById('room-disc-custom-wrap').style.display=c.roomDiscount==='custom'?'block':'none'
+  updateRoomFeePreview()
+  sv('f-gender',c.gender);sv('f-ht',c.height);sv('f-wt',c.weight);sv('f-cs',c.clothSize);sv('f-shoe',c.shoeSize);sv('f-myopia',c.myopia)
+  sv('f-ws',c.wetsuitSize);sv('f-fs',c.finSize);sv('f-bs',c.bcdSize)
+  sv('f-certsys',c.certSystem);sv('f-certno',c.certNumber);sv('f-divexp',c.divingExp)
+  setOwnGear(c.ownGear);sv('f-gn',c.gearNote);sv('f-inst',c.instructor)
+  const msd=document.getElementById('f-multi-student');if(msd)msd.checked=!!c.multiStudentDisc
+  setClassmates(c.classmates||[])
+  sv('f-cstart',c.courseStart||'');sv('f-cend',c.courseEnd||'')
+  loadItems(c.items)
+  sv('f-deposit',c.deposit);sv('f-note',c.notes)
+  updateSub();updateCustNo();onCheckinChange();updateFormMode()
+}
+function updateFormMode(){
+  const icon=document.getElementById('form-mode-icon')
+  const label=document.getElementById('form-mode-label')
+  if(!icon||!label)return
+  const id=v('f-id'),name=v('f-name')
+  if(id){
+    icon.textContent='✏️'
+    label.textContent='Editing: '+(name||'Guest')
+    label.style.color='#1e40af'
+    icon.closest('div').parentElement.style.background='#eff6ff'
+    icon.closest('div').parentElement.style.borderColor='#bfdbfe'
+  }else{
+    icon.textContent='📝'
+    label.textContent=name?'New Guest — In Progress':'New Guest — Form Empty'
+    label.style.color='#14532d'
+    icon.closest('div').parentElement.style.background='#f0fdf4'
+    icon.closest('div').parentElement.style.borderColor='#bbf7d0'
+  }
+}
+function _clearForm(){
+  sv('f-id','');sv('f-custno-stored','')
+  ;['f-name','f-dob','f-email','f-af','f-at-date','f-df','f-dt-date','f-ovhot',
+    'f-arr-ct','f-arr-cf','f-arr-drv','f-dep-ct','f-dep-cf','f-dep-drv',
+    'f-ci','f-co','f-rnum','f-rrate','f-rdisc-custom','f-ht','f-wt','f-shoe','f-myopia',
+    'f-fs','f-certno','f-divexp','f-gn','f-inst','f-deposit','f-note',
+    'f-arr-boat','f-arr-plate','f-dep-boat','f-dep-plate'
+  ].forEach(id=>sv(id,''))
+  ;['f-term','f-rtype','f-cs','f-ws','f-bs','f-certsys','f-rdisc','f-gender',
+    'f-at-h','f-at-m','f-dt-h','f-dt-m'].forEach(id=>sv(id,''))
+  document.getElementById('room-disc-custom-wrap').style.display='none'
+  document.getElementById('room-type-tip').textContent=''
+  document.getElementById('hol-alert').style.display='none'
+  document.getElementById('room-fee-preview').style.display='none'
+  document.getElementById('form-total-summary').style.display='none'
+  _formRoomFee=0
+  setOwnGear([]);loadItems([])
+  const msd=document.getElementById('f-multi-student');if(msd)msd.checked=false
+  setClassmates([])
+  document.getElementById('custno-display').textContent='————'
+  updateFormMode()
+}
+function resetForm(){
+  if(!confirm('Clear the form?'))return
+  _clearForm()
+}
+function newGuest(){
+  const hasData=v('f-id')||v('f-name')||v('f-ci')
+  if(hasData&&!confirm('Starting a new guest will clear the current form. Continue?'))return
+  _clearForm()
+  // Scroll to top of form and focus name
+  document.getElementById('page-form').scrollTo?.(0,0)
+  window.scrollTo(0,0)
+  setTimeout(()=>document.getElementById('f-name')?.focus(),50)
+}
+function saveCustomer(){
+  const d=collect();if(!d.name){alert('请填写客户姓名');document.getElementById('f-name').focus();return}
+  const all=getAll();const i=all.findIndex(c=>c.id===d.id)
+  if(i>=0)all[i]=d;else all.unshift(d)
+  saveAll(all);sv('f-id',d.id);sv('f-custno-stored',d.custNo)
+  document.getElementById('custno-display').textContent=d.custNo
+  const a=document.getElementById('save-alert');a.style.display='block';setTimeout(()=>a.style.display='none',3000)
+  updateFormMode()
+  cloudSave()
+}
+
+// ====== CLASSMATE PICKER ======
+// Stored classmate IDs for current form session
+// _classmateEntries: [{id, course}] — one entry per customer+course combination
+let _classmateEntries=[]
+function getClassmates(){return _classmateEntries}
+function setClassmates(entries){
+  // Backward compat: old saves were array of id strings
+  _classmateEntries=(entries||[]).map(e=>typeof e==='string'?{id:e,course:''}:e)
+  renderClassmateTags()
+}
+function shortCourseName(name){
+  // Extract abbreviation from "(OW)" style suffix, else truncate
+  const m=(name||'').match(/\(([^)]+)\)\s*$/)
+  if(m)return m[1]
+  return(name||'').length>18?(name||'').slice(0,17)+'…':(name||'')
+}
+function renderClassmateTags(){
+  const wrap=document.getElementById('classmate-tags');if(!wrap)return
+  const all=getAll()
+  wrap.innerHTML=_classmateEntries.map((entry,idx)=>{
+    const c=all.find(x=>x.id===entry.id);if(!c)return''
+    const lbl=c.name+(entry.course?' '+shortCourseName(entry.course):'')
+    return'<span style="display:inline-flex;align-items:center;gap:4px;background:#dbeafe;color:#1e3a8a;font-size:12px;font-weight:600;padding:2px 8px;border-radius:14px">'+lbl+'<button type="button" style="background:none;border:none;cursor:pointer;color:#1e3a8a;font-size:14px;line-height:1;padding:0" onclick="removeClassmate('+idx+')">×</button></span>'
+  }).join('')
+}
+function removeClassmate(idx){
+  _classmateEntries.splice(idx,1)
+  renderClassmateTags()
+  // If no classmates remain, auto-uncheck MSD and remove it from everyone
+  if(!_classmateEntries.length){
+    const msdCb=document.getElementById('f-multi-student')
+    if(msdCb&&msdCb.checked){msdCb.checked=false;autoApplyMultiStudentDisc()}
+  }
+}
+function toggleClassmatePicker(){
+  const picker=document.getElementById('classmate-picker')
+  if(picker.style.display==='none'||!picker.style.display){
+    buildClassmatePicker()
+    picker.style.display='block'
+    setTimeout(()=>document.addEventListener('click',_closePicker,{once:true}),0)
+  }else{picker.style.display='none'}
+}
+function _closePicker(e){
+  const picker=document.getElementById('classmate-picker')
+  const btn=document.getElementById('classmate-btn')
+  if(picker&&!picker.contains(e.target)&&e.target!==btn)picker.style.display='none'
+}
+let _cmPickerRows=[]  // temp index for onclick handlers
+function buildClassmatePicker(){
+  const picker=document.getElementById('classmate-picker');if(!picker)return
+  const all=getAll()
+  const curId=document.getElementById('f-id').value
+  const curCheckin=document.getElementById('f-ci').value
+  function daysDiff(d1,d2){
+    if(!d1||!d2)return Infinity
+    return Math.abs(new Date(d1)-new Date(d2))/86400000
+  }
+  // Build flat list: one row per customer+course, within ±4 days of current check-in
+  _cmPickerRows=[]
+  all.forEach(c=>{
+    if(c.id===curId)return
+    if(daysDiff(c.checkin,curCheckin)>4)return
+    const courseItems=(c.items||[]).filter(i=>i.name&&(i.price||0)>0)
+    if(courseItems.length===0){
+      if(!_classmateEntries.some(e=>e.id===c.id&&e.course===''))
+        _cmPickerRows.push({c,course:''})
+    } else {
+      courseItems.forEach(i=>{
+        if(!_classmateEntries.some(e=>e.id===c.id&&e.course===i.name))
+          _cmPickerRows.push({c,course:i.name})
+      })
+    }
+  })
+  if(!_cmPickerRows.length){
+    picker.innerHTML='<div style="padding:12px 16px;font-size:12px;color:#94a3b8;text-align:center">No other guests within ±4 days</div>'
+    return
+  }
+  picker.innerHTML=_cmPickerRows.map(({c,course},idx)=>{
+    const lbl=c.name+(course?' <span style="color:#475569;font-weight:500">'+shortCourseName(course)+'</span>':'')
+    const checkinLbl=c.checkin?'<span style="font-size:11px;color:#94a3b8;margin-left:4px">'+fdate(c.checkin)+'</span>':''
+    return'<div style="padding:7px 14px;cursor:pointer;display:flex;align-items:center;gap:6px" onclick="addClassmate('+idx+')" onmouseenter="this.style.background=\'#f0f9ff\'" onmouseleave="this.style.background=\'\'">'
+      +'<span style="flex:1;font-size:13px;font-weight:600;color:#1a202c">'+lbl+'</span>'+checkinLbl+'</div>'
+  }).join('')
+}
+function addClassmate(idx){
+  const row=_cmPickerRows[idx];if(!row)return
+  const {c,course}=row
+  if(!_classmateEntries.some(e=>e.id===c.id&&e.course===course))
+    _classmateEntries.push({id:c.id,course})
+  buildClassmatePicker()
+  renderClassmateTags()
+  // Auto-check MSD checkbox and apply discount when classmate added
+  const msdCb=document.getElementById('f-multi-student')
+  if(msdCb&&!msdCb.checked){msdCb.checked=true;autoApplyMultiStudentDisc()}
+  else applyMSDToClassmates(true)
+}
+
+// ====== SMART PASTE ======
+function openPasteModal(){document.getElementById('paste-input').focus()}
+function closePasteModal(){}
+function pDate(s){
+  if(!s)return''
+  s=s.trim()
+  let m,Y,M,D
+  // Helper: validate and format
+  function fmt(y,mo,d){
+    const yi=parseInt(y),mi=parseInt(mo),di=parseInt(d)
+    if(isNaN(yi)||isNaN(mi)||isNaN(di))return null
+    if(mi<1||mi>12||di<1||di>31)return null
+    return yi+'-'+String(mi).padStart(2,'0')+'-'+String(di).padStart(2,'0')
+  }
+  // 中文全排列: 年月日 / 月日年 / 日月年 等
+  // YYYY年MM月DD日
+  m=s.match(/(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日?/)
+  if(m)return fmt(m[1],m[2],m[3])||s
+  // MM月DD日YYYY年 or DD日MM月YYYY年
+  m=s.match(/(\d{1,2})\s*月\s*(\d{1,2})\s*日?\s*(\d{4})\s*年?/)
+  if(m)return fmt(m[3],m[1],m[2])||s
+  // Numeric separators: detect year by value ≥1900
+  // YYYY[-/. ]MM[-/. ]DD
+  m=s.match(/^(\d{4})[\/\-\.\s](\d{1,2})[\/\-\.\s](\d{1,2})$/)
+  if(m)return fmt(m[1],m[2],m[3])||s
+  // DD[-/.]MM[-/.]YYYY  (day first, year last — when day≤12 ambiguous: assume D/M/Y if sep is '/')
+  m=s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/)
+  if(m){const r=fmt(m[3],m[2],m[1]);if(r)return r}
+  // MM/DD/YYYY fallback
+  m=s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/)
+  if(m){const r=fmt(m[3],m[1],m[2]);if(r)return r}
+  // YYYYMMDD (8 digits)
+  m=s.match(/^(\d{4})(\d{2})(\d{2})$/)
+  if(m)return fmt(m[1],m[2],m[3])||s
+  // YYYY-MM-DD embedded in longer string
+  m=s.match(/(\d{4})[\-\/\.](\d{1,2})[\-\/\.](\d{1,2})/)
+  if(m)return fmt(m[1],m[2],m[3])||s
+  // English month names: Jan/Feb... DD YYYY or DD Jan YYYY or YYYY Jan DD
+  const MONTHS={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12,
+    january:1,february:2,march:3,april:4,june:6,july:7,august:8,september:9,october:10,november:11,december:12}
+  m=s.match(/(\d{1,2})\s+([a-zA-Z]+)\s+(\d{4})/)
+  if(m&&MONTHS[m[2].toLowerCase()]){return fmt(m[3],MONTHS[m[2].toLowerCase()],m[1])||s}
+  m=s.match(/([a-zA-Z]+)\s+(\d{1,2})[,\s]+(\d{4})/)
+  if(m&&MONTHS[m[1].toLowerCase()]){return fmt(m[3],MONTHS[m[1].toLowerCase()],m[2])||s}
+  m=s.match(/(\d{4})\s+([a-zA-Z]+)\s+(\d{1,2})/)
+  if(m&&MONTHS[m[2].toLowerCase()]){return fmt(m[1],MONTHS[m[2].toLowerCase()],m[3])||s}
+  return s
+}
+function pDT(s){
+  if(!s)return''
+  const yr=new Date().getFullYear()
+  s=s.trim()
+  // --- Extract time component ---
+  // PM markers: 下午/晚上/pm  AM markers: 上午/早上/凌晨/am  Noon: 中午
+  let tH=null,tM=null
+  const isPM=/下午|晚上|中午|pm\b/i.test(s), isAM=/上午|早上|凌晨|am\b/i.test(s)
+  function applyAmPm(h){
+    if(isPM&&h<12)return h+12
+    if(isAM&&h===12)return 0
+    return h
+  }
+  // HH:MM[:SS] (colon format)
+  let tm=s.match(/(\d{1,2}):(\d{2})(?::\d{2})?/)
+  if(tm){tH=applyAmPm(parseInt(tm[1]));tM=parseInt(tm[2])}
+  if(tH===null){
+    // Chinese: 14时30分 / 14点30分 / 晚上8点 / 11点 (时 and 点 both accepted)
+    const ct=s.match(/(\d{1,2})\s*[时点]\s*(\d{0,2})\s*分?/)
+    if(ct){tH=applyAmPm(parseInt(ct[1]));tM=ct[2]?parseInt(ct[2]):0}
+  }
+  const tStr=tH!==null?String(tH).padStart(2,'0')+':'+String(tM).padStart(2,'0'):null
+  // --- Extract date component (with or without year) ---
+  let dateStr=null
+  const full=pDate(s)
+  if(full&&/^\d{4}-\d{2}-\d{2}$/.test(full)){
+    dateStr=full
+  } else {
+    // Chinese M月D日 (no year) → current year
+    let m=s.match(/(\d{1,2})\s*月\s*(\d{1,2})\s*日?/)
+    if(m){dateStr=yr+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0')}
+    else {
+      // MM/DD, MM-DD, or MM.DD short form (no year)
+      m=s.match(/(\d{1,2})[\/\-\.](\d{1,2})(?![\d\/\-\.])/)
+      if(m){dateStr=yr+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0')}
+    }
+  }
+  if(dateStr&&tStr)return dateStr+'T'+tStr  // full datetime
+  if(dateStr)return dateStr+'T'             // date only → T suffix, time fields untouched
+  if(tStr)return 'T'+tStr                  // time only → T prefix, date field untouched
+  return s
+}
+// Date with current-year fallback (for dates without year info)
+function pDateOrCurYear(s){
+  if(!s)return''
+  const yr=new Date().getFullYear()
+  // Try full parse first
+  const full=pDate(s)
+  if(full&&/^\d{4}-\d{2}-\d{2}$/.test(full))return full
+  // Chinese M月D日
+  let m=s.match(/(\d{1,2})\s*月\s*(\d{1,2})\s*日?/)
+  if(m)return yr+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0')
+  // MM/DD or MM-DD (no year)
+  m=s.match(/^(\d{1,2})[\/\-](\d{1,2})$/)
+  if(m)return yr+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0')
+  // MM.DD (dot separator, e.g. 6.19)
+  m=s.match(/^(\d{1,2})\.(\d{1,2})$/)
+  if(m)return yr+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0')
+  return full||s
+}
+function pFlight(s){
+  const r={}
+  const fm=s.match(/\b([A-Za-z\d][A-Za-z]\d{3,4})\b/);if(fm)r.flight=fm[1].toUpperCase()
+  const dt=pDT(s);if(dt.includes('T'))r.datetime=dt
+  const tM=s.match(/\bT([1-4])\b/i)||s.match(/航站楼?\s*([1-4])/);if(tM)r.terminal='T'+tM[1]
+  return r
+}
+// Abbreviation → DIVE_ITEMS name map for smart paste shorthand
+const DIVE_ABBREV=[
+  [/^ow$/i,                                   'PADI Open Water (OW)'],
+  [/^aow$/i,                                  'PADI Advanced Open Water (AOW)'],
+  [/^dsd$/i,                                  'DSD 体验潜水'],
+  [/^efr$/i,                                  'EFR 第一应急反应员'],
+  [/^(?:高氧|enriched\s*air|nitrox)$/i,       'PADI Enriched Air 高氧专长'],
+  [/^(?:再激活|reactivate)$/i,                'Reactivate 再激活课程'],
+  [/^(?:rescue|救援)$/i,                      'PADI Rescue 救援潜水员'],
+  [/^(?:sidemount|侧挂课)$/i,                 'PADI Sidemount 侧挂'],
+  [/^(?:ccr体验|体验ccr|ccr)$/i,              'CCR 体验'],
+  [/freedive.*l1|fdl1|自由潜.*1/i,            'AIDA/PADI FreeDive L1'],
+  [/freedive.*l2|fdl2|自由潜.*2/i,            'AIDA/PADI FreeDive L2'],
+  [/freedive.*l3|fdl3|自由潜.*3/i,            'AIDA/PADI FreeDive L3'],
+  [/freedive.*l4|fdl4|自由潜.*4/i,            'AIDA/PADI FreeDive L4'],
+  [/双人.*fd|fd.*双人|双人住店/i,             'FD 住店双人+ 1-8潜'],
+  [/单人.*fd|fd.*单人|^fd$/i,                 'FD 住店单人 1-8潜'],
+  [/背飞|backmount\s*bcd/i,                   'Backmount BCD 背飞/天'],
+  [/侧挂.*bcd|sidemount.*bcd/i,               'Sidemount BCD 侧挂/天'],
+  [/电脑表|dive\s*computer/i,                 'Dive Computer 电脑表/天'],
+]
+function diveShorthandToItems(expr){
+  const results=[]
+  expr.split(/[+,、&\/]+/).map(s=>s.trim()).filter(s=>s.length>=1).forEach(p=>{
+    const pl=p.toLowerCase().replace(/\s+/g,'')
+    // exact full-name match
+    let found=DIVE_ITEMS.find(d=>d.name.toLowerCase().replace(/\s+/g,'')===pl)
+    // abbreviation table
+    if(!found){for(const[re,name]of DIVE_ABBREV){if(re.test(pl)||re.test(p)){found=DIVE_ITEMS.find(d=>d.name===name);break}}}
+    // partial name match (4+ chars, avoid false positives)
+    if(!found&&pl.length>=4)found=DIVE_ITEMS.find(d=>d.name.toLowerCase().replace(/\s+/g,'').includes(pl))
+    if(found&&!results.find(i=>i.name===found.name))results.push(found)
+  })
+  return results
+}
+function parseAndApply(){
+  const text=(document.getElementById('paste-input').value||'').trim()
+  const msg=document.getElementById('paste-msg')
+  if(!text){msg.style.color='#dc2626';msg.textContent='Please paste text first';return}
+  const R={}
+  // SEP = optional separator (colon/space/fullwidth-space/nothing)
+  const SEP='[\\s\\uFF1A:：　]*'
+  const ls=text.split(/[\n\r;；]+/)
+  const KV=[
+    [/^(?:姓名|名字|客户姓名|name)[^:：]*[:：]\s*(.+)/i,'name'],
+    [/^(?:邮箱|电子邮件|email|e-mail)[^:：]*([\w.+\-]+@[\w.\-]+\.\w+)/i,'email'],
+    [/^(?:出生日期|生日|出生年月日?|date\s*of\s*birth|birthday|dob|born|生于)[^:：]*[:：]\s*(.+)/i,'_dob'],
+    [/^(?:到达航班|抵达|来程|arrival\s*flight|航班号?|flight)[^:：]*[:：]\s*(.+)/i,'_arrive'],
+    [/^(?:返程航班?|离港|出发航班|departure\s*flight|return\s*flight)[^:：]*[:：]\s*(.+)/i,'_depart'],
+    [/^(?:落地时间|到达时间|arrival\s*time)[^:：]*[:：]\s*(.+)/i,'_atonly'],
+    [/^(?:返程时间|离港时间|起飞时间|departure\s*time)[^:：]*[:：]\s*(.+)/i,'_dtonly'],
+    [/^(?:航站楼|terminal)[^:：]*[:：]\s*(.+)/i,'_term'],
+    [/^(?:过夜酒店|机场酒店|airport\s*hotel|overnight\s*hotel|hotel)[^:：]*[:：]\s*(.+)/i,'overnightHotel'],
+    [/^(?:房间号?|房号|room\s*no(?:\.)?)[^:：]*[:：]\s*(\d+)/i,'roomNum'],
+    [/^(?:身高|height)[^:：\d]*(?:[:：]\s*)?(\d{2,3})/i,'height'],
+    [/^(?:体重|weight)[^:：\d]*(?:[:：]\s*)?(\d{2,3})/i,'weight'],
+    [/^(?:鞋[码号尺]?|脚[码号尺]?|shoe\s*size|foot\s*size)[^:：\d]*(?:[:：]\s*)?(\d{2,3})/i,'shoeSize'],
+    [/^(?:衣服?尺码?|衣码|clothing\s*size)[^:：]*(XS|S|M|L|XL|XXL|XXXL)/i,'clothSize'],
+    [/^(?:潜水服|wetsuit\s*size)[^:：]*(XS|S|M|L|XL|XXL|XXXL)/i,'wetsuitSize'],
+    [/^(?:近视度?数?|近视眼|myopia|vision)[^:：]*[:：]\s*(.+)/i,'myopia'],
+    [/^(?:性别|gender|sex)[^:：]*[:：]\s*(.+)/i,'_gender'],
+    [/^(?:潜水经验|diving\s*exp(?:erience)?|experience)[^:：]*[:：]\s*(.+)/i,'divingExp'],
+    [/^(?:认证系统?|cert(?:ification)?\s*sys(?:tem)?)[^:：]*[:：]\s*(PADI|SSI|SDI|NAUI|AIDA)/i,'certSystem'],
+    [/^(?:证书编号?|cert(?:ification)?\s*(?:no|number|#)|license)[^:：]*[:：]\s*(.+)/i,'certNumber'],
+    [/^(?:地点|location|dive\s*site)[^:：]*[:：]\s*(.+)/i,'location'],
+    [/^(?:教练|instructor|dm)[^:：]*[:：]\s*(.+)/i,'instructor'],
+    [/^(?:到达船号|arrival\s*boat)[^:：]*[:：]\s*(.+)/i,'_arrboat'],
+    [/^(?:到达车牌|arrival\s*plate)[^:：]*[:：]\s*(.+)/i,'_arrplate'],
+    [/^(?:到达司机|到达船长|到达联系|arrival\s*(?:driver|captain))[^:：]*[:：]\s*(.+)/i,'_arrdrv'],
+    [/^(?:返程船号|departure\s*boat)[^:：]*[:：]\s*(.+)/i,'_depboat'],
+    [/^(?:返程车牌|departure\s*plate)[^:：]*[:：]\s*(.+)/i,'_depplate'],
+    [/^(?:返程司机|返程船长|返程联系|departure\s*(?:driver|captain))[^:：]*[:：]\s*(.+)/i,'_depdrv'],
+    [/^(?:房型|room\s*type)[^:：]*[:：]\s*(.+)/i,'_roomtype'],
+    [/^(?:定金|订金|押金|deposit)[^:：]*[:：]\s*([\d.]+)/i,'_deposit'],
+    [/^(?:备注|note)[^:：]*[:：]\s*(.+)/i,'_notes'],
+    [/^(?:装备备注|器材备注|gear\s*notes?)[^:：]*[:：]\s*(.+)/i,'gearNote'],
+    [/^(?:脚蹼[尺码号]?|fin\s*size)[^:：]*(S|M|L)\b/i,'finSize'],
+    [/^(?:折扣|客房折扣|discount|room\s*discount)[^:：]*[:：]\s*(.+)/i,'_rdisc'],
+    [/^(?:入住日期?|入住|check[\s-]?in)[^:：]*[:：]\s*(.+)/i,'_checkin'],
+    [/^(?:退房日期?|退房|check[\s-]?out)[^:：]*[:：]\s*(.+)/i,'_checkout'],
+    [/^(?:开课日期?|course\s*start\s*date?|csd)[^:：]*[:：]\s*(\S+)/i,'_cstart'],
+    [/^(?:预计结课日期?|est\.?\s*course\s*end\s*date?|eced|esed)[^:：]*[:：]\s*(\S+)/i,'_cend'],
+    [/^(?:到达拼车时间|到达接送时间|arrival\s*(?:transfer|car|shuttle)\s*time)[^:：]*[:：]\s*(.+)/i,'_arrct'],
+    [/^(?:返程拼车时间|返程接送时间|departure\s*(?:transfer|car|shuttle)\s*time)[^:：]*[:：]\s*(.+)/i,'_depct'],
+    [/^(?:到达接送费|到达车费|arrival\s*(?:transfer|car|shuttle)\s*fee)[^:：]*[:：]\s*([\d.]+)/i,'_arrcf'],
+    [/^(?:返程接送费|返程车费|departure\s*(?:transfer|car|shuttle)\s*fee)[^:：]*[:：]\s*([\d.]+)/i,'_depcf'],
+    [/^(?:自有装备|own\s*gear|personal\s*gear)[^:：]*[:：]\s*(.+)/i,'_owngear'],
+    [/^(?:潜水安排|潜水项目|课程安排|dive\s*(?:plan|arrangement|items?|courses?))[^:：]*[:：]?\s*(.+)/i,'_dive'],
+    [/^(?:装备租赁|租赁装备|gear\s*rental|rental\s*gear)[^:：]*[:：]\s*(.+)/i,'_gearrental'],
+  ]
+  // Context-aware: track arrival vs departure transfer section
+  let _transCtx='arr'
+  ls.forEach(line=>{
+    line=line.trim().replace(/﻿/g,'').replace(/　/g,' ')
+    if(!line||/^[-=─━\s]+$/.test(line))return
+    // Detect section headers (no colon value — just a label)
+    if(/^(?:到达接送|arrival\s*transfer)/i.test(line)&&!line.match(/[:：]\s*\S/)){_transCtx='arr';return}
+    if(/^(?:返程接送|departure\s*transfer)/i.test(line)&&!line.match(/[:：]\s*\S/)){_transCtx='dep';return}
+    // Context-routed ambiguous transfer fields
+    const ctm=line.match(/^(?:拼车[\/?\/]?船?时间|transfer\s*time)[^:：]*[:：]\s*(.+)/i)
+    if(ctm&&!R['_'+_transCtx+'ct']){R['_'+_transCtx+'ct']=ctm[1].trim();return}
+    const cfm=line.match(/^(?:费用|fee)[^:：]*[:：]\s*([\d.]+)/i)
+    if(cfm&&!R['_'+_transCtx+'cf']){R['_'+_transCtx+'cf']=cfm[1].trim();return}
+    if(/^(?:多人课程折扣|课程连学折扣|multiple\s*student\s*discount|multiple\s*courses?\s*discount)/i.test(line))R._multiStudent='yes'
+    KV.forEach(([re,key])=>{if(!R[key]){const m=line.match(re);if(m&&m[1]!==undefined)R[key]=m[1].trim()}})
+  })
+  if(R._arrive){const fi=pFlight(R._arrive);if(fi.flight)R.arriveFlight=fi.flight;if(fi.datetime)R.arriveTime=fi.datetime;if(fi.terminal)R.terminal=fi.terminal;delete R._arrive}
+  if(R._depart){const fi=pFlight(R._depart);if(fi.flight)R.departFlight=fi.flight;if(fi.datetime)R.departTime=fi.datetime;delete R._depart}
+  if(R._atonly){const dt=pDT(R._atonly);if(dt.includes('T'))R.arriveTime=dt;delete R._atonly}
+  if(R._dtonly){const dt=pDT(R._dtonly);if(dt.includes('T'))R.departTime=dt;delete R._dtonly}
+  if(R._term){const m=R._term.match(/T?([1-4])/i);if(m)R.terminal='T'+m[1];delete R._term}
+  if(R._dob){R.dob=pDate(R._dob);delete R._dob}
+  if(R._roomtype){
+    const rv=R._roomtype.toLowerCase().replace(/\s+/g,'')
+    const rt=ROOM_TYPES.find(r=>{
+      const vl=r.val.toLowerCase().replace(/\s+/g,'')
+      // exact match
+      if(rv===vl)return true
+      // partial: any word in the input matches any word in the room type
+      const rvWords=rv.split(/[\/\-,，、]/)
+      if(rvWords.some(w=>w.length>=2&&vl.includes(w)))return true
+      // keyword shortcuts
+      if(/单床|大床|single/.test(rv)&&r.val.includes('Single'))return true
+      if(/双床|twinbed|twin/.test(rv)&&r.val.includes('Twin'))return true
+      if(/familya|双床a|a型/.test(rv)&&r.val.includes('Family Room A'))return true
+      if(/familyb|双床b|b型/.test(rv)&&r.val.includes('Family Room B'))return true
+      if(/宿舍|dorm|学员/.test(rv)&&r.val.includes('Dorm'))return true
+      return false
+    })
+    if(rt)R.roomType=rt.val;delete R._roomtype
+  }
+  if(!R.email){const m=text.match(/[\w.+\-]+@[\w.\-]+\.\w+/);if(m)R.email=m[0]}
+  if(!R.arriveFlight||!R.departFlight){const fs=[...text.matchAll(/\b([A-Z\d][A-Z]\d{3,4})\b/g)].map(m=>m[1]);if(fs[0]&&!R.arriveFlight)R.arriveFlight=fs[0];if(fs[1]&&!R.departFlight)R.departFlight=fs[1]}
+  if(!R.certSystem){const m=text.match(/\b(PADI|SSI|SDI|NAUI|AIDA)\b/i);if(m)R.certSystem=m[1].toUpperCase()}
+  if(!R.height){const m=text.match(/(\d{3})\s*(?:cm|厘米)/i);if(m)R.height=m[1]}
+  if(!R.weight){const m=text.match(/(\d{2,3})\s*(?:kg|公斤)/i);if(m)R.weight=m[1]}
+  if(!R.shoeSize){const m=text.match(/(?:鞋[码号]|shoe)\s*[:：]?\s*(\d{2,3})/i);if(m)R.shoeSize=m[1]}
+  if(!R.roomType){
+    const tl=text.toLowerCase()
+    for(const rt of ROOM_TYPES){if(text.includes(rt.val.split(' ')[0])||tl.includes(rt.val.toLowerCase().split(' ')[0])){R.roomType=rt.val;break}}
+    if(!R.roomType){
+      if(/单大床|single\s*bed\s*room/i.test(text))R.roomType='Single Bed Room 单大床房'
+      else if(/family\s*room\s*b|双床房b/i.test(text))R.roomType='Family Room B 双床房B'
+      else if(/family\s*room\s*a|双床房a/i.test(text))R.roomType='Family Room A 双床房A'
+      else if(/twin\s*bed|双床/i.test(text))R.roomType='Twin Bed Room 双床房'
+      else if(/dorm|宿舍/i.test(text))R.roomType='Student Dorm 学员宿舍'
+    }
+  }
+  // Gender normalize
+  if(R._gender){const g=R._gender;R.gender=(/男|male|m\b/i.test(g)?'男':/女|female|f\b/i.test(g)?'女':'其他');delete R._gender}
+  if(!R.gender){if(/(?:性别|gender)\s*[:：]\s*男|\bmale\b/i.test(text))R.gender='男';else if(/(?:性别|gender)\s*[:：]\s*女|\bfemale\b/i.test(text))R.gender='女'}
+  // Myopia fallback
+  if(!R.myopia){
+    const mm=text.match(/近视[^\n]*?(左[\d/]+|[\d/]+度)/i)||text.match(/(?:左眼?|left)\s*(\d+).*?(?:右眼?|right)\s*(\d+)/i)
+    if(mm)R.myopia=mm[0].replace(/^.*近视度?数?[:：\s]*/i,'').trim()
+  }
+  // Own gear checkboxes
+  if(R._owngear){
+    const g=R._owngear.toLowerCase()
+    const gear=[]
+    if(/wetsuit|潜水服|湿衣|防寒衣/.test(g))gear.push('潜水服')
+    if(/\bbcd\b/.test(g))gear.push('BCD')
+    if(/regulator|调节器/.test(g))gear.push('调节器')
+    if(/\bfins?\b|脚蹼|蛙鞋/.test(g))gear.push('脚蹼')
+    if(/mask|面镜|潜镜/.test(g))gear.push('面镜')
+    if(/computer|电脑表/.test(g))gear.push('电脑表')
+    if(/other|其他/.test(g))gear.push('其他')
+    if(gear.length)setOwnGear(gear)
+    delete R._owngear
+  }
+  // Dive item helper
+  function applyDiveItems(items){
+    if(!items.length)return
+    const ex=getItems().filter(i=>i.name),exN=new Set(ex.map(i=>i.name))
+    const add=items.filter(d=>!exN.has(d.name))
+    if(add.length){loadItems([...ex,...add.map(d=>({name:d.name,price:d.price,qty:1}))]);autoUpdateDiscount()}
+  }
+  // Explicit dive arrangement field
+  if(R._dive){applyDiveItems(diveShorthandToItems(R._dive));delete R._dive}
+  // Explicit gear rental field
+  if(R._gearrental){applyDiveItems(diveShorthandToItems(R._gearrental));delete R._gearrental}
+  // Scan full text: exact DIVE_ITEMS names + abbreviation tokens
+  ;(()=>{
+    const found=[]
+    DIVE_ITEMS.forEach(di=>{if(text.includes(di.name)&&!found.find(x=>x.name===di.name))found.push(di)})
+    // Token scan for abbreviations (skip tokens already matched by exact name)
+    text.split(/[\s+,、&\/()（）]+/).forEach(tok=>{
+      const tl=tok.trim().toLowerCase().replace(/[^\w一-鿿]/g,'')
+      if(tl.length<2)return
+      for(const[re,name]of DIVE_ABBREV){
+        if((re.test(tl)||re.test(tok.trim()))&&!found.find(x=>x.name===name)){
+          const di=DIVE_ITEMS.find(d=>d.name===name);if(di)found.push(di);break
+        }
+      }
+    })
+    applyDiveItems(found)
+  })()
+  Object.keys(R).forEach(k=>{if(!R[k]&&R[k]!==0)delete R[k]})
+  const count=Object.keys(R).length
+  if(!count){msg.style.color='#dc2626';msg.textContent='No fields recognized — check format';return}
+  // Apply to form
+  if(R.name)sv('f-name',R.name);if(R.email)sv('f-email',R.email);if(R.dob)sv('f-dob',R.dob)
+  if(R.arriveFlight)sv('f-af',R.arriveFlight);if(R.arriveTime)setFlightTime(R.arriveTime,'f-at-date','f-at-h','f-at-m');if(R.terminal)sv('f-term',R.terminal)
+  if(R.departFlight)sv('f-df',R.departFlight);if(R.departTime)setFlightTime(R.departTime,'f-dt-date','f-dt-h','f-dt-m')
+  if(R.overnightHotel){sv('f-ovhot',R.overnightHotel);const on=document.querySelector('input[name=overnight][value="是"]');if(on){on.checked=true;toggleOvernightHotel()}}
+  if(R.roomNum)sv('f-rnum',R.roomNum)
+  if(R.roomType){sv('f-rtype',R.roomType);onRoomTypeChange()}
+  if(R.height)sv('f-ht',R.height);if(R.weight)sv('f-wt',R.weight);if(R.shoeSize)sv('f-shoe',R.shoeSize)
+  if(R.clothSize)sv('f-cs',R.clothSize);if(R.wetsuitSize)sv('f-ws',R.wetsuitSize)
+  if(R.myopia)sv('f-myopia',R.myopia);if(R.divingExp)sv('f-divexp',R.divingExp)
+  if(R.gender)sv('f-gender',R.gender)
+  if(R.certSystem)sv('f-certsys',R.certSystem);if(R.certNumber)sv('f-certno',R.certNumber)
+  if(R.instructor)sv('f-inst',R.instructor)
+  if(R._multiStudent){const cb=document.getElementById('f-multi-student');if(cb)cb.checked=true;delete R._multiStudent}
+  if(R.location)sv('f-loc',R.location)
+  if(R._arrboat){sv('f-arr-boat',R._arrboat)}
+  if(R._arrplate){sv('f-arr-plate',R._arrplate)}
+  if(R._arrdrv){sv('f-arr-drv',R._arrdrv)}
+  if(R._depboat){sv('f-dep-boat',R._depboat)}
+  if(R._depplate){sv('f-dep-plate',R._depplate)}
+  if(R._depdrv){sv('f-dep-drv',R._depdrv)}
+  if(R._deposit){sv('f-deposit',R._deposit);updateFormTotal()}
+  if(R._notes)sv('f-note',R._notes)
+  if(R.gearNote)sv('f-gn',R.gearNote)
+  if(R.finSize)sv('f-fs',R.finSize.toUpperCase())
+  if(R._rdisc){const dv=/9折|10%/.test(R._rdisc)?'9折':/8[.]?5折|15%/.test(R._rdisc)?'85折':/8折|20%/.test(R._rdisc)?'8折':null;if(dv){sv('f-rdisc',dv);toggleDiscCustom();updateRoomFeePreview()}}
+  if(R._checkin){const d=pDateOrCurYear(R._checkin);if(d){sv('f-ci',d);onCheckinChange()}}
+  if(R._checkout){const d=pDateOrCurYear(R._checkout);if(d){sv('f-co',d);onCheckinChange()}}
+  if(R._cstart){const d=pDateOrCurYear(R._cstart);if(d)sv('f-cstart',d);delete R._cstart}
+  if(R._cend){const d=pDateOrCurYear(R._cend);if(d)sv('f-cend',d);delete R._cend}
+  if(R._arrct)sv('f-arr-ct',R._arrct)
+  if(R._depct)sv('f-dep-ct',R._depct)
+  if(R._arrcf)sv('f-arr-cf',R._arrcf)
+  if(R._depcf)sv('f-dep-cf',R._depcf)
+  updateCustNo()
+  document.getElementById('paste-input').value=''
+  msg.style.color='#059669';msg.textContent='✅ '+count+' fields filled'
+  setTimeout(()=>msg.textContent='',4000)
+}
+function runParser(){parseAndApply()}
+function applyParsed(){parseAndApply()}
+
+// ====== SCHEDULE ======
+function dateOf(dt){return dt?(dt.includes('T')?dt.split('T')[0]:dt):null}
+function timeOf(dt){return(dt&&dt.includes('T'))?dt.split('T')[1].slice(0,5):''}
+function minsOf(dt){if(!dt||!dt.includes('T'))return -1;const t=dt.split('T')[1]||'00:00';const p=t.split(':').map(Number);return p[0]*60+p[1]}
+// ====== SEMI-CAL ======
+const SCAL_COLORS={
+  'OW+AOW':{bg:'#bbf7d0',tc:'#15803d'},
+  OW:      {bg:'#fecaca',tc:'#991b1b'},
+  AOW:     {bg:'#fef9c3',tc:'#854d0e'},
+  FD:      {bg:'#bfdbfe',tc:'#1e40af'},
+  FREE:    {bg:'#e9d5ff',tc:'#6b21a8'},
+  COURSE:  {bg:'#e9d5ff',tc:'#6b21a8'},
+  STAY:    {bg:'#f1f5f9',tc:'#475569'},
+}
+function guestCourseType(c){
+  const ns=(c.items||[]).map(i=>(i.name||'').toUpperCase())
+  const hasOW=ns.some(n=>/\bOW\b/.test(n)||n.includes('OPEN WATER'))
+  const hasAOW=ns.some(n=>n.includes('AOW')||n.includes('ADVANCED OPEN WATER'))
+  if(hasOW&&hasAOW)return'OW+AOW'
+  if(hasAOW)return'AOW'
+  if(hasOW)return'OW'
+  if(ns.some(n=>n.includes('FREEDIVE')||n.includes('FREE DIVE')||n.includes('自由')))return'FREE'
+  if(ns.some(n=>/^FD\b/.test(n)))return'FD'
+  if(ns.some(n=>n.includes('PADI')||n.includes('AIDA')||n.includes('SSI')||n.includes('EFR')))return'COURSE'
+  return'STAY'
+}
+// Returns ALL course/activity short labels for a guest (for multi-badge display)
+function guestCourseLabels(c){
+  const ns=(c.items||[]).map(i=>(i.name||'').toUpperCase())
+  const out=[]
+  const add=(label,test)=>{if(ns.some(test)&&!out.includes(label))out.push(label)}
+  add('OW',   n=>/\bOW\b/.test(n)||(n.includes('OPEN WATER')&&!n.includes('ADVANCED')))
+  add('AOW',  n=>n.includes('AOW')||n.includes('ADVANCED OPEN WATER'))
+  add('FREE', n=>n.includes('FREEDIVE')||n.includes('FREE DIVE')||n.includes('自由'))
+  add('FD',   n=>/^FD\b/.test(n))
+  add('DSD',  n=>n.includes('DSD'))
+  add('EFR',  n=>n.includes('EFR'))
+  add('Rescue',n=>n.includes('RESCUE')||n.includes('救援'))
+  add('Nitrox',n=>n.includes('ENRICHED')||n.includes('高氧'))
+  add('Side',  n=>n.includes('SIDEMOUNT')||n.includes('侧挂'))
+  add('Deep',  n=>n.includes('DEEP DIVE')||n.includes('深潜'))
+  add('React', n=>n.includes('REACTIVATE')||n.includes('再激活'))
+  add('CCR',   n=>n.includes('CCR'))
+  add('Tech',  n=>n.includes('TECH')||n.includes('技潜'))
+  return out
+}
+function renderSemiCal(){
+  const base=(document.getElementById('sch-date')?.value)||new Date().toISOString().split('T')[0]
+  const el=document.getElementById('semi-cal');if(!el)return
+  const all=getAll()
+  const today=new Date().toISOString().split('T')[0]
+  const days=[]
+  for(let d=0;d<15;d++){
+    const dt=new Date(base+'T12:00:00');dt.setDate(dt.getDate()+d)
+    const ds=dt.toISOString().split('T')[0]
+    const dow='SMTWTFS'[dt.getDay()]
+    const hol=isHolidayDate(ds),isT=ds===today
+    days.push({ds,dow,hol,isT})
+  }
+  // Collect unique guests visible in this 15-day window (Gantt rows)
+  const guestMap={}
+  all.forEach(c=>{
+    if(!c.checkin||!c.checkout)return
+    days.forEach(({ds})=>{if(ds>=c.checkin&&ds<c.checkout)guestMap[c.id]=c})
+  })
+  const guests=Object.values(guestMap).sort((a,b)=>(a.checkin||'').localeCompare(b.checkin||'')||(a.name||'').localeCompare(b.name||''))
+  // Build Gantt table: rows=guests, cols=days
+  let html='<div style="overflow-x:auto;padding-bottom:6px"><table style="border-collapse:collapse;table-layout:auto;min-width:900px;width:100%"><thead><tr>'
+  html+='<th style="font-size:11px;font-weight:700;color:#64748b;text-align:left;padding:6px 8px 5px;border-right:1px solid #e2e8f0;border-bottom:2px solid #e2e8f0;background:#f8fafc;white-space:nowrap;min-width:90px;max-width:130px">Guest</th>'
+  days.forEach(({ds,dow,hol,isT})=>{
+    const bg=isT?'#e0f2fe':hol?'#fff0f0':'#f8fafc'
+    const tc=isT?'#0284c7':hol?'#dc2626':'#64748b'
+    html+=`<th style="font-size:11px;font-weight:700;color:${tc};text-align:center;padding:6px 3px 5px;border-right:1px solid #f1f5f9;border-bottom:2px solid #e2e8f0;background:${bg};white-space:nowrap;min-width:52px">`
+    if(isT)html+='<span class="scal-today-dot" style="font-size:9px">T</span>'
+    html+=fdate(ds)+'<br><span style="font-weight:500;font-size:10px">'+dow+'</span>'
+    if(hol)html+='<br><span style="color:#ef4444;font-size:9px;font-weight:800">PH</span>'
+    html+='</th>'
+  })
+  html+='</tr></thead><tbody>'
+  if(!guests.length){
+    html+='<tr><td colspan="'+(days.length+1)+'" style="text-align:center;color:#cbd5e1;font-size:13px;padding:22px">No guests in this period</td></tr>'
+  } else {
+    guests.forEach(c=>{
+      const ct=guestCourseType(c),col=SCAL_COLORS[ct]||SCAL_COLORS.STAY
+      const labels=guestCourseLabels(c)
+      const badges=labels.map(l=>`<span style="font-size:9px;font-weight:700;padding:0 3px;border-radius:3px;background:rgba(0,0,0,.12)">${l}</span>`).join('')
+      html+='<tr>'
+      // Sticky guest name column
+      html+=`<td style="padding:3px 7px;border-right:1px solid #e2e8f0;border-bottom:1px solid #f1f5f9;background:${col.bg};color:${col.tc};font-size:11px;font-weight:700;cursor:pointer;vertical-align:middle;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" onclick="editC('${c.id}')" title="${c.name+(c.checkin&&c.checkout?' '+fdate(c.checkin)+'→'+fdate(c.checkout):'')}"><div style="overflow:hidden;text-overflow:ellipsis">${c.name}${badges?'<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:1px">'+badges+'</div>':''}</div></td>`
+      days.forEach(({ds,hol,isT})=>{
+        const inHouse=c.checkin&&c.checkout&&ds>=c.checkin&&ds<c.checkout
+        if(inHouse){
+          const cellBg=col.bg
+          html+=`<td style="background:${cellBg};border-right:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;padding:4px 3px;text-align:center"><div style="height:8px;border-radius:4px;background:${col.tc};opacity:.35;margin:0 3px"></div></td>`
+        } else {
+          const bg=isT?'#f0f9ff':hol?'#fff9f9':'white'
+          html+=`<td style="background:${bg};border-right:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;padding:4px 3px"></td>`
+        }
+      })
+      html+='</tr>'
+    })
+  }
+  html+='</tbody></table></div>'
+  el.innerHTML=html
+}
+// ====== INSTRUCTOR TIMETABLE ======
+function renderInstCal(){
+  const base=document.getElementById('sch-date').value;if(!base)return
+  const el=document.getElementById('inst-cal');if(!el)return
+  const all=getAll()
+  const today=new Date().toISOString().split('T')[0]
+  const days=[]
+  for(let d=0;d<15;d++){
+    const dt=new Date(base+'T12:00:00');dt.setDate(dt.getDate()+d)
+    days.push(dt.toISOString().split('T')[0])
+  }
+  // instStudMap[inst][studentId][date] = customer object
+  const instStudMap={}
+  all.forEach(c=>{
+    const inst=(c.instructor||'').trim();if(!inst)return
+    const ci=c.courseStart||c.checkin,co=c.courseEnd||c.checkout;if(!ci||!co)return
+    if(!instStudMap[inst])instStudMap[inst]={}
+    if(!instStudMap[inst][c.id])instStudMap[inst][c.id]={c,days:{}}
+    days.forEach(ds=>{if(ds>=ci&&ds<=co)instStudMap[inst][c.id].days[ds]=true})
+  })
+  const instructors=Object.keys(instStudMap).sort()
+  if(!instructors.length){el.innerHTML='<div style="padding:18px 20px;color:#94a3b8;font-size:13px">暂无教练排课数据（请在客户表单中填写教练姓名）</div>';return}
+  let html='<div style="overflow-x:auto;padding-bottom:6px"><table style="border-collapse:collapse;table-layout:auto;min-width:900px;width:100%">'
+  html+='<thead><tr><th style="background:#f8fafc;border:1px solid #e2e8f0;padding:7px 12px;font-size:11px;font-weight:700;color:#475569;white-space:nowrap;min-width:120px;text-align:left;position:sticky;left:0;z-index:2">教练 / 学员</th>'
+  days.forEach(ds=>{
+    const dt=new Date(ds+'T12:00:00')
+    const dow='日一二三四五六'[dt.getDay()]
+    const isT=ds===today,hol=isHolidayDate(ds)
+    const bg=isT?'#e0f2fe':hol?'#fff0f0':'#f8fafc'
+    const tc=isT?'#0284c7':hol?'#dc2626':'#475569'
+    html+=`<th style="background:${bg};border:1px solid #e2e8f0;padding:6px 4px;font-size:11px;font-weight:700;color:${tc};text-align:center;white-space:nowrap;min-width:60px">`
+    if(isT)html+='<span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;background:#0284c7;color:white;border-radius:50%;font-size:8px;font-weight:800;margin-right:2px">今</span>'
+    html+=fdate(ds)+'<br><span style="font-weight:500;font-size:10px">周'+dow+'</span></th>'
+  })
+  html+='</tr></thead><tbody>'
+  instructors.forEach(inst=>{
+    // Instructor header row
+    html+=`<tr><td colspan="${days.length+1}" style="background:#0b3d5e;color:white;font-size:12px;font-weight:800;padding:5px 12px;letter-spacing:.3px">👨‍🏫 ${inst}</td></tr>`
+    // One sub-row per student, sorted by checkin
+    const studs=Object.values(instStudMap[inst]).sort((a,b)=>(a.c.checkin||'').localeCompare(b.c.checkin||''))
+    studs.forEach(({c,days:activeDays})=>{
+      const ct=guestCourseType(c),col=SCAL_COLORS[ct]||SCAL_COLORS.STAY
+      const labels=guestCourseLabels(c)
+      const badges=labels.map(l=>`<span style="font-size:9px;font-weight:700;padding:0 3px;border-radius:3px;background:rgba(0,0,0,.12)">${l}</span>`).join(' ')
+      html+=`<tr><td style="background:${col.bg};border:1px solid #e2e8f0;padding:5px 10px;font-size:12px;font-weight:700;color:${col.tc};white-space:nowrap;position:sticky;left:0;z-index:1;cursor:pointer" onclick="editC('${c.id}')">${c.name}${badges?' <span style="margin-left:3px">'+badges+'</span>':''}</td>`
+      days.forEach(ds=>{
+        const isT=ds===today,hol=isHolidayDate(ds)
+        if(activeDays[ds]){
+          html+=`<td style="background:${col.bg};border:1px solid #e2e8f0;padding:4px 3px;text-align:center"><div style="height:10px;border-radius:5px;background:${col.tc};opacity:.4;margin:0 4px"></div></td>`
+        }else{
+          const bg=isT?'#f0f9ff':hol?'#fff9f9':'white'
+          html+=`<td style="background:${bg};border:1px solid #f1f5f9;padding:4px 3px"></td>`
+        }
+      })
+      html+='</tr>'
+    })
+  })
+  html+='</tbody></table></div>'
+  el.innerHTML=html
+}
+// ====== SCHEDULE GROUPING ======
+const GROUP_PALETTE=[
+  {bg:'#fef9c3',bd:'#fde047',hd:'#713f12'},
+  {bg:'#d1fae5',bd:'#6ee7b7',hd:'#065f46'},
+  {bg:'#dbeafe',bd:'#93c5fd',hd:'#1e3a8a'},
+  {bg:'#fce7f3',bd:'#f9a8d4',hd:'#9d174d'},
+  {bg:'#ede9fe',bd:'#c4b5fd',hd:'#4c1d95'},
+  {bg:'#ffedd5',bd:'#fdba74',hd:'#7c2d12'},
+]
+function timeGroups(list,timeKey,winMins){
+  const groups=[],solo=[],used=new Set()
+  for(let i=0;i<list.length;i++){
+    if(used.has(i))continue
+    const t0=minsOf(list[i][timeKey])
+    if(t0<0){solo.push(list[i]);used.add(i);continue}
+    const grp=[list[i]];used.add(i)
+    for(let j=i+1;j<list.length;j++){
+      if(used.has(j))continue
+      const t1=minsOf(list[j][timeKey])
+      if(t1>=0&&t1-t0<=winMins){grp.push(list[j]);used.add(j)}
+    }
+    if(grp.length>=2)groups.push(grp);else solo.push(grp[0])
+  }
+  return{groups,solo}
+}
+const _selectedForArrange=new Set()
+function toggleSelectArrange(key){
+  if(_selectedForArrange.has(key))_selectedForArrange.delete(key)
+  else _selectedForArrange.add(key)
+  renderSchedule()
+}
+function parseArrangeText(text){
+  const r={};const ls=text.split(/[\n\r;；]+/)
+  ls.forEach(line=>{
+    line=line.trim();if(!line)return
+    let m
+    m=line.match(/(?:时间|time|transfer\s*time)[^:：]*[:：]\s*(.+)/i);if(m&&!r.time)r.time=m[1].trim()
+    m=line.match(/(?:车牌|plate|license)[^:：]*[:：]\s*(.+)/i);if(m&&!r.plate)r.plate=m[1].trim()
+    m=line.match(/(?:电话|tel|phone|司机|driver|船长|captain)[^:：]*[:：]\s*(.+)/i);if(m&&!r.tel)r.tel=m[1].trim()
+    m=line.match(/(?:船号|boat)[^:：]*[:：]\s*(.+)/i);if(m&&!r.boat)r.boat=m[1].trim()
+    m=line.match(/(?:费用|fee|cost|金额)[^:：]*[:：]\s*([\d.]+)/i);if(m&&!r.fee)r.fee=parseFloat(m[1])
+  })
+  if(!r.time){const m=text.match(/\b(\d{1,2}:\d{2})\b/);if(m)r.time=m[1]}
+  if(!r.tel){const m=text.match(/\+?[\d][\d\s\-]{6,14}[\d]/);if(m&&m[0].replace(/\D/g,'').length>=7)r.tel=m[0]}
+  if(!r.fee){const m=text.match(/(\d+(?:\.\d+)?)\s*(?:元|yuan|rmb)/i);if(m)r.fee=parseFloat(m[1])}
+  return r
+}
+function updateBatchFields(mode){
+  const text=(document.getElementById('batch-text-'+mode)||{}).value||''
+  const r=parseArrangeText(text)
+  const setF=(id,v)=>{const e=document.getElementById(id);if(e&&v)e.value=v}
+  setF('ba-time-'+mode,r.time);setF('ba-plate-'+mode,r.plate);setF('ba-tel-'+mode,r.tel);setF('ba-boat-'+mode,r.boat)
+  if(r.fee){const fe=document.getElementById('ba-fee-'+mode);if(fe)fe.value=r.fee;updateSplitLabel(mode)}
+}
+function updateSplitLabel(mode){
+  const fee=parseFloat((document.getElementById('ba-fee-'+mode)||{}).value)||0
+  const n=[..._selectedForArrange].filter(k=>k.endsWith(':'+mode)).length
+  const sp=document.getElementById('ba-split-'+mode)
+  if(sp)sp.textContent='¥ '+(n>0?(fee/n).toFixed(2):'0')
+}
+function applyBatchArrange(mode){
+  const all=getAll()
+  const sel=[..._selectedForArrange].filter(k=>k.endsWith(':'+mode))
+  if(!sel.length)return
+  const time=(document.getElementById('ba-time-'+mode)||{}).value||''
+  const plate=(document.getElementById('ba-plate-'+mode)||{}).value||''
+  const tel=(document.getElementById('ba-tel-'+mode)||{}).value||''
+  const boat=(document.getElementById('ba-boat-'+mode)||{}).value||''
+  const totalFee=parseFloat((document.getElementById('ba-fee-'+mode)||{}).value)||0
+  const perFee=sel.length>0&&totalFee>0?(totalFee/sel.length):0
+  sel.forEach(key=>{
+    const cId=key.slice(0,-(mode.length+1))
+    const idx=all.findIndex(c=>c.id===cId);if(idx<0)return
+    if(mode==='arrive'){
+      if(time)all[idx].arrCarTime=time;if(plate)all[idx].arrPlate=plate
+      if(tel)all[idx].arrDriverTel=tel;if(boat)all[idx].arrBoat=boat
+      if(perFee>0)all[idx].arrCarFee=String(perFee.toFixed(2))
+    }else{
+      if(time)all[idx].depCarTime=time;if(plate)all[idx].depPlate=plate
+      if(tel)all[idx].depDriverTel=tel;if(boat)all[idx].depBoat=boat
+      if(perFee>0)all[idx].depCarFee=String(perFee.toFixed(2))
+    }
+  })
+  saveAll(all);cloudSave();_selectedForArrange.clear();renderSchedule()
+}
+function renderBatchPanel(mode){
+  const sel=[..._selectedForArrange].filter(k=>k.endsWith(':'+mode))
+  if(!sel.length)return''
+  const n=sel.length
+  const inp=(id,ph,tp)=>'<input id="'+id+'" type="'+(tp||'text')+'" placeholder="'+ph+'" style="width:100%;padding:5px 7px;border:1px solid #93c5fd;border-radius:6px;font-size:12px;margin-top:2px;box-sizing:border-box">'
+  const fl=(label,inp2)=>'<label style="font-size:11px;font-weight:600;color:#1e40af;display:block">'+label+'<br>'+inp2+'</label>'
+  return'<div onclick="event.stopPropagation()" style="background:#eff6ff;border:2px solid #bfdbfe;border-radius:12px;padding:12px 14px;margin-top:10px">'+
+    '<div style="font-size:12px;font-weight:800;color:#1e40af;margin-bottom:8px">📋 Smart Arrange — '+n+' guest'+(n>1?'s':'')+' selected</div>'+
+    '<textarea id="batch-text-'+mode+'" placeholder="Paste transfer info — auto-parses time, plate, tel, boat, fee…" rows="3" style="width:100%;padding:7px 9px;border:1px solid #93c5fd;border-radius:7px;font-size:12px;resize:vertical;box-sizing:border-box;font-family:inherit;background:white;margin-bottom:8px" oninput="updateBatchFields(\''+mode+'\')" onpaste="setTimeout(()=>updateBatchFields(\''+mode+'\'),10)"></textarea>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">'+
+    fl('Transfer Time',inp('ba-time-'+mode,'e.g. 14:30'))+
+    fl('License Plate',inp('ba-plate-'+mode,'Plate No.'))+
+    fl('Driver / Captain Tel',inp('ba-tel-'+mode,'Phone No.'))+
+    fl('Boat No.',inp('ba-boat-'+mode,'Boat name/no.'))+
+    fl('Total Fee (¥)',inp('ba-fee-'+mode,'0','number')+' <span style="font-size:10px;color:#3b82f6">÷'+n+'</span>')+
+    fl('Per Person','<div id="ba-split-'+mode+'" style="padding:5px 7px;background:#dbeafe;border-radius:5px;font-size:12px;margin-top:2px;font-weight:700;color:#1e40af">¥ 0</div>')+
+    '</div>'+
+    '<button onclick="applyBatchArrange(\''+mode+'\')" style="background:#3b82f6;color:white;border:none;padding:6px 18px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">✅ Arrange '+n+' Guest'+(n>1?'s':'')+'</button>'+
+    '<button onclick="_selectedForArrange.clear();renderSchedule()" style="margin-left:8px;background:white;color:#6b7280;border:1px solid #d1d5db;padding:6px 14px;border-radius:7px;font-size:12px;cursor:pointer">✕ Clear</button>'+
+    '</div>'
+}
+function arrangeBadges(c,mode){
+  const hasCar=mode==='arrive'?(c.arrCarTime||c.arrPlate):(c.depCarTime||c.depPlate)
+  const hasBoat=mode==='arrive'?c.arrBoat:c.depBoat
+  return(hasCar?'<span style="font-size:11px;font-weight:700;background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:10px;margin-left:3px">🚗 ✓</span>':'')+
+    (hasBoat?'<span style="font-size:11px;font-weight:700;background:#dbeafe;color:#1d4ed8;padding:2px 7px;border-radius:10px;margin-left:3px">⛵ ✓</span>':'')
+}
+function arrangePanel(c,mode){
+  const key=c.id+':'+mode,sel=_selectedForArrange.has(key)
+  const chkStyle=sel?'background:#3b82f6;border-color:#3b82f6':'background:white;border-color:#d1d5db'
+  const chk='<span onclick="event.stopPropagation();toggleSelectArrange(\''+key+'\')" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;border:2px solid;cursor:pointer;flex-shrink:0;'+chkStyle+'">'+(sel?'<svg width="11" height="11" viewBox="0 0 12 12"><polyline points="1,6 5,10 11,2" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</span>'
+  return{chk,panel:''}
+}
+function renderGroupBlock(grp,mode,ci){
+  const pal=GROUP_PALETTE[ci%GROUP_PALETTE.length]
+  const timeKey=mode==='arrive'?'arriveTime':'departTime'
+  const flKey=mode==='arrive'?'arriveFlight':'departFlight'
+  const lbl=mode==='arrive'?'Land':'Depart'
+  const times=grp.map(c=>timeOf(c[timeKey])).filter(Boolean)
+  const tRange=times.length?times[0]+(times[times.length-1]!==times[0]?'–'+times[times.length-1]:''):''
+  const pax=grp.length>1?' · '+grp.length+' pax':''
+  let h='<div style="background:'+pal.bg+';border:1.5px solid '+pal.bd+';border-radius:10px;padding:10px 12px;margin-bottom:10px">'
+  h+='<div style="font-size:11px;font-weight:800;color:'+pal.hd+';letter-spacing:.4px;margin-bottom:8px">🚐 Transfer'+pax+' · '+lbl+(tRange?' '+tRange:'')+'</div>'
+  grp.forEach(c=>{
+    const t=timeOf(c[timeKey]),term=c.terminal||'',fl=c[flKey]||''
+    const {chk,panel}=arrangePanel(c,mode)
+    const isArranged=mode==='arrive'?(c.arrCarTime||c.arrPlate||c.arrBoat):(c.depCarTime||c.depPlate||c.depBoat)
+    const isPaid=mode==='arrive'?c.arrTransPaid==='1':c.depTransPaid==='1'
+    const perFee=parseFloat(mode==='arrive'?c.arrCarFee:c.depCarFee)||0
+    const plate=mode==='arrive'?c.arrPlate:c.depPlate
+    const boat=mode==='arrive'?c.arrBoat:c.depBoat
+    const guestBg=isPaid?'#dcfce7':isArranged?'#f0fdf4':'white'
+    const guestBd=isPaid?'1px solid #4ade80':isArranged?'1px solid #86efac':'1px solid rgba(0,0,0,.06)'
+    const paidChk=isArranged?'<span onclick="event.stopPropagation();toggleTransPaid(\''+c.id+'\',\''+mode+'\')" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;font-weight:700;color:'+(isPaid?'#15803d':'#6b7280')+';background:'+(isPaid?'#bbf7d0':'#f1f5f9')+';padding:2px 8px;border-radius:10px;border:1px solid '+(isPaid?'#4ade80':'#d1d5db')+';flex-shrink:0"><span>'+(isPaid?'✅':'☐')+'</span>已付款'+(perFee>0?' ¥'+perFee.toFixed(0):'')+'</span>':''
+    h+='<div style="background:'+guestBg+';border-radius:7px;margin-bottom:4px;border:'+guestBd+';padding:7px 10px">'
+    h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+    h+='<div style="display:flex;align-items:center;gap:8px;flex:1;cursor:pointer" onclick="editC(\''+c.id+'\')">'
+    h+=chk
+    h+='<span style="font-weight:700;font-size:14px;color:#0f172a">'+c.name+'</span>'
+    h+=arrangeBadges(c,mode)
+    h+=(fl?'<span style="font-size:12px;font-weight:600;color:#374151;margin-left:4px">'+fl+'</span>':'')
+    h+='<span style="font-size:13px;font-weight:600;color:#374151;min-width:42px;text-align:right">'+(t||'—')+'</span>'
+    h+=(term?'<span style="font-size:12px;font-weight:700;color:#0284c7;background:#e0f2fe;padding:2px 9px;border-radius:12px;flex-shrink:0">'+term+'</span>':'')
+    h+='</div>'
+    h+=paidChk
+    h+='</div>'
+    if(isArranged&&(plate||boat)){h+='<div style="font-size:11px;color:#374151;margin-top:3px;padding-left:26px;display:flex;gap:10px">'+(plate?'<span>🚗 '+plate+'</span>':'')+(boat?'<span>⛵ '+boat+'</span>':'')+'</div>'}
+    h+='</div>'
+  })
+  h+='</div>'
+  return h
+}
+function toggleTransPaid(cId,mode){
+  const all=getAll();const idx=all.findIndex(c=>c.id===cId);if(idx<0)return
+  const fld=mode==='arrive'?'arrTransPaid':'depTransPaid'
+  all[idx][fld]=all[idx][fld]==='1'?'0':'1'
+  saveAll(all);cloudSave();renderSchedule()
+}
+function setToday(){document.getElementById('sch-date').value=new Date().toISOString().split('T')[0];renderSchedule()}
+function shiftDate(d){const el=document.getElementById('sch-date');const b=el.value?new Date(el.value+'T12:00:00'):new Date();b.setDate(b.getDate()+d);el.value=b.toISOString().split('T')[0];renderSchedule()}
+function renderSchedule(){
+  const sel=document.getElementById('sch-date').value;if(!sel)return
+  const all=getAll()
+  const arrives=all.filter(c=>dateOf(c.arriveTime)===sel).sort((a,b)=>minsOf(a.arriveTime)-minsOf(b.arriveTime))
+  const departs=all.filter(c=>dateOf(c.departTime)===sel).sort((a,b)=>minsOf(a.departTime)-minsOf(b.departTime))
+  const checkins=all.filter(c=>c.checkin===sel),checkouts=all.filter(c=>c.checkout===sel)
+  document.getElementById('sch-stats').innerHTML='<div class="sch-stat"><div class="sch-stat-num">'+arrives.length+'</div><div class="sch-stat-lbl">🛬 Arrivals</div></div><div class="sch-stat"><div class="sch-stat-num">'+departs.length+'</div><div class="sch-stat-lbl">🛫 Departures</div></div><div class="sch-stat"><div class="sch-stat-num">'+checkins.length+'</div><div class="sch-stat-lbl">🏨 Check-ins</div></div><div class="sch-stat"><div class="sch-stat-num">'+checkouts.length+'</div><div class="sch-stat-lbl">🚪 Check-outs</div></div>'
+  const isHol=isHolidayDate(sel)
+  // Group arrivals/departures by 60-min time window
+  const {groups:arrGrps,solo:arrSolo}=timeGroups(arrives,'arriveTime',60)
+  const {groups:depGrps,solo:depSolo}=timeGroups(departs,'departTime',60)
+  let html=(isHol?'<div style="background:#fee2e2;border:1px solid #fecaca;border-radius:10px;padding:10px 15px;margin-bottom:14px;font-size:13px;font-weight:700;color:#991b1b">🎉 Public Holiday Today · Room rates at full price</div>':'')+'<div class="sch-section"><div class="sch-stitle">🛬 Arrivals Today <span class="sch-cnt">'+arrives.length+' pax</span></div>'
+  if(!arrives.length)html+=empty('✈️','No arrivals today')
+  else{let gi=0;arrGrps.forEach(grp=>{html+=renderGroupBlock(grp,'arrive',gi++)});arrSolo.forEach(c=>{if(c.arrCarTime||c.arrBoat)html+=renderGroupBlock([c],'arrive',gi++);else html+=schCard(c,'arrive',false,false)})}
+  html+=renderBatchPanel('arrive')+'</div><div class="sch-section"><div class="sch-stitle">🛫 Departures Today <span class="sch-cnt">'+departs.length+' pax</span></div>'
+  if(!departs.length)html+=empty('✈️','No departures today')
+  else{let gi=0;depGrps.forEach(grp=>{html+=renderGroupBlock(grp,'depart',gi++)});depSolo.forEach(c=>{if(c.depCarTime||c.depBoat)html+=renderGroupBlock([c],'depart',gi++);else html+=schCard(c,'depart',false,false)})}
+  html+=renderBatchPanel('depart')+'</div>'
+  if(checkins.length){html+='<div class="sch-section"><div class="sch-stitle">🏨 Check-ins Today <span class="sch-cnt">'+checkins.length+' pax</span></div>';checkins.forEach(c=>{html+='<div class="sch-card" onclick="editC(\''+c.id+'\')"><div class="sch-time-block"><div class="sch-time">IN</div><div class="sch-tlbl">Check In</div></div><div class="sch-info"><div class="sch-name">'+c.name+(c.custNo?'<span class="tag badge-no">'+c.custNo+'</span>':'')+(c.roomType?'<span class="tag tr">'+c.roomType.split(' ')[0]+'</span>':'')+(c.roomNum?'<span class="tag tr">🏨 '+c.roomNum+'</span>':'')+'</div><div class="sch-meta">'+[c.email?'📧 '+c.email:'',c.checkout?'🚪 Check-out '+c.checkout:'',c.instructor?'👨‍🏫 '+c.instructor:''].filter(Boolean).map(x=>'<span>'+x+'</span>').join('')+'</div></div></div>'});html+='</div>'}
+  if(checkouts.length){html+='<div class="sch-section"><div class="sch-stitle">🚪 Check-outs Today <span class="sch-cnt">'+checkouts.length+' pax</span></div>';checkouts.forEach(c=>{html+='<div class="sch-card" onclick="editC(\''+c.id+'\')"><div class="sch-time-block"><div class="sch-time">OUT</div><div class="sch-tlbl">Check Out</div></div><div class="sch-info"><div class="sch-name">'+c.name+(c.roomNum?'<span class="tag tr">🏨 '+c.roomNum+'</span>':'')+'</div><div class="sch-meta">'+[c.departFlight?'✈️ '+c.departFlight+' '+timeOf(c.departTime):'',c.depCarTime?'🚐 '+c.depCarTime:''].filter(Boolean).map(x=>'<span>'+x+'</span>').join('')+'</div></div></div>'});html+='</div>'}
+  document.getElementById('sch-content').innerHTML=html
+  renderSemiCal()
+  renderInstCal()
+}
+function schCard(c,mode,inCp,isSug){
+  const t=mode==='arrive'?timeOf(c.arriveTime):timeOf(c.departTime)
+  const fl=mode==='arrive'?c.arriveFlight:c.departFlight,lbl=mode==='arrive'?'Land':'Depart'
+  let tags=c.custNo?'<span class="tag badge-no">'+c.custNo+'</span>':''
+  if(inCp)tags+='<span class="tag tc">🚐 Transfer</span>';else if(isSug&&mode==='arrive')tags+='<span class="tag ts">⏰ Close time</span>'
+  if(c.overnight==='是'&&mode==='arrive')tags+='<span class="tag tn">🌙 Overnight</span>'
+  if(c.isHoliday==='是')tags+='<span class="tag th">🎉 Holiday</span>'
+  if(c.roomNum)tags+='<span class="tag tr">🏨 '+c.roomNum+'</span>'
+  const isArranged=mode==='arrive'?(c.arrCarTime||c.arrPlate||c.arrBoat):(c.depCarTime||c.depPlate||c.depBoat)
+  const isPaid=mode==='arrive'?c.arrTransPaid==='1':c.depTransPaid==='1'
+  const perFee=parseFloat(mode==='arrive'?c.arrCarFee:c.depCarFee)||0
+  const cardBg=isPaid?'#dcfce7':isArranged?'#f0fdf4':'white'
+  const cardBd=isPaid?'#4ade80':isArranged?'#86efac':'#e2e8f0'
+  const plate=mode==='arrive'?c.arrPlate:c.depPlate
+  const boat=mode==='arrive'?c.arrBoat:c.depBoat
+  const meta=[fl?'✈️ '+fl+(c.terminal?' '+c.terminal:''):'',plate?'🚗 '+plate:'',boat?'⛵ '+boat:''].filter(Boolean)
+  const {chk,panel}=arrangePanel(c,mode)
+  const paidChk=isArranged?'<span onclick="event.stopPropagation();toggleTransPaid(\''+c.id+'\',\''+mode+'\')" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;font-weight:700;color:'+(isPaid?'#15803d':'#6b7280')+';background:'+(isPaid?'#bbf7d0':'#f1f5f9')+';padding:2px 8px;border-radius:10px;border:1px solid '+(isPaid?'#4ade80':'#d1d5db')+';margin-left:4px;flex-shrink:0"><span>'+(isPaid?'✅':'☐')+'</span>已付款'+(perFee>0?' ¥'+perFee.toFixed(0):'')+'</span>':''
+  return'<div style="background:'+cardBg+';border-radius:10px;border:1px solid '+cardBd+';margin-bottom:8px;padding:0">'+
+    '<div class="sch-card" style="border:none;margin:0;border-radius:10px;background:'+cardBg+'" onclick="editC(\''+c.id+'\')">'+
+    '<div class="sch-time-block"><div class="sch-time">'+(t||'—')+'</div><div class="sch-tlbl">'+lbl+'</div></div>'+
+    '<div class="sch-info">'+
+    '<div class="sch-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'+chk+'<span>'+c.name+'</span>'+arrangeBadges(c,mode)+paidChk+' '+tags+'</div>'+
+    '<div class="sch-meta">'+meta.map(x=>'<span>'+x+'</span>').join('')+'</div>'+
+    '</div></div>'+
+    '</div>'
+}
+function empty(icon,txt){return'<div class="empty-state" style="padding:26px"><div class="empty-icon" style="font-size:30px">'+icon+'</div><p>'+txt+'</p></div>'}
+
+// ====== LIST ======
+function renderList(q){
+  const all=getAll();const s=(q||'').toLowerCase()
+  const f=(s?all.filter(c=>[c.name,c.email,c.custNo,c.location,c.instructor,c.roomNum,c.date].join(' ').toLowerCase().includes(s)):all)
+    .slice().sort((a,b)=>(a.arriveTime||'').localeCompare(b.arriveTime||''))
+  const el=document.getElementById('customer-list')
+  if(!f.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🤿</div><p>'+(s?'No results found':'No guests yet — click New Guest to start')+'</p></div>';return}
+  const bc={已付全款:'bp',已付定金:'bd',未付:'bu'}
+  const payLbl={'已付全款':'Paid','已付定金':'Deposit Paid','未付':'Unpaid'}
+  el.innerHTML=f.map(c=>{
+    const tot=calcTotal(c);const b=bc[c.payStatus]||'bu'
+    const meta=[c.custNo?'🔢 '+c.custNo:'',c.date?'📅 '+c.date:'',c.location?'📍 '+c.location:'',c.instructor?'👨‍🏫 '+c.instructor:'',c.roomNum?'🏨 '+c.roomNum+(c.roomType?' ('+c.roomType.split(' ')[0]+')':''):'',tot>0?'💰 ¥'+tot.toFixed(0):''].filter(Boolean)
+    return'<div class="cc" onclick="editC(\''+c.id+'\')"><div class="ava">'+(c.name||'?').charAt(0)+'</div><div class="ci"><div class="cn">'+c.name+' <span class="badge '+b+'">'+(payLbl[c.payStatus]||'Unpaid')+'</span>'+(c.isHoliday==='是'?'<span class="tag th" style="font-size:10px">Holiday</span>':'')+'</div><div class="cm">'+meta.map(m=>'<span>'+m+'</span>').join('')+'</div></div><div class="ca" onclick="event.stopPropagation()"><button class="btn btn-secondary btn-sm" onclick="goBill(\''+c.id+'\')">Bill</button><button class="btn btn-danger btn-sm" onclick="delC(\''+c.id+'\')">Delete</button></div></div>'
+  }).join('')
+}
+function editC(id){const c=getAll().find(x=>x.id===id);if(!c)return;fillForm(c);switchTab('form');window.scrollTo(0,0)}
+function delC(id){if(!confirm('确认删除？'))return;saveAll(getAll().filter(c=>c.id!==id));cloudSave();renderList(document.querySelector('.sb')?.value||'')}
+function goBill(id){switchTab('bill');document.getElementById('bill-sel').value=id;renderBill()}
+
+// ====== BILL ======
+function calcTotal(c){
+  const items=(c.items||[]).reduce((s,i)=>s+i.price*i.qty,0)
+  return items+(parseFloat(c.arrCarFee)||0)+(parseFloat(c.depCarFee)||0)+calcRoomSubtotal(c)-(parseFloat(c.discount)||0)
+}
+function calcRoomSubtotal(c){
+  if(!c.checkin||!c.checkout||!c.roomRate)return 0
+  const nights=Math.round((new Date(c.checkout)-new Date(c.checkin))/(1000*3600*24))
+  if(nights<=0)return 0
+  const rate=parseFloat(c.roomRate)
+  const hols=new Set(getHolidays())
+  const shared=getSharedNights(c)
+  const isDormRoom=(c.roomType||'').includes('学员宿舍')
+  const d=c.roomDiscount;let f=1
+  if(!isDormRoom){if(d==='9折')f=0.9;else if(d==='85折')f=0.85;else if(d==='8折')f=0.8;else if(d==='custom')f=parseFloat(c.roomDiscountCustom)||1}
+  let total=0
+  for(let i=0;i<nights;i++){
+    const ds=new Date(new Date(c.checkin).getTime()+i*86400000).toISOString().slice(0,10)
+    total+=rate*(hols.has(ds)?1:f)*(shared.has(ds)?0.5:1)
+  }
+  return total
+}
+function fillBillSel(){
+  const s=document.getElementById('bill-sel')
+  s.innerHTML='<option value="">— Select Guest —</option>'+getAll().map(c=>'<option value="'+c.id+'">'+c.name+(c.custNo?' ['+c.custNo+']':'')+(c.date?' ('+c.date+')':'')+'</option>').join('')
+}
+function fdt(s){if(!s)return'—';const m=s.match(/\d{4}-(\d{2})-(\d{2})(?:T(\d{2}:\d{2}))?/);return m?(m[1]+'/'+m[2]+(m[3]?' '+m[3]:'')):s}
+function fdate(s){if(!s)return'—';const m=s.match(/\d{4}-(\d{2})-(\d{2})/);return m?(m[1]+'/'+m[2]):s}
+function brow(l,v2){return v2?'<div class="br"><span class="brl">'+l+'</span><span class="brv">'+v2+'</span></div>':''}
+function renderBill(){
+  const id=document.getElementById('bill-sel').value
+  if(!id){document.getElementById('bill-out').innerHTML='<div class="empty-state"><div class="empty-icon">🧾</div><p>请选择客户</p></div>';return}
+  const c=getAll().find(x=>x.id===id);if(!c)return
+  const iT=(c.items||[]).reduce((s,i)=>s+i.price*i.qty,0)
+  const disc=parseFloat(c.discount)||0,dep=parseFloat(c.deposit)||0
+  const roomSub=calcRoomSubtotal(c)
+  const tot=iT+roomSub-disc
+  const balance=tot-dep
+  const bc2={已付全款:'bp',已付定金:'bd',未付:'bu'}
+  const payLblMap={'已付全款':'Paid','已付定金':'Deposit Paid','未付':'Unpaid'}
+  const hasR=c.checkin||c.checkout||c.roomType||c.roomNum
+  const nights=c.checkin&&c.checkout?Math.round((new Date(c.checkout)-new Date(c.checkin))/(1000*3600*24)):0
+  const{holNights:rHol,normNights:rNorm}=(c.checkin&&c.checkout?getRoomNightBreakdown(c.checkin,c.checkout):{holNights:0,normNights:0})
+  let discNote=''
+  if(hasR&&c.roomRate&&nights>0){
+    const rate=parseFloat(c.roomRate)
+    const d=c.roomDiscount;let f=1
+    if(d==='9折')f=0.9;else if(d==='85折')f=0.85;else if(d==='8折')f=0.8;else if(d==='custom')f=parseFloat(c.roomDiscountCustom)||1
+    const saved=rNorm*rate*(1-f)
+    if(rHol>0&&rNorm>0&&f<1)discNote='<div style="font-size:12px;color:#0284c7;margin-top:5px;font-weight:600">🎉 '+rHol+' holiday night(s) at full rate 节假日原价 · 🏷️ '+rNorm+' discounted night(s) 折扣晚, saved 省 ¥'+saved.toFixed(2)+'</div>'
+    else if(rHol>0&&rNorm===0)discNote='<div style="font-size:12px;color:#92400e;margin-top:5px;font-weight:600">🎉 All nights are public holidays · 全部节假日 — no discount applied 不享折扣</div>'
+    else if(f<1&&saved>0){const lb={'9折':'10% off 九折','85折':'15% off 八五折','8折':'20% off 八折','custom':'custom disc 自定义折扣'}[d]||d;discNote='<div style="font-size:12px;color:#059669;margin-top:5px;font-weight:600">🏷️ '+lb+' — saved 省 ¥'+saved.toFixed(2)+'</div>'}
+  }
+  // Build room fee rows (split by holiday/non-holiday and solo/shared)
+  let roomRows=''
+  if(c.roomRate&&c.checkin&&c.checkout){
+    const rt=(c.roomType||'客房').split(' ')[0]
+    const rate=parseFloat(c.roomRate)
+    const rd=c.roomDiscount;let rf=1
+    if(rd==='9折')rf=0.9;else if(rd==='85折')rf=0.85;else if(rd==='8折')rf=0.8;else if(rd==='custom')rf=parseFloat(c.roomDiscountCustom)||1
+    const discLbl=rd==='9折'?'10% disc':rd==='85折'?'15% disc':rd==='8折'?'20% disc':rd==='custom'?'custom disc':''
+    const hols=new Set(getHolidays())
+    const sharedSet=getSharedNights(c)
+    const totalNights=Math.round((new Date(c.checkout)-new Date(c.checkin))/(1000*3600*24))
+    let holSolo=0,holShare=0,normSolo=0,normShare=0
+    for(let i=0;i<totalNights;i++){
+      const ds=new Date(new Date(c.checkin).getTime()+i*86400000).toISOString().slice(0,10)
+      const isH=hols.has(ds),isS=sharedSet.has(ds)
+      if(isH&&isS)holShare++;else if(isH)holSolo++;else if(isS)normShare++;else normSolo++
+    }
+    const mkRow=(lbl,up,qty,sub)=>'<tr><td>'+rt+' ('+lbl+')</td><td>'+up+'</td><td>'+qty+'</td><td>¥ '+sub+'</td></tr>'
+    const nts=n=>n+' nt'+(n>1?'s':'')
+    if(holSolo>0)roomRows+=mkRow('Holiday · 节假日 (full rate 原价)',('¥'+rate+'/nt'),nts(holSolo),(holSolo*rate).toFixed(2))
+    if(holShare>0)roomRows+=mkRow('Holiday · 节假日 (shared 拼房 50%)','¥'+rate+'/nt × 50%',nts(holShare),(holShare*rate*0.5).toFixed(2))
+    if(normSolo>0){
+      const pl=rf<1?'¥'+rate+'/nt × '+discLbl:'¥'+rate+'/nt'
+      roomRows+=mkRow((discLbl?discLbl+' · 折扣':'full rate · 原价'),pl,nts(normSolo),(normSolo*rate*rf).toFixed(2))
+    }
+    if(normShare>0){
+      const pl=rf<1?'¥'+rate+'/nt × '+discLbl+' × 50%':'¥'+rate+'/nt × 50%'
+      roomRows+=mkRow((discLbl?discLbl:'full rate · 原价')+' · shared 拼房 50%',pl,nts(normShare),(normShare*rate*rf*0.5).toFixed(2))
+    }
+  }
+  const nightDisp=nights>0?' ('+nights+' night'+(nights>1?'s':'')+')':''
+  document.getElementById('bill-out').innerHTML=
+'<div class="bw"><div class="bh">'+
+'<div><div class="bsn" style="color:#1a6bb5;font-size:28px;font-weight:900;letter-spacing:.5px">Lucky Tito Dive Resort</div><div class="bss">PG Training Center · Invoice</div></div>'+
+'<div><div class="blbl">Invoice No.</div><div class="bnum">'+(c.custNo||'INV-'+(c.id||'').slice(-6).toUpperCase())+'</div>'+
+'<div class="bdate">Date: '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})+'</div></div>'+
+'</div>'+
+'<div class="big">'+
+'<div class="bs"><div class="bst">Guest Info</div><div class="br"><span class="brl">Name</span><span class="brv">'+c.name+'</span>'+(c.email?'<span class="brl" style="margin-left:20px">Email</span><span class="brv">'+c.email+'</span>':'')+'</div></div>'+
+'</div>'+
+(hasR?'<div class="bs"><div class="bst">Accommodation</div><div class="big">'+brow('Check-in',fdate(c.checkin))+brow('Check-out',fdate(c.checkout)+nightDisp)+brow('Room Type',c.roomType)+brow('Room No.',c.roomNum)+'</div>'+discNote+'</div>':'')+
+'<div class="bs"><div class="bst">Charges</div>'+
+'<table class="bit"><thead><tr><th>Item</th><th>Unit Price</th><th>Qty</th><th>Subtotal</th></tr></thead><tbody>'+
+(c.items||[]).map(i=>'<tr><td>'+i.name+'</td><td>¥ '+(+i.price).toFixed(2)+'</td><td>'+i.qty+'</td><td>¥ '+(i.price*i.qty).toFixed(2)+'</td></tr>').join('')+
+roomRows+
+'</tbody></table><div class="btb">'+
+'<div class="btr"><span>Subtotal</span><span>¥ '+(iT+roomSub).toFixed(2)+'</span></div>'+
+(disc>0?'<div class="btr" style="color:#059669"><span>Discount</span><span>− ¥ '+disc.toFixed(2)+'</span></div>':'')+
+'<div class="btf"><span>Total Due</span><span>¥ '+tot.toFixed(2)+'</span></div>'+
+(dep>0?'<div class="btr" style="margin-top:8px;padding-top:8px;border-top:1px dashed #e2e8f0"><span>Deposit Paid</span><span style="color:#059669">− ¥ '+dep.toFixed(2)+'</span></div><div class="btr" style="font-weight:700;color:#dc2626"><span>Balance Due</span><span>¥ '+balance.toFixed(2)+'</span></div>':'')+
+'</div></div>'+
+(c.upgrade?'<div style="margin-top:12px;font-size:12px;color:#0284c7;background:#e0f2fe;padding:5px 12px;border-radius:20px;font-weight:600;display:inline-block">🎁 '+c.upgrade+'</div>':'')+
+(c.notes?'<div style="margin-top:12px;padding:10px 13px;background:#f8fafc;border-radius:8px;font-size:12px;color:#64748b;line-height:1.6">📝 <strong>Notes: </strong>'+c.notes+'</div>':'')+
+'<div class="bfoot">Thank you for diving with us! 🐠🌊</div></div>'
+}
+
+function generateBillImage(btn){
+  const el=document.getElementById('bill-out')
+  if(!el||el.querySelector('.empty-state')){alert('Please select a guest first.');return}
+  const origText=btn.textContent
+  btn.textContent='⏳ Generating…';btn.disabled=true
+  function run(){
+    html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#ffffff',width:el.scrollWidth,height:el.scrollHeight,windowWidth:el.scrollWidth,windowHeight:el.scrollHeight,scrollX:0,scrollY:0}).then(canvas=>{
+      canvas.toBlob(blob=>{
+        if(!blob){btn.textContent=origText;btn.disabled=false;return}
+        if(navigator.clipboard&&window.ClipboardItem){
+          navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).then(()=>{
+            btn.textContent='✅ Copied!'
+            setTimeout(()=>{btn.textContent=origText;btn.disabled=false},2500)
+          }).catch(()=>{const u=canvas.toDataURL();const w=window.open();w&&w.document.write('<img src="'+u+'" style="max-width:100%">');btn.textContent=origText;btn.disabled=false})
+        }else{const u=canvas.toDataURL();const w=window.open();w&&w.document.write('<img src="'+u+'" style="max-width:100%">');btn.textContent=origText;btn.disabled=false}
+      },'image/png')
+    }).catch(e=>{btn.textContent=origText;btn.disabled=false;alert('Error: '+e.message)})
+  }
+  if(window.html2canvas)run()
+  else{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';s.onload=run;s.onerror=()=>{btn.textContent=origText;btn.disabled=false;alert('Could not load html2canvas')};document.head.appendChild(s)}
+}
+
+// ====== EXPORT / IMPORT ======
+function exportData(){
+  const d=getAll();if(!d.length){alert('暂无数据');return}
+  const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'})
+  const a=document.createElement('a');a.href=URL.createObjectURL(b)
+  a.download='潜水店客户数据_'+new Date().toISOString().split('T')[0]+'.json';a.click();URL.revokeObjectURL(a.href)
+}
+function importData(e){
+  const f=e.target.files[0];if(!f)return
+  const r=new FileReader()
+  r.onload=function(ev){
+    try{const d=JSON.parse(ev.target.result);if(!Array.isArray(d)){alert('Invalid file format');return}
+    const ex=getAll();const ids=new Set(ex.map(c=>c.id));let add=0,upd=0
+    d.forEach(c=>{if(ids.has(c.id)){ex[ex.findIndex(x=>x.id===c.id)]=c;upd++}else{ex.unshift(c);add++}})
+    saveAll(ex);cloudSave();alert('Import complete: '+add+' added, '+upd+' updated')}catch{alert('File parse error')}
+    e.target.value=''
+  };r.readAsText(f)
+}
+
+// ====== BOOKING SHEET ======
+function calcAge(dob){
+  if(!dob)return''
+  const b=new Date(dob),n=new Date()
+  let age=n.getFullYear()-b.getFullYear()
+  const m=n.getMonth()-b.getMonth()
+  if(m<0||(m===0&&n.getDate()<b.getDate()))age--
+  return age>0?String(age):''
+}
+function fBkDate(s){
+  if(!s)return'—'
+  const m=s.match(/(\d{4})-(\d{2})-(\d{2})/)
+  if(!m)return s
+  const mo=['Jan.','Feb.','Mar.','Apr.','May','Jun.','Jul.','Aug.','Sep.','Oct.','Nov.','Dec.']
+  return mo[parseInt(m[2])-1]+' '+parseInt(m[3])+'-'+m[1]
+}
+function fBkBookDate(s){
+  if(!s)return'—'
+  const m=s.match(/\d{4}-(\d{2})-(\d{2})/)
+  if(!m)return s
+  const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  return mo[parseInt(m[1])-1]+'-'+parseInt(m[2])
+}
+function renderBooking(){
+  const ci=document.getElementById('bk-ci').value
+  const nameQ=(document.getElementById('bk-name')?.value||'').trim().toLowerCase()
+  const out=document.getElementById('booking-out')
+  let guests=getAll()
+  if(ci)guests=guests.filter(c=>c.checkin===ci)
+  if(nameQ)guests=guests.filter(c=>(c.name||'').toLowerCase().includes(nameQ))
+  if(!guests.length){
+    out.innerHTML='<div class="empty-state"><div class="empty-icon">📄</div><p>No guests found — try a different name or check-in date</p></div>'
+    return
+  }
+  guests.sort((a,b)=>(a.checkin||'').localeCompare(b.checkin||'')||(a.name||'').localeCompare(b.name||''))
+  // Check-in/out display: unique dates from matched guests
+  const cis=[...new Set(guests.map(c=>c.checkin).filter(Boolean))].sort()
+  const cos=[...new Set(guests.map(c=>c.checkout).filter(Boolean))].sort()
+  const displayCI=cis.map(fBkDate).join(' / ')
+  const displayCO=cos.map(fBkDate).join(' / ')
+  // Guest rows
+  let guestRows=''
+  guests.forEach((c,i)=>{
+    const age=calcAge(c.dob||c.birthday)
+    const sex=(c.gender||'').toLowerCase().includes('f')||(c.gender||'').includes('女')?'F':(c.gender||'').toLowerCase().includes('m')||(c.gender||'').includes('男')?'M':''
+    const room=[c.roomType?c.roomType.replace(/\s+/g,' '):'',c.roomNum?'#'+c.roomNum:''].filter(Boolean).join(' ')
+    const diveRes=(c.items||[]).filter(it=>it.name).map(it=>it.name+(it.qty>1?' x'+it.qty:'')).join('; ')
+    guestRows+=`<tr>
+      <td class="bk-td" style="text-align:center;width:36px">${i+1}</td>
+      <td class="bk-td" style="font-weight:700;min-width:110px">${c.name||''}</td>
+      <td class="bk-td" style="text-align:center;width:42px">${age}</td>
+      <td class="bk-td" style="text-align:center;width:42px">${sex}</td>
+      <td class="bk-td" style="text-align:center;font-size:11px;min-width:100px">${room}</td>
+      <td class="bk-td" style="font-size:11px;min-width:130px">${diveRes}</td>
+      <td class="bk-td" style="min-width:80px"></td>
+    </tr>`
+  })
+  out.innerHTML=`<div class="bk-sheet">
+    <!-- Header -->
+    <div style="text-align:center;padding-bottom:18px;border-bottom:3px solid #e0e0e0;margin-bottom:16px">
+      <div class="bk-logo-title">Lucky Tito Dive Resort</div>
+      <div style="font-size:13px;font-weight:800;color:#4a90c4;letter-spacing:4px;margin:5px 0 3px">BOOKING CONFIRMATION SHEET</div>
+      <div style="font-size:13px;color:#999;letter-spacing:2px">行程预定确认单</div>
+    </div>
+    <!-- Booking date -->
+    <div style="font-size:12px;margin-bottom:14px"><span style="font-weight:800">预定日期 DATE OF BOOKING:</span><span style="margin-left:20px">${fBkBookDate(new Date().toISOString().slice(0,10))}</span></div>
+    <!-- Booking Details -->
+    <table style="width:100%;border-collapse:collapse;margin-bottom:14px">
+      <tr><td colspan="2" class="bk-section-hd">BOOKING DETAILS</td></tr>
+      <tr>
+        <td style="text-align:right;font-weight:800;font-size:12px;padding:8px 20px 4px;width:50%">CHECK-IN DATE:</td>
+        <td style="font-size:12px;padding:8px 8px 4px">${displayCI}</td>
+      </tr>
+      <tr>
+        <td style="text-align:right;font-weight:800;font-size:12px;padding:4px 20px 8px">CHECK-OUT DATE:</td>
+        <td style="font-size:12px;padding:4px 8px 8px">${displayCO}</td>
+      </tr>
+    </table>
+    <!-- Guest Details -->
+    <table style="width:100%;border-collapse:collapse;margin-bottom:14px">
+      <tr><td colspan="7" class="bk-section-hd">GUEST/S DETAILS</td></tr>
+      <tr>
+        <th class="bk-th"></th>
+        <th class="bk-th">NAME</th>
+        <th class="bk-th">AGE</th>
+        <th class="bk-th">SEX</th>
+        <th class="bk-th">ROOM<br>TYPE/NUMBER</th>
+        <th class="bk-th">DIVE CENTER RESERVATION</th>
+        <th class="bk-th">OTHER</th>
+      </tr>
+      ${guestRows}
+    </table>
+    <!-- Payment Details -->
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
+      <tr><td colspan="2" class="bk-section-hd orange">PAYMENT DETAILS</td></tr>
+      <tr>
+        <td style="font-weight:800;font-size:12px;padding:10px 16px">AMOUNT DEPOSITED:</td>
+        <td style="font-size:12px;padding:10px 8px">${guests.reduce((s,c)=>s+(+c.deposit||0),0)>0?'¥ '+guests.reduce((s,c)=>s+(+c.deposit||0),0).toFixed(2):''}</td>
+      </tr>
+    </table>
+    <!-- Terms -->
+    <div style="font-size:12px;line-height:2;margin-bottom:6px">
+      <div style="font-weight:800;margin-bottom:2px">预定须知:</div>
+      <div>1、预定一经确认不予退款，一年之内保留预约，可转让。</div>
+      <div>2、客房定金为首晚房费，FUNDIVE定金500元，课程定金 1000元。</div>
+      <div>3、出行日期变更请提前7天告知我们，如遇节假日，需补足差价。</div>
+      <div>4、不住店潜水员需到店先行支付潜水费用，住店潜水员将在离店前收到明细账单。</div>
+    </div>
+    <div style="font-size:11px;line-height:2;color:#333;margin-bottom:24px">
+      <div>1.Once the reservation is confirmed, there will be no refund. The reservation will be retained within one year and can be transferred to others.</div>
+      <div>2.For room deposit should be first night's room fee, the FUNDIVE deposit is 500 yuan, and the course deposit is 1000 yuan.</div>
+      <div>3.Please inform us 7 days in advance if the travel date changes. If it falls on a holiday, the price difference will need to be paid.</div>
+      <div>4.Walk-in diver should be pay first when check in. In-house diver will receive the bill before check out.</div>
+    </div>
+    <!-- Footer border -->
+    <div style="padding-top:12px;border-top:2px solid #333;margin-bottom:16px"></div>
+    <div style="text-align:center;font-size:10.5px;color:#666;border-top:1px solid #ddd;padding-top:10px;line-height:1.9">
+      <div>You may contact us through email: luckytitodiveresort@gmail.com</div>
+      <div>WeChat ID: LucktTito &nbsp;&nbsp; or call +63919-923-4567</div>
+      <div>BLK. 1 Sabang Beach, Puerto Galera, Oriental Mindoro, Philippines</div>
+    </div>
+  </div>`
+}
+
+function generateBookingImage(btn){
+  const el=document.getElementById('booking-out')
+  if(!el||el.querySelector('.empty-state')){alert('Please select check-in / check-out dates first.');return}
+  const origText=btn.textContent
+  btn.textContent='⏳ Generating…';btn.disabled=true
+  function run(){
+    html2canvas(el,{
+      scale:2,useCORS:true,backgroundColor:'#ffffff',
+      width:el.scrollWidth,height:el.scrollHeight,
+      windowWidth:el.scrollWidth,windowHeight:el.scrollHeight,
+      scrollX:0,scrollY:0
+    }).then(canvas=>{
+      canvas.toBlob(blob=>{
+        if(!blob){btn.textContent=origText;btn.disabled=false;alert('Image generation failed.');return}
+        if(navigator.clipboard&&window.ClipboardItem){
+          navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).then(()=>{
+            btn.textContent='✅ Copied to clipboard!'
+            setTimeout(()=>{btn.textContent=origText;btn.disabled=false},2800)
+          }).catch(()=>openFallback(canvas,btn,origText))
+        } else openFallback(canvas,btn,origText)
+      },'image/png')
+    }).catch(e=>{btn.textContent=origText;btn.disabled=false;alert('Error: '+e.message)})
+  }
+  function openFallback(canvas,btn,origText){
+    // Fallback: open in new tab so user can save/copy manually
+    const url=canvas.toDataURL('image/png')
+    const win=window.open()
+    if(win){win.document.write('<img src="'+url+'" style="max-width:100%">');win.document.title='Booking Sheet';}
+    btn.textContent=origText;btn.disabled=false
+  }
+  if(window.html2canvas){run();return}
+  const s=document.createElement('script')
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
+  s.onload=run
+  s.onerror=()=>{btn.textContent=origText;btn.disabled=false;alert('Could not load html2canvas library. Check your internet connection.')}
+  document.head.appendChild(s)
+}
+
+// ====== ELEARNING ======
+function isCourseItem(name){
+  if(!name)return false
+  const n=name.toUpperCase()
+  if(/DISCOUNT|折扣|RENTAL|租赁|\/天|FD\s*住店|FUNDIVE|STAY/.test(n))return false
+  return /PADI|AIDA|SSI|SDI|NAUI|\bOW\b|AOW|\bDSD\b|\bEFR\b|RESCUE|FREEDIVE|FREE\s*DIVE|自由潜|CCR|REACTIVATE|再激活|DEEP\s*DIVE|NITROX|ENRICHED|SIDEMOUNT|BUOYANCY|DRIFT|NAVIGATION|NIGHT\s*DIVE|PEAK|SEARCH|WRECK|PHOTO|ADVANCED|OPEN\s*WATER/.test(n)
+}
+function toggleElStatus(cId,courseKey,field){
+  const all=getAll();const idx=all.findIndex(c=>c.id===cId);if(idx<0)return
+  if(!all[idx].elStatus)all[idx].elStatus={}
+  if(!all[idx].elStatus[courseKey])all[idx].elStatus[courseKey]={el:false,cert:false}
+  all[idx].elStatus[courseKey][field]=!all[idx].elStatus[courseKey][field]
+  saveAll(all);cloudSave();renderElearning()
+}
+function renderElearning(){
+  const el=document.getElementById('el-out');if(!el)return
+  const all=getAll()
+  const today=new Date().toISOString().split('T')[0]
+  const limit=new Date();limit.setDate(limit.getDate()+15);const limitStr=limit.toISOString().split('T')[0]
+  // Build rows: one per (guest, course)
+  const rows=[]
+  all.forEach(c=>{
+    const courses=(c.items||[]).filter(i=>isCourseItem(i.name))
+    if(!courses.length)return
+    // Include guest if arriving within next 15 days OR has any course without cert
+    const arriving=(c.checkin||'')>=today&&(c.checkin||'')<=limitStr
+    courses.forEach(item=>{
+      const ck=item.name
+      const st=(c.elStatus||{})[ck]||{el:false,cert:false}
+      // Show if: arriving in next 15 days, OR cert not yet issued
+      if(!arriving&&st.cert)return
+      rows.push({c,course:ck,el:st.el,cert:st.cert})
+    })
+  })
+  if(!rows.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📚</div><p>No pending students in next 15 days · 近15天无待处理学员</p></div>';return}
+  // Sort by check-in date
+  rows.sort((a,b)=>(a.c.checkin||'').localeCompare(b.c.checkin||'')||(a.c.name||'').localeCompare(b.c.name||''))
+  const chkBox=(cId,ck,field,checked)=>{
+    const esc=ck.replace(/'/g,"\\'")
+    return'<span onclick="toggleElStatus(\''+cId+'\',\''+esc+'\',\''+field+'\')" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;border:2px solid '+(checked?'#0ea5e9':'#d1d5db')+';background:'+(checked?'#0ea5e9':'white')+';cursor:pointer;flex-shrink:0">'+(checked?'<svg width="13" height="13" viewBox="0 0 12 12"><polyline points="1,6 5,10 11,2" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</span>'
+  }
+  let html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">'
+  html+='<thead><tr style="background:#f8fafc">'
+  html+='<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;white-space:nowrap">Check-in</th>'
+  html+='<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0">Name</th>'
+  html+='<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;white-space:nowrap">Date of Birth</th>'
+  html+='<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0">Email</th>'
+  html+='<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0">Course</th>'
+  html+='<th style="padding:9px 12px;text-align:center;font-size:11px;font-weight:800;color:#0ea5e9;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;white-space:nowrap">eLearning<br>Sent</th>'
+  html+='<th style="padding:9px 12px;text-align:center;font-size:11px;font-weight:800;color:#059669;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;white-space:nowrap">Certificate<br>Issued</th>'
+  html+='</tr></thead><tbody>'
+  let lastId=''
+  rows.forEach(({c,course,el:elSent,cert},i)=>{
+    const bg=i%2===0?'white':'#fafbfc'
+    const isNewGuest=c.id!==lastId
+    lastId=c.id
+    html+='<tr style="background:'+bg+';border-bottom:1px solid #f1f5f9">'
+    // Check-in date — only show on first course row for this guest
+    html+='<td style="padding:8px 12px;color:#0284c7;font-weight:700;font-size:12px;white-space:nowrap">'+(isNewGuest?fdate(c.checkin):'')+'</td>'
+    // Name (pinyin) — only first row
+    html+='<td style="padding:8px 12px;font-weight:'+(isNewGuest?'700':'500')+';color:'+(isNewGuest?'#0f172a':'#64748b')+'">'+c.name+'</td>'
+    // DOB — only first row
+    html+='<td style="padding:8px 12px;font-size:12px;color:#475569;white-space:nowrap">'+(isNewGuest?(c.dob||'—'):'')+'</td>'
+    // Email — only first row
+    html+='<td style="padding:8px 12px;font-size:12px;color:#475569">'+(isNewGuest?(c.email||'—'):'')+'</td>'
+    // Course name
+    html+='<td style="padding:8px 12px;font-size:12px;color:#374151">'+course+'</td>'
+    // eLearning checkbox
+    html+='<td style="padding:8px 12px;text-align:center">'+chkBox(c.id,course,'el',elSent)+'</td>'
+    // Certificate checkbox
+    html+='<td style="padding:8px 12px;text-align:center">'+chkBox(c.id,course,'cert',cert)+'</td>'
+    html+='</tr>'
+  })
+  html+='</tbody></table></div>'
+  el.innerHTML=html
+}
+
+// ====== INIT ======
+document.getElementById('sch-date').value=new Date().toISOString().split('T')[0]
+addItem();initDiveCats();initTimeSelects();renderSemiCal()
+if(getSyncUrl()){setNavSync('ok','Online');cloudLoad()}else setNavSync('none','Offline')
+</script>
+</body>
+</html>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                
