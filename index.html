@@ -539,10 +539,10 @@ function out(t,tp){return ContentService.createTextOutput(t).setMimeType(Content
       <div class="quick-add-bar">
         <div class="dive-cat-pills" id="dive-cat-pills"></div>
         <div class="quick-add-row">
-          <div class="fg"><label>选择项目</label>
-            <select id="dive-item-sel"><option value="">— 选择课程/活动 —</option></select></div>
-          <div class="fg" style="max-width:80px"><label>单价</label><input type="number" id="dive-item-price" placeholder="0" min="0"></div>
-          <div class="fg" style="max-width:70px"><label>数量</label><input type="number" id="dive-item-qty" value="1" min="1"></div>
+          <div class="fg"><label>选择项目 Select Item</label>
+            <select id="dive-item-sel"><option value="">— 选择课程/活动 Select —</option></select></div>
+          <div class="fg" style="max-width:80px"><label>单价 Price</label><input type="number" id="dive-item-price" placeholder="0" min="0"></div>
+          <div class="fg" style="max-width:70px"><label>数量 Qty</label><input type="number" id="dive-item-qty" value="1" min="1"></div>
           <button class="btn btn-success" onclick="addDiveItemToFees()" style="align-self:flex-end">➕ Add</button>
         </div>
       </div>
@@ -558,8 +558,8 @@ function out(t,tp){return ContentService.createTextOutput(t).setMimeType(Content
     <div class="card-body">
       <table class="it">
         <thead><tr>
-          <th style="width:42%">项目名称</th><th style="width:17%">单价 (元)</th>
-          <th style="width:12%">数量</th><th style="width:19%">小计</th>
+          <th style="width:42%">项目名称 Item</th><th style="width:17%">单价 Unit Price (元)</th>
+          <th style="width:12%">数量 Qty</th><th style="width:19%">小计 Subtotal</th>
           <th style="width:10%" class="no-print"></th>
         </tr></thead>
         <tbody id="items-body"></tbody>
@@ -682,33 +682,33 @@ const ROOM_TYPES=[
   {val:'Student Dorm 学员宿舍',rate:125,bed:'Bunk bed 青旅单人上下床',note:'含单早，一位宿舍床位（仅限学员）'},
 ]
 const DIVE_ITEMS=[
-  {cat:'🤸 自由潜',name:'AIDA/PADI FreeDive L1',price:1800,unit:'人'},
-  {cat:'🤸 自由潜',name:'AIDA/PADI FreeDive L2',price:2800,unit:'人'},
-  {cat:'🤸 自由潜',name:'AIDA/PADI FreeDive L3',price:3000,unit:'人'},
-  {cat:'🤸 自由潜',name:'AIDA/PADI FreeDive L4',price:3400,unit:'人'},
-  {cat:'🎓 PADI课程',name:'PADI Open Water (OW)',price:2900,unit:'人'},
-  {cat:'🎓 PADI课程',name:'PADI Advanced Open Water (AOW)',price:2650,unit:'人'},
-  {cat:'🎓 PADI课程',name:'PADI Deep Dive 深潜专长',price:2800,unit:'人'},
-  {cat:'🎓 PADI课程',name:'PADI Sidemount 侧挂',price:2800,unit:'人'},
-  {cat:'🎓 PADI课程',name:'PADI Self-Reliant Diver 独行侠',price:2200,unit:'人'},
-  {cat:'🎓 PADI课程',name:'PADI Rescue 救援潜水员',price:2750,unit:'人'},
-  {cat:'🎓 PADI课程',name:'PADI DPV 水下推进器专长',price:2200,unit:'人'},
-  {cat:'🎓 PADI课程',name:'EFR 第一应急反应员',price:800,unit:'人'},
-  {cat:'🎓 PADI课程',name:'PADI Enriched Air 高氧专长',price:900,unit:'人'},
-  {cat:'🎓 PADI课程',name:'PADI Tech Basics 技潜基础',price:2800,unit:'人'},
-  {cat:'🎓 PADI课程',name:'CCR 体验',price:4900,unit:'人'},
-  {cat:'🎓 PADI课程',name:'Reactivate 再激活课程',price:500,unit:'人'},
-  {cat:'🌊 潜水活动',name:'DSD 体验潜水',price:500,unit:'人'},
-  {cat:'🌊 潜水活动',name:'Regular Fun Dive 平日欢乐潜',price:175,unit:'潜'},
-  {cat:'🌊 潜水活动',name:'Regular Night Dive 平日夜潜',price:235,unit:'潜'},
-  {cat:'🌊 潜水活动',name:'FD 住店单人 1-8潜',price:160,unit:'潜'},
-  {cat:'🌊 潜水活动',name:'FD 住店双人+ 1-8潜',price:155,unit:'潜'},
-  {cat:'🌊 潜水活动',name:'FD 住店单人 8潜以上',price:155,unit:'潜'},
-  {cat:'🌊 潜水活动',name:'FD 住店双人+ 8潜以上',price:150,unit:'潜'},
-  {cat:'🌊 潜水活动',name:'节假日FD套餐 Holiday FD (8潜)',price:1560,unit:'套'},
-  {cat:'🎒 装备租赁',name:'Backmount BCD 背飞/天',price:65,unit:'天'},
-  {cat:'🎒 装备租赁',name:'Sidemount BCD 侧挂/天',price:150,unit:'天'},
-  {cat:'🎒 装备租赁',name:'Dive Computer 电脑表/天',price:40,unit:'天'},
+  {cat:'🤸 自由潜 Freedive',name:'AIDA/PADI FreeDive L1',price:1800,unit:'人'},
+  {cat:'🤸 自由潜 Freedive',name:'AIDA/PADI FreeDive L2',price:2800,unit:'人'},
+  {cat:'🤸 自由潜 Freedive',name:'AIDA/PADI FreeDive L3',price:3000,unit:'人'},
+  {cat:'🤸 自由潜 Freedive',name:'AIDA/PADI FreeDive L4',price:3400,unit:'人'},
+  {cat:'🎓 PADI课程 Course',name:'PADI Open Water (OW)',price:2900,unit:'人'},
+  {cat:'🎓 PADI课程 Course',name:'PADI Advanced Open Water (AOW)',price:2650,unit:'人'},
+  {cat:'🎓 PADI课程 Course',name:'PADI Deep Dive 深潜专长',price:2800,unit:'人'},
+  {cat:'🎓 PADI课程 Course',name:'PADI Sidemount 侧挂',price:2800,unit:'人'},
+  {cat:'🎓 PADI课程 Course',name:'PADI Self-Reliant Diver 独行侠',price:2200,unit:'人'},
+  {cat:'🎓 PADI课程 Course',name:'PADI Rescue 救援潜水员',price:2750,unit:'人'},
+  {cat:'🎓 PADI课程 Course',name:'PADI DPV 水下推进器专长',price:2200,unit:'人'},
+  {cat:'🎓 PADI课程 Course',name:'EFR 第一应急反应员',price:800,unit:'人'},
+  {cat:'🎓 PADI课程 Course',name:'PADI Enriched Air 高氧专长',price:900,unit:'人'},
+  {cat:'🎓 PADI课程 Course',name:'PADI Tech Basics 技潜基础',price:2800,unit:'人'},
+  {cat:'🎓 PADI课程 Course',name:'CCR 体验',price:4900,unit:'人'},
+  {cat:'🎓 PADI课程 Course',name:'Reactivate 再激活课程',price:500,unit:'人'},
+  {cat:'🌊 潜水活动 Fun Dive',name:'DSD 体验潜水',price:500,unit:'人'},
+  {cat:'🌊 潜水活动 Fun Dive',name:'Regular Fun Dive 平日欢乐潜',price:175,unit:'潜'},
+  {cat:'🌊 潜水活动 Fun Dive',name:'Regular Night Dive 平日夜潜',price:235,unit:'潜'},
+  {cat:'🌊 潜水活动 Fun Dive',name:'FD 住店单人 1-8潜',price:160,unit:'潜'},
+  {cat:'🌊 潜水活动 Fun Dive',name:'FD 住店双人+ 1-8潜',price:155,unit:'潜'},
+  {cat:'🌊 潜水活动 Fun Dive',name:'FD 住店单人 8潜以上',price:155,unit:'潜'},
+  {cat:'🌊 潜水活动 Fun Dive',name:'FD 住店双人+ 8潜以上',price:150,unit:'潜'},
+  {cat:'🌊 潜水活动 Fun Dive',name:'节假日FD套餐 Holiday FD (8潜)',price:1560,unit:'套'},
+  {cat:'🎒 装备租赁 Gear Rental',name:'Backmount BCD 背飞/天',price:65,unit:'天'},
+  {cat:'🎒 装备租赁 Gear Rental',name:'Sidemount BCD 侧挂/天',price:150,unit:'天'},
+  {cat:'🎒 装备租赁 Gear Rental',name:'Dive Computer 电脑表/天',price:40,unit:'天'},
 ]
 
 // ====== HOLIDAYS ======
@@ -939,7 +939,7 @@ function toggleOvernightHotel(){}
 // Names that DO trigger student discount (courses, excluding 高氧/EFR/再激活)
 const NO_DISC_COURSES=new Set(['EFR 第一应急反应员','PADI Enriched Air 高氧专长','Reactivate 再激活课程'])
 function getStudentCourseNames(){
-  return new Set(DIVE_ITEMS.filter(d=>d.cat==='🎓 PADI课程'&&!NO_DISC_COURSES.has(d.name)).map(d=>d.name))
+  return new Set(DIVE_ITEMS.filter(d=>d.cat==='🎓 PADI课程 Course'&&!NO_DISC_COURSES.has(d.name)).map(d=>d.name))
 }
 function hasStudentCourse(){
   const valid=getStudentCourseNames()
@@ -1121,7 +1121,7 @@ function updateFormTotal(){
 function addItem(name,price,qty){
   const id=uid();rowIds.push(id)
   const tr=document.createElement('tr');tr.id='ir-'+id
-  tr.innerHTML='<td><input type="text" value="'+(name||'')+'" placeholder="项目名称" oninput="updateSub()"></td><td><input type="number" value="'+(price||'')+'" placeholder="0" min="0" oninput="updateSub()" style="text-align:right"></td><td><input type="number" value="'+(qty||1)+'" min="1" oninput="updateSub()" style="text-align:center;max-width:60px"></td><td class="rsub">¥ 0.00</td><td class="no-print"><button class="btn btn-danger btn-sm" onclick="rmItem(\''+id+'\')">✕</button></td>'
+  tr.innerHTML='<td><input type="text" value="'+(name||'')+'" placeholder="项目名称 Item Name" oninput="updateSub()"></td><td><input type="number" value="'+(price||'')+'" placeholder="0" min="0" oninput="updateSub()" style="text-align:right"></td><td><input type="number" value="'+(qty||1)+'" min="1" oninput="updateSub()" style="text-align:center;max-width:60px"></td><td class="rsub">¥ 0.00</td><td class="no-print"><button class="btn btn-danger btn-sm" onclick="rmItem(\''+id+'\')">✕</button></td>'
   document.getElementById('items-body').appendChild(tr);updateSub()
 }
 function rmItem(id){document.getElementById('ir-'+id)?.remove();rowIds=rowIds.filter(r=>r!==id);updateSub();autoUpdateDiscount()}
