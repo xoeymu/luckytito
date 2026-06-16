@@ -890,6 +890,11 @@ function onCheckinChange(){
   if(hols.length){
     el.style.display='block'
     el.innerHTML='<div class="hol-badge">🎉 Holiday dates: '+hols.join(', ')+'&nbsp;&nbsp;<button onclick="setHolidayYes()" style="background:none;border:1px solid #991b1b;border-radius:4px;color:#991b1b;cursor:pointer;font-size:11px;font-weight:700;padding:1px 7px;margin-left:4px">Mark as Holiday</button></div>'
+    +'<div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;background:#fff1f1;border-radius:8px;border:1px solid #fecaca">'
+    +'<span style="font-size:12px;font-weight:700;color:#991b1b">🤿 节假日FD潜数 Holiday FD dives</span>'
+    +'<input type="number" id="f-hol-fd-qty" min="0" placeholder="0" value="'+(_holFdQty||'')+'" style="width:65px;padding:4px 8px;border:1.5px solid #fecaca;border-radius:6px;font-size:13px;text-align:center" oninput="_holFdQty=parseInt(this.value)||0;updateFormTotal()">'
+    +'<span style="font-size:12px;color:#991b1b">潜 × ¥195 = ¥ <span id="hol-fd-preview">'+(_holFdQty*195||0)+'</span> — 自动计入费用和账单</span>'
+    +'</div>'
   }else el.style.display='none'
   updateRoomFeePreview()
 }
@@ -1087,7 +1092,7 @@ function updateRoomFeePreview(){
 }
 
 // ====== ITEMS ======
-let rowIds=[],_formRoomFee=0
+let rowIds=[],_formRoomFee=0,_holFdQty=0
 function updateFormTotal(){
   let iT=0
   document.querySelectorAll('#items-body tr').forEach(tr=>{
@@ -1097,7 +1102,9 @@ function updateFormTotal(){
   const arrCar=parseFloat(document.getElementById('f-arr-cf')?.value)||0
   const depCar=parseFloat(document.getElementById('f-dep-cf')?.value)||0
   const dep=parseFloat(document.getElementById('f-deposit')?.value)||0
-  const tot=iT+arrCar+depCar+_formRoomFee
+  const holFdSub=_holFdQty*195
+  const pr=document.getElementById('hol-fd-preview');if(pr)pr.textContent=holFdSub
+  const tot=iT+arrCar+depCar+_formRoomFee+holFdSub
   const el=document.getElementById('form-total-summary')
   if(tot<=0){el.style.display='none';return}
   el.style.display='block'
@@ -1118,9 +1125,30 @@ function addItem(name,price,qty){
   document.getElementById('items-body').appendChild(tr);updateSub()
 }
 function rmItem(id){document.getElementById('ir-'+id)?.remove();rowIds=rowIds.filter(r=>r!==id);updateSub();autoUpdateDiscount()}
+const FD_TIERS=[
+  {low:'FD 住店单人 1-8潜',  lowP:160, high:'FD 住店单人 8潜以上',   highP:155},
+  {low:'FD 住店双人+ 1-8潜', lowP:155, high:'FD 住店双人+ 8潜以上',  highP:150},
+]
+function autoFdTier(tr){
+  const nameIn=tr.querySelector('input[type=text]')
+  const priceIn=tr.querySelectorAll('input[type=number]')[0]
+  const qtyIn=tr.querySelectorAll('input[type=number]')[1]
+  if(!nameIn||!priceIn||!qtyIn)return
+  const name=nameIn.value.trim(),qty=parseFloat(qtyIn.value)||0
+  for(const t of FD_TIERS){
+    if(name===t.low||name===t.high){
+      const useHigh=qty>=8
+      const newName=useHigh?t.high:t.low,newP=useHigh?t.highP:t.lowP
+      if(nameIn.value!==newName)nameIn.value=newName
+      if(parseFloat(priceIn.value)!==newP)priceIn.value=newP
+      break
+    }
+  }
+}
 function updateSub(){
   let tot=0
   document.querySelectorAll('#items-body tr').forEach(tr=>{
+    autoFdTier(tr)
     const ins=tr.querySelectorAll('input[type=number]')
     const sub=(parseFloat(ins[0]?.value)||0)*(parseFloat(ins[1]?.value)||0)
     tot+=sub;const c=tr.querySelector('.rsub');if(c)c.textContent='¥ '+sub.toFixed(2)
@@ -1157,7 +1185,7 @@ function collect(){
     certSystem:v('f-certsys'),certNumber:v('f-certno').trim(),divingExp:v('f-divexp').trim(),
     ownGear:getOwnGear(),gearNote:v('f-gn').trim(),
     instructor:v('f-inst').trim(),multiStudentDisc:document.getElementById('f-multi-student')?.checked||false,classmates:getClassmates(),courseStart:v('f-cstart'),courseEnd:v('f-cend'),
-    items:getItems(),deposit:v('f-deposit'),notes:v('f-note').trim(),savedAt:new Date().toISOString()}
+    items:getItems(),deposit:v('f-deposit'),holFdQty:_holFdQty||0,notes:v('f-note').trim(),savedAt:new Date().toISOString()}
 }
 function fillForm(c){
   sv('f-id',c.id);sv('f-custno-stored',c.custNo||'')
@@ -1181,6 +1209,7 @@ function fillForm(c){
   sv('f-cstart',c.courseStart||'');sv('f-cend',c.courseEnd||'')
   loadItems(c.items)
   sv('f-deposit',c.deposit);sv('f-note',c.notes)
+  _holFdQty=c.holFdQty||0
   updateSub();updateCustNo();onCheckinChange();updateFormMode()
 }
 function updateFormMode(){
@@ -1214,7 +1243,7 @@ function _clearForm(){
     'f-at-h','f-at-m','f-dt-h','f-dt-m'].forEach(id=>sv(id,''))
   document.getElementById('room-disc-custom-wrap').style.display='none'
   document.getElementById('room-type-tip').textContent=''
-  document.getElementById('hol-alert').style.display='none'
+  _holFdQty=0;document.getElementById('hol-alert').style.display='none'
   document.getElementById('room-fee-preview').style.display='none'
   document.getElementById('form-total-summary').style.display='none'
   _formRoomFee=0
@@ -2107,7 +2136,8 @@ function goBill(id){switchTab('bill');document.getElementById('bill-sel').value=
 // ====== BILL ======
 function calcTotal(c){
   const items=(c.items||[]).reduce((s,i)=>s+i.price*i.qty,0)
-  return items+(parseFloat(c.arrCarFee)||0)+(parseFloat(c.depCarFee)||0)+calcRoomSubtotal(c)-(parseFloat(c.discount)||0)
+  const holFd=(parseInt(c.holFdQty)||0)*195
+  return items+holFd+(parseFloat(c.arrCarFee)||0)+(parseFloat(c.depCarFee)||0)+calcRoomSubtotal(c)-(parseFloat(c.discount)||0)
 }
 function calcRoomSubtotal(c){
   if(!c.checkin||!c.checkout||!c.roomRate)return 0
@@ -2138,9 +2168,11 @@ function renderBill(){
   if(!id){document.getElementById('bill-out').innerHTML='<div class="empty-state"><div class="empty-icon">🧾</div><p>请选择客户</p></div>';return}
   const c=getAll().find(x=>x.id===id);if(!c)return
   const iT=(c.items||[]).reduce((s,i)=>s+i.price*i.qty,0)
+  const holFdQty=parseInt(c.holFdQty)||0
+  const holFdSub=holFdQty*195
   const disc=parseFloat(c.discount)||0,dep=parseFloat(c.deposit)||0
   const roomSub=calcRoomSubtotal(c)
-  const tot=iT+roomSub-disc
+  const tot=iT+holFdSub+roomSub-disc
   const balance=tot-dep
   const bc2={已付全款:'bp',已付定金:'bd',未付:'bu'}
   const payLblMap={'已付全款':'Paid','已付定金':'Deposit Paid','未付':'Unpaid'}
@@ -2201,9 +2233,10 @@ function renderBill(){
 '<div class="bs"><div class="bst">Charges</div>'+
 '<table class="bit"><thead><tr><th>Item</th><th>Unit Price</th><th>Qty</th><th>Subtotal</th></tr></thead><tbody>'+
 (c.items||[]).map(i=>'<tr><td>'+i.name+'</td><td>¥ '+(+i.price).toFixed(2)+'</td><td>'+i.qty+'</td><td>¥ '+(i.price*i.qty).toFixed(2)+'</td></tr>').join('')+
+(holFdQty>0?'<tr style="background:#fff1f1"><td>🎉 节假日FD Holiday Fun Dive</td><td>¥ 195.00</td><td>'+holFdQty+'</td><td>¥ '+holFdSub.toFixed(2)+'</td></tr>':'')+
 roomRows+
 '</tbody></table><div class="btb">'+
-'<div class="btr"><span>Subtotal</span><span>¥ '+(iT+roomSub).toFixed(2)+'</span></div>'+
+'<div class="btr"><span>Subtotal</span><span>¥ '+(iT+holFdSub+roomSub).toFixed(2)+'</span></div>'+
 (disc>0?'<div class="btr" style="color:#059669"><span>Discount</span><span>− ¥ '+disc.toFixed(2)+'</span></div>':'')+
 '<div class="btf"><span>Total Due</span><span>¥ '+tot.toFixed(2)+'</span></div>'+
 (dep>0?'<div class="btr" style="margin-top:8px;padding-top:8px;border-top:1px dashed #e2e8f0"><span>Deposit Paid</span><span style="color:#059669">− ¥ '+dep.toFixed(2)+'</span></div><div class="btr" style="font-weight:700;color:#dc2626"><span>Balance Due</span><span>¥ '+balance.toFixed(2)+'</span></div>':'')+
