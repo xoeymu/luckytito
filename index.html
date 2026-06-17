@@ -272,47 +272,17 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
     <button onclick="closeSyncModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#94a3b8;line-height:1;padding:2px 5px">✕</button>
   </div>
   <div class="modal-status" id="modal-status-bar"></div>
-  <div class="step-row">
-    <div class="step-num">1</div>
-    <div class="step-body">
-      <h3>打开 Google Apps Script 粘贴代码</h3>
-      <p>前往 <a href="https://script.google.com" target="_blank">script.google.com</a> → 新建项目 → 全选删除 → 粘贴：</p>
-      <textarea class="gs-code" id="gs-code" readonly>const FILE='潜水店客户数据.json';
-function doGet(e){const p=e.parameter||{},cb=p.callback||'';try{const r=JSON.stringify({ok:true,data:read()});return out(cb?cb+'('+r+')':r,cb?'JAVASCRIPT':'JSON')}catch(err){const r=JSON.stringify({ok:false,error:''+err});return out(cb?cb+'('+r+')':r,cb?'JAVASCRIPT':'JSON')}}
-function doPost(e){try{write(JSON.parse(e.postData.contents));return out(JSON.stringify({ok:true}),'JSON')}catch(err){return out(JSON.stringify({ok:false,error:''+err}),'JSON')}}
-function read(){const f=DriveApp.getFilesByName(FILE);return f.hasNext()?JSON.parse(f.next().getBlob().getDataAsString('UTF-8')):[]}
-function write(d){const f=DriveApp.getFilesByName(FILE);const j=JSON.stringify(d,null,2);if(f.hasNext())f.next().setContent(j);else DriveApp.createFile(FILE,j,MimeType.PLAIN_TEXT)}
-function out(t,tp){return ContentService.createTextOutput(t).setMimeType(ContentService.MimeType[tp])}</textarea>
-      <div style="display:flex;align-items:center;gap:9px;margin-top:8px">
-        <button class="btn btn-secondary btn-sm" onclick="copyGsCode()">📋 Copy</button>
-        <span id="copy-tip" style="font-size:12px;color:#10b981;display:none">已复制 ✓</span>
-      </div>
+  <div style="margin-top:14px">
+    <div style="display:flex;gap:8px">
+      <input type="text" id="sync-url-input" placeholder="https://script.google.com/macros/s/…/exec" style="flex:1;font-size:13px">
+      <button class="btn btn-primary" onclick="testAndConnect()">Connect</button>
     </div>
-  </div>
-  <div class="step-row">
-    <div class="step-num">2</div>
-    <div class="step-body">
-      <h3>部署为网络应用</h3>
-      <ol><li>点「部署」→「新建部署」→ 类型选「网络应用」</li><li>执行身份：我；谁可访问：所有人</li><li>点「部署」→ 授权 → 复制网络应用网址</li></ol>
-      <div class="warn-box">⚠️ 若提示「未经验证」：点「高级」→「转到（不安全）」→「允许」</div>
-    </div>
-  </div>
-  <div class="step-row" style="margin-bottom:0">
-    <div class="step-num">3</div>
-    <div class="step-body">
-      <h3>粘贴网址完成连接</h3>
-      <div style="display:flex;gap:8px;margin-top:6px">
-        <input type="text" id="sync-url-input" placeholder="https://script.google.com/macros/s/…/exec" style="flex:1;font-size:13px">
-        <button class="btn btn-primary" onclick="testAndConnect()">Connect</button>
-      </div>
-      <div id="test-result" style="margin-top:7px;font-size:13px;min-height:18px"></div>
-    </div>
+    <div id="test-result" style="margin-top:7px;font-size:13px;min-height:18px"></div>
   </div>
   <div class="modal-footer">
     <div id="conn-info" style="font-size:12px;color:#94a3b8"></div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-secondary btn-sm" onclick="manualSyncLoad()" id="btn-manual" style="display:none">🔄 Sync Now</button>
-      <button class="btn btn-danger btn-sm" onclick="disconnectSync()" id="btn-disconnect" style="display:none">Disconnect</button>
     </div>
   </div>
 </div>
@@ -709,6 +679,10 @@ const DIVE_ITEMS=[
   {cat:'🎒 装备租赁 Gear Rental',name:'Backmount BCD 背飞/天',price:65,unit:'天'},
   {cat:'🎒 装备租赁 Gear Rental',name:'Sidemount BCD 侧挂/天',price:150,unit:'天'},
   {cat:'🎒 装备租赁 Gear Rental',name:'Dive Computer 电脑表/天',price:40,unit:'天'},
+  {cat:'🏝️ 外岛&促销 Verde&Promo',name:'Verde Island Trip 外岛三潜含午餐',price:1000,unit:'人'},
+  {cat:'🏝️ 外岛&促销 Verde&Promo',name:'3dives+twin room+lunch promo 三潜双床早午餐',price:690,unit:'人'},
+  {cat:'🏝️ 外岛&促销 Verde&Promo',name:'3dives+single room+lunch promo 三潜大床早午餐',price:790,unit:'人'},
+  {cat:'🏝️ 外岛&促销 Verde&Promo',name:'3dives+dorm room+lunch promo 三潜宿舍早午餐',price:590,unit:'人'},
 ]
 
 // ====== HOLIDAYS ======
@@ -786,9 +760,9 @@ function closeSyncModal(){document.getElementById('sync-modal').style.display='n
 function refreshModalUI(){
   const url=getSyncUrl(),ts=localStorage.getItem(TK)
   const bar=document.getElementById('modal-status-bar'),ci=document.getElementById('conn-info')
-  const bm=document.getElementById('btn-manual'),bd=document.getElementById('btn-disconnect')
-  if(url){bar.style.background='#d1fae5';bar.style.color='#065f46';bar.textContent='✅ Connected to Google Drive';ci.textContent=ts?'Last sync: '+new Date(ts).toLocaleString():'';bm.style.display=bd.style.display='inline-flex';setNavSync('ok','Online')}
-  else{bar.style.background='#f1f5f9';bar.style.color='#64748b';bar.textContent='Not connected — data stored locally only';ci.textContent='';bm.style.display=bd.style.display='none';setNavSync('none','Offline')}
+  const bm=document.getElementById('btn-manual')
+  if(url){bar.style.background='#d1fae5';bar.style.color='#065f46';bar.textContent='✅ Connected to Google Drive';ci.textContent=ts?'Last sync: '+new Date(ts).toLocaleString():'';bm.style.display='inline-flex';setNavSync('ok','Online')}
+  else{bar.style.background='#f1f5f9';bar.style.color='#64748b';bar.textContent='Not connected — data stored locally only';ci.textContent='';bm.style.display='none';setNavSync('none','Offline')}
 }
 function copyGsCode(){const ta=document.getElementById('gs-code');ta.select();document.execCommand('copy');const tip=document.getElementById('copy-tip');tip.style.display='inline';setTimeout(()=>tip.style.display='none',2200)}
 function testAndConnect(){
@@ -1061,7 +1035,7 @@ function updateRoomFeePreview(){
   const rateN=parseFloat(rate)
   const hols=new Set(getHolidays())
   const tempC={id:v('f-id')||'__preview__',roomNum:rnum,checkin:ci,checkout:co}
-  const sharedSet=rnum?getSharedNights(tempC):new Set()
+  const sharedSet=(rnum&&!isDorm())?getSharedNights(tempC):new Set()
   const disc=v('f-rdisc')
   let f=1,discLabel=''
   if(!isDorm()){
@@ -2145,8 +2119,8 @@ function calcRoomSubtotal(c){
   if(nights<=0)return 0
   const rate=parseFloat(c.roomRate)
   const hols=new Set(getHolidays())
-  const shared=getSharedNights(c)
   const isDormRoom=(c.roomType||'').includes('学员宿舍')
+  const shared=isDormRoom?new Set():getSharedNights(c)
   const d=c.roomDiscount;let f=1
   if(!isDormRoom){if(d==='9折')f=0.9;else if(d==='85折')f=0.85;else if(d==='8折')f=0.8;else if(d==='custom')f=parseFloat(c.roomDiscountCustom)||1}
   let total=0
@@ -2194,11 +2168,12 @@ function renderBill(){
   if(c.roomRate&&c.checkin&&c.checkout){
     const rt=(c.roomType||'客房').split(' ')[0]
     const rate=parseFloat(c.roomRate)
-    const rd=c.roomDiscount;let rf=1
-    if(rd==='9折')rf=0.9;else if(rd==='85折')rf=0.85;else if(rd==='8折')rf=0.8;else if(rd==='custom')rf=parseFloat(c.roomDiscountCustom)||1
+    const isDormBill=(c.roomType||'').includes('学员宿舍')
+    const rd=isDormBill?'':c.roomDiscount;let rf=1
+    if(!isDormBill){if(rd==='9折')rf=0.9;else if(rd==='85折')rf=0.85;else if(rd==='8折')rf=0.8;else if(rd==='custom')rf=parseFloat(c.roomDiscountCustom)||1}
     const discLbl=rd==='9折'?'10% disc':rd==='85折'?'15% disc':rd==='8折'?'20% disc':rd==='custom'?'custom disc':''
     const hols=new Set(getHolidays())
-    const sharedSet=getSharedNights(c)
+    const sharedSet=isDormBill?new Set():getSharedNights(c)
     const totalNights=Math.round((new Date(c.checkout)-new Date(c.checkin))/(1000*3600*24))
     let holSolo=0,holShare=0,normSolo=0,normShare=0
     for(let i=0;i<totalNights;i++){
