@@ -427,7 +427,19 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
 
   <!-- 3. 住宿 -->
   <div class="card">
-    <div class="card-header"><span class="card-title">🏨 住宿 Accommodation</span></div>
+    <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+      <span class="card-title">🏨 住宿 Accommodation</span>
+      <button type="button" id="btn-free-upgrade" onclick="toggleFreeUpgrade()" style="font-size:12px;padding:4px 10px;border-radius:16px;border:1px solid #0284c7;background:#e0f2fe;color:#0284c7;cursor:pointer;font-weight:600">🎁 免费升级 Free Upgrade</button>
+    </div>
+    <div id="free-upgrade-panel" style="display:none;margin:0 0 10px 0;padding:10px 14px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px">
+      <div style="font-size:12px;color:#0369a1;font-weight:600;margin-bottom:8px">选择升级后房价 Select Upgrade Rate</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button type="button" id="btn-upg-420" onclick="setFreeUpgrade(420)" style="padding:5px 16px;border-radius:8px;border:2px solid #bae6fd;background:#fff;color:#0369a1;font-weight:700;cursor:pointer;font-size:14px">¥ 420 / 晚</button>
+        <button type="button" id="btn-upg-375" onclick="setFreeUpgrade(375)" style="padding:5px 16px;border-radius:8px;border:2px solid #bae6fd;background:#fff;color:#0369a1;font-weight:700;cursor:pointer;font-size:14px">¥ 375 / 晚</button>
+        <button type="button" onclick="cancelFreeUpgrade()" style="padding:5px 12px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#64748b;cursor:pointer;font-size:12px">✕ 取消</button>
+        <span id="upgrade-active-label" style="font-size:12px;color:#0284c7;font-weight:600;display:none"></span>
+      </div>
+    </div>
     <div class="card-body">
       <div class="g4">
         <div class="fg"><label>入住日期 Check-in</label><input type="date" id="f-ci" onchange="onCheckinChange()"></div>
@@ -443,12 +455,13 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
           </select>
           <div id="room-type-tip" class="room-info-tip"></div>
         </div>
-        <div class="fg"><label>房间号 Room No.</label><input type="text" id="f-rnum" placeholder="301" oninput="updateCustNo()"></div>
+        <div class="fg"><label>房间号 Room No.</label><input type="text" id="f-rnum" placeholder="301" oninput="updateCustNo();onRoomNumChange()"></div>
       </div>
       <div id="hol-alert" style="display:none;margin-top:10px"></div>
       <input type="hidden" id="f-rrate">
       <input type="hidden" id="f-rdisc">
       <input type="hidden" id="f-rdisc-custom">
+      <input type="hidden" id="f-upgrade-rate">
       <div id="room-disc-custom-wrap" style="display:none"></div>
     </div>
   </div>
@@ -890,8 +903,65 @@ function onRoomTypeChange(){
   const sel=document.getElementById('f-rtype')
   const opt=sel.options[sel.selectedIndex]
   const rate=opt.dataset.rate
-  if(rate){sv('f-rrate',rate);document.getElementById('room-type-tip').textContent=ROOM_TYPES.find(r=>r.val===opt.value)?.note||''}
-  else{document.getElementById('room-type-tip').textContent=''}
+  if(rate){
+    // Only set rate from room type if no free upgrade is active
+    if(!v('f-upgrade-rate'))sv('f-rrate',rate)
+    document.getElementById('room-type-tip').textContent=ROOM_TYPES.find(r=>r.val===opt.value)?.note||''
+  }else{document.getElementById('room-type-tip').textContent=''}
+  updateRoomFeePreview()
+}
+function onRoomNumChange(){
+  const num=v('f-rnum').trim()
+  if(['105','106','107'].includes(num)){
+    // These rooms cost ¥450/night (unless free upgrade overrides)
+    if(!v('f-upgrade-rate'))sv('f-rrate','450')
+    updateRoomFeePreview()
+  } else {
+    // Room changed away from 105/106/107 — restore from room type (if no upgrade active)
+    if(!v('f-upgrade-rate')){
+      const sel=document.getElementById('f-rtype')
+      const opt=sel.options[sel.selectedIndex]
+      const rate=opt.dataset.rate
+      if(rate)sv('f-rrate',rate)
+      updateRoomFeePreview()
+    }
+  }
+}
+function toggleFreeUpgrade(){
+  const panel=document.getElementById('free-upgrade-panel')
+  panel.style.display=panel.style.display==='none'?'block':'none'
+}
+function setFreeUpgrade(rate){
+  sv('f-upgrade-rate',rate)
+  sv('f-rrate',rate)
+  // Highlight active button
+  document.getElementById('btn-upg-420').style.background=rate===420?'#0284c7':'#fff'
+  document.getElementById('btn-upg-420').style.color=rate===420?'#fff':'#0369a1'
+  document.getElementById('btn-upg-375').style.background=rate===375?'#0284c7':'#fff'
+  document.getElementById('btn-upg-375').style.color=rate===375?'#fff':'#0369a1'
+  const lbl=document.getElementById('upgrade-active-label')
+  lbl.style.display='inline'
+  lbl.textContent='✓ 已设为 ¥'+rate+'/晚'
+  document.getElementById('btn-free-upgrade').style.background='#0284c7'
+  document.getElementById('btn-free-upgrade').style.color='#fff'
+  updateRoomFeePreview()
+}
+function cancelFreeUpgrade(){
+  sv('f-upgrade-rate','')
+  document.getElementById('upgrade-active-label').style.display='none'
+  document.getElementById('btn-upg-420').style.background='#fff'
+  document.getElementById('btn-upg-420').style.color='#0369a1'
+  document.getElementById('btn-upg-375').style.background='#fff'
+  document.getElementById('btn-upg-375').style.color='#0369a1'
+  document.getElementById('btn-free-upgrade').style.background='#e0f2fe'
+  document.getElementById('btn-free-upgrade').style.color='#0284c7'
+  document.getElementById('free-upgrade-panel').style.display='none'
+  // Restore rate: 105/106/107 → 450, else from room type
+  const num=v('f-rnum').trim()
+  if(['105','106','107'].includes(num)){sv('f-rrate','450')}
+  else{
+    const sel=document.getElementById('f-rtype');const opt=sel.options[sel.selectedIndex];const rate=opt.dataset.rate;if(rate)sv('f-rrate',rate)
+  }
   updateRoomFeePreview()
 }
 function onCheckinChange(){
@@ -1099,6 +1169,7 @@ function updateRoomFeePreview(){
   if(normShare>0)parts.push(normShare+'晚'+(f<1?' '+discLabel:'普通')+'均摊50%')
   let noteText=parts.join(' + ')
   if(sharedSet.size>0)noteText+=' · 🏠 与同房客户均摊'
+  if(v('f-upgrade-rate'))noteText+=' · 🎁 免费升级'
   document.getElementById('room-fee-preview-note').textContent=noteText
   updateFormTotal()
 }
@@ -1190,6 +1261,8 @@ function collect(){
     depCarTime:v('f-dep-ct').trim(),depCarFee:v('f-dep-cf'),depBoat:v('f-dep-boat').trim(),depPlate:v('f-dep-plate').trim(),depDriverPhone:v('f-dep-drv').trim(),
     checkin:v('f-ci'),checkout:v('f-co'),roomType:v('f-rtype'),roomNum:v('f-rnum').trim(),
     roomRate:v('f-rrate'),
+    freeUpgrade:v('f-upgrade-rate')?'免费升级 Free Upgrade ¥'+v('f-upgrade-rate')+'/晚':'',
+    upgrade:v('f-upgrade-rate')?'免费升级 Free Upgrade ¥'+v('f-upgrade-rate')+'/晚':'',
     isHoliday:checkStayHasHoliday(v('f-ci'),v('f-co')).length>0?'是':'否',
     roomDiscount:v('f-rdisc'),roomDiscountCustom:v('f-rdisc-custom'),
     gender:v('f-gender'),height:v('f-ht'),weight:v('f-wt'),clothSize:v('f-cs'),shoeSize:v('f-shoe').trim(),myopia:v('f-myopia').trim(),
@@ -1211,6 +1284,20 @@ function fillForm(c){
   if(c.roomType){const opt=[...document.getElementById('f-rtype').options].find(o=>o.value===c.roomType);if(opt)document.getElementById('room-type-tip').textContent=ROOM_TYPES.find(r=>r.val===c.roomType)?.note||''}
   sv('f-rdisc',c.roomDiscount);sv('f-rdisc-custom',c.roomDiscountCustom)
   document.getElementById('room-disc-custom-wrap').style.display=c.roomDiscount==='custom'?'block':'none'
+  // Restore free upgrade state
+  const upgRate=c.freeUpgrade?c.freeUpgrade.match(/¥(\d+)/)?.[1]:'';
+  sv('f-upgrade-rate',upgRate||'')
+  if(upgRate){
+    setFreeUpgrade(parseInt(upgRate))
+    document.getElementById('free-upgrade-panel').style.display='block'
+  }else{
+    document.getElementById('btn-free-upgrade').style.background='#e0f2fe'
+    document.getElementById('btn-free-upgrade').style.color='#0284c7'
+    document.getElementById('free-upgrade-panel').style.display='none'
+    document.getElementById('upgrade-active-label').style.display='none'
+    document.getElementById('btn-upg-420').style.background='#fff';document.getElementById('btn-upg-420').style.color='#0369a1'
+    document.getElementById('btn-upg-375').style.background='#fff';document.getElementById('btn-upg-375').style.color='#0369a1'
+  }
   updateRoomFeePreview()
   sv('f-gender',c.gender);sv('f-ht',c.height);sv('f-wt',c.weight);sv('f-cs',c.clothSize);sv('f-shoe',c.shoeSize);sv('f-myopia',c.myopia)
   sv('f-ws',c.wetsuitSize);sv('f-fs',c.finSize);sv('f-bs',c.bcdSize)
@@ -1260,6 +1347,14 @@ function _clearForm(){
   document.getElementById('room-fee-preview').style.display='none'
   document.getElementById('form-total-summary').style.display='none'
   _formRoomFee=0
+  // Clear free upgrade
+  sv('f-upgrade-rate','')
+  document.getElementById('free-upgrade-panel').style.display='none'
+  document.getElementById('upgrade-active-label').style.display='none'
+  document.getElementById('btn-free-upgrade').style.background='#e0f2fe'
+  document.getElementById('btn-free-upgrade').style.color='#0284c7'
+  document.getElementById('btn-upg-420').style.background='#fff';document.getElementById('btn-upg-420').style.color='#0369a1'
+  document.getElementById('btn-upg-375').style.background='#fff';document.getElementById('btn-upg-375').style.color='#0369a1'
   setOwnGear([]);loadItems([])
   const msd=document.getElementById('f-multi-student');if(msd)msd.checked=false
   setClassmates([])
