@@ -53,8 +53,9 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f4f8;color:#1a202c;font-size:14px;min-height:100vh}
 .nav{background:#0b3d5e;color:white;padding:0 16px;display:flex;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2);gap:0;height:54px}
 .nav-brand{font-size:15px;font-weight:700;margin-right:16px;white-space:nowrap;display:flex;align-items:center;gap:6px;flex-shrink:0}
-.nav-tabs{display:flex;flex:1;overflow:hidden;height:54px}
-.nav-tab{padding:0 13px;height:54px;display:flex;align-items:center;color:rgba(255,255,255,.65);cursor:pointer;border-bottom:3px solid transparent;font-size:13px;font-weight:500;transition:all .15s;white-space:nowrap}
+.nav-tabs{display:flex;flex:1;overflow-x:auto;height:54px;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{padding:0 11px;height:54px;display:flex;align-items:center;color:rgba(255,255,255,.65);cursor:pointer;border-bottom:3px solid transparent;font-size:12px;font-weight:500;transition:all .15s;white-space:nowrap}
 .nav-tab:hover{color:white;background:rgba(255,255,255,.07)}
 .nav-tab.active{color:white;border-bottom-color:#38bdf8}
 .nav-tools{display:flex;gap:6px;align-items:center;margin-left:8px;flex-shrink:0}
@@ -260,6 +261,20 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
   .bw{box-shadow:none;border:none;padding:20px}
   .bk-sheet{box-shadow:none;border:none;padding:20px}
 }
+/* ====== ROOM CALENDAR ====== */
+.rcal-table{border-collapse:collapse;table-layout:fixed;min-width:max-content;font-size:12px}
+.rcal-table th,.rcal-table td{border:1px solid #e2e8f0;padding:0}
+.rcal-th-room{width:72px;min-width:72px;position:sticky;left:0;background:#0b3d5e;color:white;font-size:11px;font-weight:700;text-align:center;padding:6px 4px;z-index:3;white-space:nowrap}
+.rcal-th-date{width:54px;min-width:54px;text-align:center;padding:5px 2px;background:#f8fafc;font-size:10px;color:#475569;font-weight:600}
+.rcal-th-date.today{background:#0ea5e9;color:white}
+.rcal-cat-row td{background:#f1f5f9;font-size:10px;font-weight:700;color:#64748b;padding:3px 8px;position:sticky;left:0;z-index:2;letter-spacing:.5px;text-transform:uppercase}
+.rcal-room-label{position:sticky;left:0;background:#f8fafc;z-index:2;font-size:11px;font-weight:700;text-align:center;color:#374151;padding:0;min-height:32px;border-right:2px solid #cbd5e1}
+.rcal-cell{min-height:32px;height:32px;padding:1px;vertical-align:middle;position:relative;cursor:default}
+.rcal-cell.drop-ok{background:#dbeafe!important}
+.rcal-block{display:block;width:100%;height:28px;border-radius:4px;color:white;font-size:10px;font-weight:700;padding:0 5px;line-height:28px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.rcal-block:active{cursor:grabbing;opacity:.8}
+.rcal-cont{min-height:28px;height:28px}
+.rcal-free{min-height:28px;height:28px}
 </style>
 </head>
 <body>
@@ -267,11 +282,12 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
   <div class="nav-brand">🤿 LUCKY TITO PG TRANNING CENTER</div>
   <div class="nav-tabs">
     <div class="nav-tab active" onclick="switchTab('form')" id="tab-form">＋ New Guest</div>
-    <div class="nav-tab" onclick="switchTab('schedule')" id="tab-schedule">📅 Schedule</div>
-    <div class="nav-tab" onclick="switchTab('list')" id="tab-list">📋 Guest List</div>
-    <div class="nav-tab" onclick="switchTab('bill')" id="tab-bill">🧾 Bill</div>
-    <div class="nav-tab" onclick="switchTab('booking')" id="tab-booking">📄 Booking</div>
-    <div class="nav-tab" onclick="switchTab('elearning')" id="tab-elearning">📚 eLearning</div>
+    <div class="nav-tab" onclick="switchTab('schedule')" id="tab-schedule">Schedule</div>
+    <div class="nav-tab" onclick="switchTab('list')" id="tab-list">Guest List</div>
+    <div class="nav-tab" onclick="switchTab('bill')" id="tab-bill">Bill</div>
+    <div class="nav-tab" onclick="switchTab('booking')" id="tab-booking">Booking</div>
+    <div class="nav-tab" onclick="switchTab('elearning')" id="tab-elearning">eLearning</div>
+    <div class="nav-tab" onclick="switchTab('rooms')" id="tab-rooms">Rooms</div>
   </div>
   <div class="nav-tools">
     <span id="nav-username" style="font-size:12px;color:rgba(255,255,255,.75);font-weight:600;padding:0 6px;white-space:nowrap"></span>
@@ -593,10 +609,17 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
         <div id="room-fee-preview-note" style="font-size:11px;color:#64748b;margin-top:3px"></div>
       </div>
       <hr class="divider" style="margin-top:14px">
-      <div class="g2" style="margin-top:4px">
+      <div class="g3" style="margin-top:4px">
         <div class="fg"><label>已付定金 Deposit Paid (元)</label><input type="number" id="f-deposit" placeholder="0" min="0" oninput="updateSub();updateFormTotal()"></div>
-        <div class="fg full"><label>备注 Notes</label><textarea id="f-note" placeholder="特殊要求、内部备注…"></textarea></div>
+        <div class="fg"><label>实收 Actual Received</label><input type="text" id="f-actual-received" placeholder="0"></div>
+        <div class="fg"><label>币种 Currency</label>
+          <select id="f-actual-currency">
+            <option value="CNY">CNY 人民币 ¥</option>
+            <option value="PHP">PHP 菲律宾比索 ₱</option>
+          </select>
+        </div>
       </div>
+      <div class="fg" style="margin-top:6px"><label>备注 Notes</label><textarea id="f-note" placeholder="特殊要求、内部备注…"></textarea></div>
       <div id="form-total-summary" style="display:none;margin-top:12px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
         <div class="btr" style="padding:8px 14px;background:#f8fafc;font-size:13px"><span>应付总额 Total</span><span id="fts-total" style="font-weight:700">¥ 0.00</span></div>
         <div id="fts-dep-row" style="display:none;padding:7px 14px;font-size:13px;color:#059669;border-top:1px dashed #e2e8f0"><span>已付定金 Deposit</span><span id="fts-dep">− ¥ 0.00</span></div>
@@ -643,7 +666,16 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
 
 <!-- PAGE: LIST -->
 <div id="page-list" class="page">
-  <input type="text" class="sb no-print" placeholder="🔍 Search name, email, ID, location, instructor, room…" oninput="renderList(this.value)">
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px" class="no-print">
+    <input type="text" class="sb" style="flex:1;margin-bottom:0" placeholder="🔍 Search name, email, ID, location, instructor, room…" oninput="renderList(this.value)">
+    <button id="btn-batch-select" class="btn btn-secondary btn-sm" onclick="toggleBatchMode()" style="white-space:nowrap">☑ Select</button>
+  </div>
+  <div id="batch-toolbar" style="display:none;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:8px 14px;margin-bottom:8px;display:none;align-items:center;gap:10px" class="no-print">
+    <span id="batch-count" style="font-size:13px;color:#0369a1;font-weight:600">0 selected</span>
+    <button class="btn btn-sm" style="background:#0284c7;color:white" onclick="batchCheckout()">✓ Checkout Selected</button>
+    <button class="btn btn-secondary btn-sm" onclick="batchSelectAll()">Select All</button>
+    <button class="btn btn-secondary btn-sm" onclick="toggleBatchMode()">Cancel</button>
+  </div>
   <div id="customer-list"></div>
 </div>
 
@@ -686,6 +718,27 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
     <div class="card-body" style="padding:0">
       <div id="el-out"><div class="empty-state"><div class="empty-icon">📚</div><p>No course students found</p></div></div>
     </div>
+  </div>
+</div>
+
+<!-- PAGE: ROOMS -->
+<div id="page-rooms" class="page">
+  <div class="card" style="overflow:hidden">
+    <div class="card-header" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span class="card-title">🏨 Room Calendar</span>
+      <div style="display:flex;gap:6px;align-items:center;margin-left:auto">
+        <button class="btn btn-secondary btn-sm" onclick="roomCalShift(-7)">← Prev</button>
+        <button class="btn btn-secondary btn-sm" onclick="roomCalToday()">Today</button>
+        <button class="btn btn-secondary btn-sm" onclick="roomCalShift(7)">Next →</button>
+        <span id="rooms-range" style="font-size:12px;color:#64748b;white-space:nowrap"></span>
+      </div>
+    </div>
+    <div class="card-body" style="padding:0;overflow-x:auto">
+      <div id="rooms-cal"></div>
+    </div>
+  </div>
+  <div style="margin-top:10px;padding:8px 12px;background:#f8fafc;border-radius:8px;font-size:11px;color:#94a3b8">
+    💡 Click a guest block to edit · Drag to shift dates · Drop on a different room to reassign
   </div>
 </div>
 
@@ -807,13 +860,14 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 
 // ====== NAV ======
 function switchTab(n){
-  ['form','schedule','list','bill','booking','elearning'].forEach(t=>{
+  ['form','schedule','list','bill','booking','elearning','rooms'].forEach(t=>{
     document.getElementById('page-'+t).classList.toggle('active',t===n)
     document.getElementById('tab-'+t).classList.toggle('active',t===n)
   })
   if(n==='list')renderList()
   if(n==='bill')fillBillSel()
   if(n==='schedule')renderSchedule()
+  if(n==='rooms')renderRooms()
   if(n==='elearning')renderElearning()
   if(n==='booking'){renderSemiCal()}
 }
@@ -858,8 +912,8 @@ function cloudLoad(){
       local.forEach(c=>{if(!ids.has(c.id))cloud.push(c)});saveAll(cloud)
       localStorage.setItem(TK,new Date().toISOString())
       setNavSync('ok','Synced '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));refreshModalUI()
-      const ac=['form','schedule','list','bill'].find(t=>document.getElementById('page-'+t).classList.contains('active'))
-      if(ac==='list')renderList();if(ac==='schedule')renderSchedule();if(ac==='bill')fillBillSel()
+      const ac=['form','schedule','list','bill','rooms'].find(t=>document.getElementById('page-'+t).classList.contains('active'))
+      if(ac==='list')renderList();if(ac==='schedule')renderSchedule();if(ac==='bill')fillBillSel();if(ac==='rooms')renderRooms()
     }else setNavSync('fail','Sync failed')
   }
   s.onerror=function(){if(done)return;if(s.parentNode)document.head.removeChild(s);delete window[cb];setNavSync('fail','Sync failed')}
@@ -1297,7 +1351,7 @@ function collect(){
     certSystem:v('f-certsys'),certNumber:v('f-certno').trim(),divingExp:v('f-divexp').trim(),
     ownGear:getOwnGear(),gearNote:v('f-gn').trim(),
     instructor:v('f-inst').trim(),multiStudentDisc:document.getElementById('f-multi-student')?.checked||false,classmates:getClassmates(),courseStart:v('f-cstart'),courseEnd:v('f-cend'),
-    items:getItems(),deposit:v('f-deposit'),holFdQty:_holFdQty||0,notes:v('f-note').trim(),savedAt:new Date().toISOString()}
+    items:getItems(),deposit:v('f-deposit'),actualReceived:v('f-actual-received').trim(),actualCurrency:v('f-actual-currency')||'CNY',holFdQty:_holFdQty||0,notes:v('f-note').trim(),savedAt:new Date().toISOString()}
 }
 function fillForm(c){
   sv('f-id',c.id);sv('f-custno-stored',c.custNo||'')
@@ -1334,7 +1388,7 @@ function fillForm(c){
   setClassmates(c.classmates||[])
   sv('f-cstart',c.courseStart||'');sv('f-cend',c.courseEnd||'')
   loadItems(c.items)
-  sv('f-deposit',c.deposit);sv('f-note',c.notes)
+  sv('f-deposit',c.deposit);sv('f-actual-received',c.actualReceived||'');sv('f-actual-currency',c.actualCurrency||'CNY');sv('f-note',c.notes)
   _holFdQty=c.holFdQty||0
   updateSub();updateCustNo();onCheckinChange();updateFormMode()
 }
@@ -1362,7 +1416,7 @@ function _clearForm(){
   ;['f-name','f-dob','f-email','f-af','f-at-date','f-df','f-dt-date','f-ovhot',
     'f-arr-ct','f-arr-cf','f-arr-drv','f-dep-ct','f-dep-cf','f-dep-drv',
     'f-ci','f-co','f-rnum','f-rrate','f-rdisc-custom','f-ht','f-wt','f-shoe','f-myopia',
-    'f-fs','f-certno','f-divexp','f-gn','f-inst','f-deposit','f-note',
+    'f-fs','f-certno','f-divexp','f-gn','f-inst','f-deposit','f-actual-received','f-note',
     'f-arr-boat','f-arr-plate','f-dep-boat','f-dep-plate'
   ].forEach(id=>sv(id,''))
   ;['f-term','f-rtype','f-cs','f-ws','f-bs','f-certsys','f-rdisc','f-gender',
@@ -2283,13 +2337,42 @@ function schCard(c,mode,inCp,isSug){
 function empty(icon,txt){return'<div class="empty-state" style="padding:26px"><div class="empty-icon" style="font-size:30px">'+icon+'</div><p>'+txt+'</p></div>'}
 
 // ====== LIST ======
+let _batchMode=false,_batchSelected=new Set()
+function toggleBatchMode(){
+  _batchMode=!_batchMode;_batchSelected.clear()
+  document.getElementById('btn-batch-select').textContent=_batchMode?'✕ Cancel':'☑ Select'
+  document.getElementById('btn-batch-select').className='btn btn-sm '+ (_batchMode?'btn-danger':'btn-secondary')
+  const tb=document.getElementById('batch-toolbar');tb.style.display=_batchMode?'flex':'none'
+  renderList(document.querySelector('.sb')?.value||'')
+}
+function batchSelectAll(){
+  const all=getAll().filter(c=>!c.checkedOut)
+  all.forEach(c=>_batchSelected.add(c.id))
+  document.getElementById('batch-count').textContent=_batchSelected.size+' selected'
+  renderList(document.querySelector('.sb')?.value||'')
+}
+function batchToggle(id){
+  if(_batchSelected.has(id))_batchSelected.delete(id);else _batchSelected.add(id)
+  document.getElementById('batch-count').textContent=_batchSelected.size+' selected'
+}
+function batchCheckout(){
+  if(!_batchSelected.size)return
+  if(!confirm('Checkout '+_batchSelected.size+' guest(s)?'))return
+  const all=getAll()
+  all.forEach(c=>{if(_batchSelected.has(c.id))c.checkedOut=true})
+  saveAll(all);cloudSave();_batchSelected.clear();toggleBatchMode()
+}
 function renderList(q){
   const all=getAll();const s=(q||'').toLowerCase()
-  // Without search: hide checked-out guests. With search: show all matches including checked-out.
   const f=(s
     ?all.filter(c=>[c.name,c.email,c.custNo,c.location,c.instructor,c.roomNum,c.date].join(' ').toLowerCase().includes(s))
     :all.filter(c=>!c.checkedOut)
-  ).slice().sort((a,b)=>(a.arriveTime||'').localeCompare(b.arriveTime||''))
+  ).slice().sort((a,b)=>{
+    const tA=a.arriveTime||'',tB=b.arriveTime||''
+    if(tA!==tB)return tA.localeCompare(tB)
+    const rA=parseInt(a.roomNum)||9999,rB=parseInt(b.roomNum)||9999
+    return rA-rB
+  })
   const el=document.getElementById('customer-list')
   if(!f.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🤿</div><p>'+(s?'No results found':'No guests yet — click New Guest to start')+'</p></div>';return}
   const bc={已付全款:'bp',已付定金:'bd',未付:'bu'}
@@ -2297,23 +2380,74 @@ function renderList(q){
   el.innerHTML=f.map(c=>{
     const tot=calcTotal(c);const b=bc[c.payStatus]||'bu'
     const isOut=!!c.checkedOut
+    const isSel=_batchSelected.has(c.id)
     const meta=[c.custNo?'🔢 '+c.custNo:'',c.date?'📅 '+c.date:'',c.location?'📍 '+c.location:'',c.instructor?'👨‍🏫 '+c.instructor:'',c.roomNum?'🏨 '+c.roomNum+(c.roomType?' ('+c.roomType.split(' ')[0]+')':''):'',tot>0?'💰 ¥'+tot.toFixed(0):''].filter(Boolean)
     const coBtn='<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;font-weight:600;color:'+(isOut?'#16a34a':'#64748b')+';white-space:nowrap"><input type="checkbox" '+(isOut?'checked':'')+' onchange="toggleCheckedOut(\''+c.id+'\',this)" style="width:14px;height:14px;cursor:pointer;accent-color:#16a34a"> Checked Out</label>'
-    return'<div class="cc" onclick="editC(\''+c.id+'\')" style="'+(isOut?'opacity:0.5;':'')+'"><div class="ava" style="'+(isOut?'background:#94a3b8':'')+'">'+( c.name||'?').charAt(0)+'</div><div class="ci"><div class="cn">'+c.name+' <span class="badge '+b+'">'+(payLbl[c.payStatus]||'Unpaid')+'</span>'+(isOut?'<span class="tag" style="font-size:10px;background:#dcfce7;color:#16a34a">✓ Checked Out</span>':'')+(c.isHoliday==='是'?'<span class="tag th" style="font-size:10px">Holiday</span>':'')+'</div><div class="cm">'+meta.map(m=>'<span>'+m+'</span>').join('')+'</div></div><div class="ca" onclick="event.stopPropagation()">'+coBtn+'<button class="btn btn-secondary btn-sm" onclick="goBill(\''+c.id+'\')">Bill</button><button class="btn btn-danger btn-sm" onclick="delC(\''+c.id+'\')">Delete</button></div></div>'
+    const batchCb=_batchMode?'<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;cursor:pointer;margin-right:4px"><input type="checkbox" '+(isSel?'checked':'')+' onchange="batchToggle(\''+c.id+'\')" style="width:16px;height:16px;cursor:pointer;accent-color:#0284c7"></label>':''
+    return'<div class="cc" onclick="'+(_batchMode?'':'editC(\''+c.id+'\')')+'\" style="'+(isOut?'opacity:0.5;':'')+(isSel?'background:#e0f2fe;border-color:#0284c7;':'')+'"><div style="display:flex;align-items:center">'+batchCb+'<div class="ava" style="'+(isOut?'background:#94a3b8':'')+'flex-shrink:0">'+(c.name||'?').charAt(0)+'</div></div><div class="ci"><div class="cn">'+c.name+' <span class="badge '+b+'">'+(payLbl[c.payStatus]||'Unpaid')+'</span>'+(isOut?'<span class="tag" style="font-size:10px;background:#dcfce7;color:#16a34a">✓ Checked Out</span>':'')+(c.isHoliday==='是'?'<span class="tag th" style="font-size:10px">Holiday</span>':'')+'</div><div class="cm">'+meta.map(m=>'<span>'+m+'</span>').join('')+'</div></div><div class="ca" onclick="event.stopPropagation()">'+(!_batchMode?coBtn:'')+'<button class="btn btn-secondary btn-sm" onclick="goBill(\''+c.id+'\')">Bill</button>'+(!_batchMode?'<button class="btn btn-danger btn-sm" onclick="delC(\''+c.id+'\')">Delete</button>':'')+'</div></div>'
   }).join('')
 }
 function editC(id){const c=getAll().find(x=>x.id===id);if(!c)return;fillForm(c);switchTab('form');window.scrollTo(0,0)}
 function delC(id){if(!confirm('确认删除？'))return;saveAll(getAll().filter(c=>c.id!==id));cloudSave();renderList(document.querySelector('.sb')?.value||'')}
 function goBill(id){switchTab('bill');document.getElementById('bill-sel').value=id;renderBill()}
+let _coModalCb=null
 function toggleCheckedOut(id,cb){
   const all=getAll();const i=all.findIndex(c=>c.id===id);if(i<0)return
-  const isOut=all[i].checkedOut
-  if(!isOut){
-    if(!confirm('Confirm: '+all[i].name+' has checked out?\n确认该客人已结账？')){if(cb)cb.checked=false;return}
+  if(all[i].checkedOut){
+    // Un-checkout — just toggle back
+    all[i].checkedOut=false;saveAll(all);cloudSave()
+    renderList(document.querySelector('.sb')?.value||'');return
   }
-  all[i].checkedOut=!isOut
+  // Start checkout modal flow
+  _coModalCb=cb
+  showCoModal(id)
+}
+function showCoModal(id){
+  const modal=document.getElementById('co-modal')
+  const all=getAll();const c=all.find(x=>x.id===id);if(!c)return
+  modal.style.display='flex'
+  document.getElementById('co-modal-inner').innerHTML=
+    '<div style="font-size:16px;font-weight:800;color:#0b3d5e;margin-bottom:6px">✓ Checkout</div>'
+    +'<div style="font-size:13px;color:#475569;margin-bottom:18px">Confirm checkout for <strong>'+c.name+'</strong>?</div>'
+    +'<div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:10px">Payment currency 结账币种</div>'
+    +'<div style="display:flex;gap:10px;margin-bottom:20px">'
+    +'<button onclick="coPickCurrency(\''+id+'\',\'CNY\')" style="flex:1;padding:12px;border:2px solid #e2e8f0;border-radius:10px;background:#f8fafc;font-size:14px;font-weight:700;cursor:pointer;color:#0b3d5e">¥ CNY<br><span style=\"font-size:11px;font-weight:400;color:#94a3b8\">人民币</span></button>'
+    +'<button onclick="coPickCurrency(\''+id+'\',\'PHP\')" style="flex:1;padding:12px;border:2px solid #e2e8f0;border-radius:10px;background:#f8fafc;font-size:14px;font-weight:700;cursor:pointer;color:#0b3d5e">₱ PHP<br><span style=\"font-size:11px;font-weight:400;color:#94a3b8\">菲律宾比索</span></button>'
+    +'</div>'
+    +'<button onclick="coClose()" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;background:white;color:#64748b;cursor:pointer;font-size:13px">Cancel 取消</button>'
+}
+function coPickCurrency(id,cur){
+  if(cur==='CNY'){coFinish(id,'CNY',null)}
+  else{
+    // Show exchange rate input
+    document.getElementById('co-modal-inner').innerHTML=
+      '<div style="font-size:15px;font-weight:800;color:#0b3d5e;margin-bottom:6px">₱ PHP Exchange Rate</div>'
+      +'<div style="font-size:12px;color:#64748b;margin-bottom:16px">账单将按此汇率全部折算为菲律宾比索</div>'
+      +'<div style="font-size:13px;font-weight:700;margin-bottom:6px">¥ 1 CNY = ₱ ? PHP</div>'
+      +'<input id="co-rate-input" type="number" placeholder="e.g. 8.50" step="0.01" min="0" style="width:100%;padding:10px 14px;border:2px solid #bae6fd;border-radius:8px;font-size:16px;margin-bottom:16px;box-sizing:border-box;outline:none">'
+      +'<button onclick="coConfirmRate(\''+id+'\')" style="width:100%;padding:10px;background:#0ea5e9;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">Confirm 确认</button>'
+      +'<button onclick="showCoModal(\''+id+'\')" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;background:white;color:#64748b;cursor:pointer;font-size:13px">← Back</button>'
+    setTimeout(()=>document.getElementById('co-rate-input')?.focus(),100)
+  }
+}
+function coConfirmRate(id){
+  const rate=parseFloat(document.getElementById('co-rate-input').value)
+  if(!rate||rate<=0){document.getElementById('co-rate-input').style.border='2px solid #ef4444';return}
+  coFinish(id,'PHP',rate)
+}
+function coFinish(id,cur,rate){
+  coClose()
+  const all=getAll();const i=all.findIndex(c=>c.id===id);if(i<0)return
+  all[i].checkedOut=true
+  all[i].checkoutCurrency=cur
+  if(rate)all[i].phpRate=rate
   saveAll(all);cloudSave()
   renderList(document.querySelector('.sb')?.value||'')
+}
+function coClose(){
+  document.getElementById('co-modal').style.display='none'
+  if(_coModalCb)_coModalCb.checked=false
+  _coModalCb=null
 }
 
 // ====== BILL ======
@@ -2430,6 +2564,13 @@ roomRows+
 (c.upgrade?'<div style="margin-top:12px;font-size:12px;color:#0284c7;background:#e0f2fe;padding:5px 12px;border-radius:20px;font-weight:600;display:inline-block">🎁 '+c.upgrade+'</div>':'')+
 (c.notes?'<div style="margin-top:12px;padding:10px 13px;background:#f8fafc;border-radius:8px;font-size:12px;color:#64748b;line-height:1.6">📝 <strong>Notes: </strong>'+c.notes+'</div>':'')+
 '<div class="bfoot">Thank you for diving with us!</div></div>'
+  // PHP conversion: replace all ¥ amounts with ₱ equivalents
+  if(c.checkoutCurrency==='PHP'&&c.phpRate){
+    const rate=parseFloat(c.phpRate)
+    const el=document.getElementById('bill-out')
+    // Replace ¥ X.XX patterns
+    el.innerHTML=el.innerHTML.replace(/¥\s*([\d,]+\.?\d*)/g,(m,n)=>'₱ '+Math.round(parseFloat(n.replace(/,/g,''))*rate).toLocaleString())
+  }
 }
 
 function generateBillImage(btn){
@@ -2712,13 +2853,172 @@ function renderElearning(){
   el.innerHTML=html
 }
 
+// ====== ROOM CALENDAR ======
+const ROOM_DEFS=[
+  // Family A 双床房A ¥420
+  {num:'101',cat:'Family A',color:'#0ea5e9'},{num:'103',cat:'Family A',color:'#0ea5e9'},
+  {num:'108',cat:'Family A',color:'#0ea5e9'},{num:'109',cat:'Family A',color:'#0ea5e9'},
+  {num:'201',cat:'Family A',color:'#0ea5e9'},{num:'202',cat:'Family A',color:'#0ea5e9'},
+  {num:'203',cat:'Family A',color:'#0ea5e9'},{num:'205',cat:'Family A',color:'#0ea5e9'},
+  {num:'206',cat:'Family A',color:'#0ea5e9'},
+  // Single Bed 单大床房 ¥375
+  {num:'102',cat:'Single',color:'#10b981'},{num:'207',cat:'Single',color:'#10b981'},{num:'208',cat:'Single',color:'#10b981'},
+  // Family B 双大床 ¥450
+  {num:'105',cat:'Family B',color:'#8b5cf6'},{num:'106',cat:'Family B',color:'#8b5cf6'},{num:'107',cat:'Family B',color:'#8b5cf6'},
+  // Dorm Female 女宿舍 ¥125
+  {num:'F1',cat:'Dorm F',color:'#ec4899'},{num:'F2',cat:'Dorm F',color:'#ec4899'},{num:'F3',cat:'Dorm F',color:'#ec4899'},
+  {num:'F4',cat:'Dorm F',color:'#ec4899'},{num:'F5',cat:'Dorm F',color:'#ec4899'},{num:'F6',cat:'Dorm F',color:'#ec4899'},
+  // Dorm Male 男宿舍 ¥125
+  {num:'M1',cat:'Dorm M',color:'#f59e0b'},{num:'M2',cat:'Dorm M',color:'#f59e0b'},{num:'M3',cat:'Dorm M',color:'#f59e0b'},
+  {num:'M4',cat:'Dorm M',color:'#f59e0b'},{num:'M5',cat:'Dorm M',color:'#f59e0b'},{num:'M6',cat:'Dorm M',color:'#f59e0b'},
+  // Instructor 教练宿舍
+  {num:'I1',cat:'Instructor',color:'#64748b'},{num:'I2',cat:'Instructor',color:'#64748b'},
+]
+const CAT_LABELS={'Family A':'Family A 双床房A ¥420','Single':'Single Bed 单大床房 ¥375','Family B':'Family B 双大床 ¥450','Dorm F':'Dorm F 女宿舍 ¥125','Dorm M':'Dorm M 男宿舍 ¥125','Instructor':'Instructor 教练宿舍'}
+const GUEST_COLORS=['#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#84cc16','#f97316']
+let _calStart=0 // days offset from today
+let _calDragCid=null,_calDragDate=null
+
+function roomCalShift(d){_calStart+=d;renderRooms()}
+function roomCalToday(){_calStart=0;renderRooms()}
+
+function addDays(dateStr,n){
+  const d=new Date(dateStr);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)
+}
+function daysBetween(a,b){return Math.round((new Date(b)-new Date(a))/(86400000))}
+
+function renderRooms(){
+  const DAYS=21
+  const today=new Date();today.setHours(0,0,0,0)
+  const startDate=new Date(today);startDate.setDate(today.getDate()+_calStart)
+  const startStr=startDate.toISOString().slice(0,10)
+  const dates=[]
+  for(let i=0;i<DAYS;i++){
+    const d=new Date(startDate);d.setDate(startDate.getDate()+i)
+    dates.push(d.toISOString().slice(0,10))
+  }
+  const endStr=dates[DAYS-1]
+  const todayStr=today.toISOString().slice(0,10)
+  const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  const fmtDate=s=>{const[,m,d]=s.split('-');return parseInt(d)+' '+mo[parseInt(m)-1]}
+  document.getElementById('rooms-range').textContent=fmtDate(startStr)+' — '+fmtDate(endStr)
+
+  // Build guest color map (consistent per guest)
+  const all=getAll()
+  const colorMap={}
+  all.forEach((c,i)=>{colorMap[c.id]=GUEST_COLORS[i%GUEST_COLORS.length]})
+
+  // Build lookup: roomNum+date → guest
+  const occ={} // key: roomNum+'|'+date → {c, isStart}
+  all.forEach(c=>{
+    if(!c.checkin||!c.checkout||!c.roomNum)return
+    const nights=daysBetween(c.checkin,c.checkout)
+    for(let i=0;i<nights;i++){
+      const ds=addDays(c.checkin,i)
+      const key=c.roomNum+'|'+ds
+      occ[key]={c,isStart:i===0,color:colorMap[c.id]}
+    }
+  })
+
+  // Group rooms by category
+  const cats=[...new Set(ROOM_DEFS.map(r=>r.cat))]
+
+  let html='<table class="rcal-table"><thead><tr><th class="rcal-th-room">Room</th>'
+  dates.forEach(d=>{
+    const isToday=d===todayStr
+    const label=fmtDate(d)
+    html+='<th class="rcal-th-date'+(isToday?' today':'')+'">'+label+'</th>'
+  })
+  html+='</tr></thead><tbody>'
+
+  cats.forEach(cat=>{
+    // Category header row
+    html+='<tr class="rcal-cat-row"><td colspan="'+(DAYS+1)+'">'+CAT_LABELS[cat]+'</td></tr>'
+    ROOM_DEFS.filter(r=>r.cat===cat).forEach(room=>{
+      html+='<tr>'
+      html+='<td class="rcal-room-label" style="background:'+(room.color+'22')+'"><div style="display:flex;align-items:center;justify-content:center;height:32px"><span style="font-size:11px;font-weight:700;color:'+room.color+'">'+room.num+'</span></div></td>'
+      let skip=0
+      dates.forEach((d,di)=>{
+        if(skip>0){skip--;return}
+        const key=room.num+'|'+d
+        const entry=occ[key]
+        const isToday=d===todayStr
+        if(entry&&entry.isStart){
+          // Count colspan (only within visible window)
+          let span=1
+          for(let k=1;k<DAYS-di;k++){if(occ[room.num+'|'+addDays(d,k)])span++;else break}
+          skip=span-1
+          const bg=entry.color
+          const name=entry.c.name||'Guest'
+          const displayName=span<=2?name.split(' ')[0].substring(0,5):(name.length>16?name.substring(0,15)+'…':name)
+          html+='<td class="rcal-cell" style="background:'+(isToday?'#dbeafe':'')+'" colspan="'+span+'" data-room="'+room.num+'" data-date="'+d+'" ondragover="rcalDragOver(event)" ondrop="rcalDrop(event)">'
+            +'<div class="rcal-block" draggable="true" style="background:'+bg+'" title="'+name+' · '+entry.c.checkin+' → '+entry.c.checkout+'" data-cid="'+entry.c.id+'" data-checkin="'+entry.c.checkin+'" ondragstart="rcalDragStart(event)" onclick="editC(\''+entry.c.id+'\');event.stopPropagation()">'+displayName+'</div></td>'
+        } else if(entry){
+          // Mid-stay block with no start visible (started before window)
+          html+='<td class="rcal-cell" style="background:'+(entry.color+'33')+'" data-room="'+room.num+'" data-date="'+d+'" ondragover="rcalDragOver(event)" ondrop="rcalDrop(event)"></td>'
+        } else {
+          html+='<td class="rcal-cell" style="background:'+(isToday?'#eff6ff':'')+'" data-room="'+room.num+'" data-date="'+d+'" ondragover="rcalDragOver(event)" ondrop="rcalDrop(event)"></td>'
+        }
+      })
+      html+='</tr>'
+    })
+  })
+  html+='</tbody></table>'
+  document.getElementById('rooms-cal').innerHTML=html
+}
+
+function rcalDragStart(e){
+  const el=e.target.closest('[data-cid]')
+  if(!el)return
+  _calDragCid=el.dataset.cid
+  _calDragDate=el.dataset.checkin
+  e.dataTransfer.effectAllowed='move'
+  e.dataTransfer.setData('text/plain',_calDragCid)
+}
+function rcalDragOver(e){
+  e.preventDefault();e.dataTransfer.dropEffect='move'
+  document.querySelectorAll('.drop-ok').forEach(x=>x.classList.remove('drop-ok'))
+  e.currentTarget.classList.add('drop-ok')
+}
+function rcalDrop(e){
+  e.preventDefault()
+  document.querySelectorAll('.drop-ok').forEach(x=>x.classList.remove('drop-ok'))
+  const newRoom=e.currentTarget.dataset.room
+  const newDate=e.currentTarget.dataset.date
+  if(!_calDragCid||!newDate)return
+  const all=getAll();const i=all.findIndex(c=>c.id===_calDragCid);if(i<0)return
+  const c=all[i]
+  const nights=c.checkin&&c.checkout?daysBetween(c.checkin,c.checkout):1
+  c.checkin=newDate
+  c.checkout=addDays(newDate,nights)
+  if(newRoom)c.roomNum=newRoom
+  // Update roomType to match new room
+  const rdef=ROOM_DEFS.find(r=>r.num===newRoom)
+  if(rdef){
+    const typeMap={'Family A':'Family Room A 双床房A','Single':'Single Bed Room 单大床房','Family B':'Family Room B 双床房B','Dorm F':'Student Dorm 学员宿舍','Dorm M':'Student Dorm 学员宿舍','Instructor':'Instructor Dorm 教练宿舍'}
+    if(typeMap[rdef.cat])c.roomType=typeMap[rdef.cat]
+  }
+  c.savedAt=new Date().toISOString()
+  saveAll(all);cloudSave();renderRooms()
+  _calDragCid=null;_calDragDate=null
+}
+
 // ====== INIT ======
 document.getElementById('sch-date').value=new Date().toISOString().split('T')[0]
 addItem();initDiveCats();initTimeSelects();renderSemiCal();renderSaveLog()
 if(getSyncUrl()){setNavSync('ok','Online');cloudLoad()}else setNavSync('none','Offline')
+// Auto-sync every 5 minutes
+setInterval(()=>{if(getSyncUrl())cloudSave()},5*60*1000)
 // Restore username display after page refresh
 ;(function(){const u=sessionStorage.getItem('lt_user');const el=document.getElementById('nav-username');if(u&&el)el.textContent='👤 '+u})()
 </script>
+
+<!-- CHECKOUT MODAL -->
+<div id="co-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:16px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div id="co-modal-inner"></div>
+  </div>
+</div>
 </body>
 </html>
                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
