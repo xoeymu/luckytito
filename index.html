@@ -186,6 +186,9 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
 .pr-val{color:#0f172a;font-weight:500;word-break:break-all}
 .pr-none{color:#94a3b8;font-size:13px;text-align:center;padding:18px 0}
 .room-info-tip{font-size:12px;color:#64748b;margin-top:4px;font-style:italic}
+.save-log-row{font-size:12px;color:#475569;padding:5px 0;border-bottom:1px solid #f1f5f9;font-family:'Courier New',monospace;line-height:1.5}
+.save-log-row:last-child{border-bottom:none}
+.save-log-toggle{cursor:pointer;user-select:none}
 .hol-badge{display:inline-flex;align-items:center;gap:4px;background:#fee2e2;border:1px solid #fecaca;color:#991b1b;border-radius:6px;padding:3px 9px;font-size:12px;font-weight:700;margin-top:6px}
 .step-row{display:flex;gap:14px;margin-bottom:20px}
 .step-num{width:26px;height:26px;border-radius:50%;background:#e0f2fe;color:#0284c7;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
@@ -205,6 +208,34 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
 .bk-th{background:#dbe9f7;padding:7px 8px;font-size:11px;font-weight:800;text-align:center;border-bottom:2px solid #4a90c4;color:#1a3a5c}
 .bk-td{padding:8px 8px;border-bottom:1px solid #eee;font-size:12px;vertical-align:middle}
 .bk-logo-title{font-size:33px;font-weight:900;color:#1a6bb5;font-family:Georgia,serif;letter-spacing:1px;line-height:1.1}
+@media(max-width:768px){
+  .nav{height:auto;flex-wrap:wrap;padding:6px 10px;gap:4px}
+  .nav-brand{font-size:12px;margin-right:auto;order:1}
+  .nav-tools{order:2;margin-left:0}
+  .nav-tabs{order:3;flex:0 0 100%;overflow-x:auto;-webkit-overflow-scrolling:touch;height:40px;scrollbar-width:none}
+  .nav-tabs::-webkit-scrollbar{display:none}
+  .nav-tab{height:40px;padding:0 10px;font-size:11px}
+  .page{padding:10px 8px 60px}
+  .card-body{padding:12px}
+  .g2,.g3,.g4{grid-template-columns:1fr!important}
+  .quick-add-row{flex-direction:column}
+  .quick-add-row .fg{min-width:0;width:100%}
+  .sch-stats{grid-template-columns:1fr 1fr}
+  .sch-card{flex-wrap:wrap;gap:8px}
+  .bw{padding:18px 14px;margin:0}
+  .bh{flex-direction:column;gap:10px}
+  .bnum,.blbl,.bdate{text-align:left}
+  .big{grid-template-columns:1fr}
+  .it,.bit{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .scal-wrap{overflow-x:auto}
+  .modal-box,.modal-sm{padding:16px;border-radius:12px}
+  .modal-overlay{padding:12px 8px}
+  .bill-controls{flex-wrap:wrap}
+  .bill-select{min-width:0;width:100%}
+  .form-footer{flex-wrap:wrap}
+  .bk-sheet{padding:16px 12px}
+  input[type=text],input[type=number],input[type=date],input[type=email],select{font-size:16px}
+}
 @media print{
   .no-print{display:none!important}
   body{background:white}
@@ -377,7 +408,8 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
             <select id="f-dt-m" style="width:56px"></select>
           </div>
         </div>
-        <div class="fg"></div>
+        <div class="fg"><label>航站楼 Terminal</label>
+          <input type="text" id="f-dep-term" placeholder="T1 / T2 / T3…"></div>
       </div>
       <div class="sec-div"><span class="sec-div-label">返程送机 Departure Transfer</span><div class="sec-div-line"></div></div>
       <div class="g3">
@@ -414,26 +446,10 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
         <div class="fg"><label>房间号 Room No.</label><input type="text" id="f-rnum" placeholder="301" oninput="updateCustNo()"></div>
       </div>
       <div id="hol-alert" style="display:none;margin-top:10px"></div>
-      <div class="g2" style="margin-top:12px">
-        <div class="fg" id="room-disc-wrap">
-          <label>折扣 Discount</label>
-          <select id="f-rdisc" onchange="toggleDiscCustom();updateRoomFeePreview()">
-            <option value="">无折扣 None</option>
-            <option value="9折">学员 9折 Student 10%off</option>
-            <option value="85折">8.5折 15%off</option>
-            <option value="8折">8折 20%off</option>
-            <option value="custom">自定义 Custom</option>
-          </select>
-        </div>
-        <div class="fg" id="room-rate-wrap">
-          <label>单价/晚 Rate/Night (元)</label>
-          <input type="number" id="f-rrate" placeholder="自动填充或手动输入" min="0" oninput="updateRoomFeePreview()">
-        </div>
-      </div>
-      <div id="room-disc-custom-wrap" style="display:none;margin-top:10px">
-        <div class="fg" style="max-width:200px"><label>自定义折率 Custom Rate (0.1–1.0)</label>
-          <input type="number" id="f-rdisc-custom" placeholder="0.90" min="0.1" max="1" step="0.01"></div>
-      </div>
+      <input type="hidden" id="f-rrate">
+      <input type="hidden" id="f-rdisc">
+      <input type="hidden" id="f-rdisc-custom">
+      <div id="room-disc-custom-wrap" style="display:none"></div>
     </div>
   </div>
 
@@ -563,6 +579,15 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
   <div class="form-footer no-print">
     <button class="btn btn-ghost" onclick="resetForm()">Clear</button>
     <button class="btn btn-primary" onclick="saveCustomer()">💾 Save</button>
+  </div>
+  <div class="card no-print" style="margin-top:10px">
+    <div class="card-header save-log-toggle" onclick="const b=document.getElementById('save-log-body');b.style.display=b.style.display==='none'?'block':'none'">
+      <span class="card-title" style="font-size:12px;color:#94a3b8">📋 Save Log</span>
+      <span style="font-size:11px;color:#94a3b8">Recent saves</span>
+    </div>
+    <div class="card-body" id="save-log-body" style="display:none;padding:10px 16px">
+      <div id="save-log-list"><span style="font-size:12px;color:#94a3b8">No saves yet</span></div>
+    </div>
   </div>
 </div>
 
@@ -1148,7 +1173,7 @@ function collect(){
     arriveFlight:v('f-af').trim(),arriveTime:getFlightTime('f-at-date','f-at-h','f-at-m'),terminal:v('f-term'),
     overnightHotel:v('f-ovhot').trim(),
     arrCarTime:v('f-arr-ct').trim(),arrCarFee:v('f-arr-cf'),arrBoat:v('f-arr-boat').trim(),arrPlate:v('f-arr-plate').trim(),arrDriverPhone:v('f-arr-drv').trim(),
-    departFlight:v('f-df').trim(),departTime:getFlightTime('f-dt-date','f-dt-h','f-dt-m'),
+    departFlight:v('f-df').trim(),departTime:getFlightTime('f-dt-date','f-dt-h','f-dt-m'),depTerminal:v('f-dep-term'),
     depCarTime:v('f-dep-ct').trim(),depCarFee:v('f-dep-cf'),depBoat:v('f-dep-boat').trim(),depPlate:v('f-dep-plate').trim(),depDriverPhone:v('f-dep-drv').trim(),
     checkin:v('f-ci'),checkout:v('f-co'),roomType:v('f-rtype'),roomNum:v('f-rnum').trim(),
     roomRate:v('f-rrate'),
@@ -1167,7 +1192,7 @@ function fillForm(c){
   sv('f-af',c.arriveFlight);setFlightTime(c.arriveTime,'f-at-date','f-at-h','f-at-m');sv('f-term',c.terminal)
   sv('f-ovhot',c.overnightHotel)
   sv('f-arr-ct',c.arrCarTime);sv('f-arr-cf',c.arrCarFee);sv('f-arr-boat',c.arrBoat);sv('f-arr-plate',c.arrPlate);sv('f-arr-drv',c.arrDriverPhone)
-  sv('f-df',c.departFlight);setFlightTime(c.departTime,'f-dt-date','f-dt-h','f-dt-m')
+  sv('f-df',c.departFlight);setFlightTime(c.departTime,'f-dt-date','f-dt-h','f-dt-m');sv('f-dep-term',c.depTerminal)
   sv('f-dep-ct',c.depCarTime);sv('f-dep-cf',c.depCarFee);sv('f-dep-boat',c.depBoat);sv('f-dep-plate',c.depPlate);sv('f-dep-drv',c.depDriverPhone)
   sv('f-ci',c.checkin);sv('f-co',c.checkout);sv('f-rtype',c.roomType);sv('f-rnum',c.roomNum);sv('f-rrate',c.roomRate)
   if(c.roomType){const opt=[...document.getElementById('f-rtype').options].find(o=>o.value===c.roomType);if(opt)document.getElementById('room-type-tip').textContent=ROOM_TYPES.find(r=>r.val===c.roomType)?.note||''}
@@ -1215,6 +1240,7 @@ function _clearForm(){
   ].forEach(id=>sv(id,''))
   ;['f-term','f-rtype','f-cs','f-ws','f-bs','f-certsys','f-rdisc','f-gender',
     'f-at-h','f-at-m','f-dt-h','f-dt-m'].forEach(id=>sv(id,''))
+  sv('f-dep-term','')
   document.getElementById('room-disc-custom-wrap').style.display='none'
   document.getElementById('room-type-tip').textContent=''
   _holFdQty=0;document.getElementById('hol-alert').style.display='none'
@@ -1240,6 +1266,34 @@ function newGuest(){
   window.scrollTo(0,0)
   setTimeout(()=>document.getElementById('f-name')?.focus(),50)
 }
+// ====== SAVE LOG ======
+const SAVE_LOG_KEY='lt_save_log'
+function countFilledFields(c){
+  const vals=[c.name,c.dob,c.email,c.arriveFlight,c.arriveTime,c.terminal,
+    c.overnightHotel,c.arrCarTime,c.arrCarFee,c.arrBoat,c.arrPlate,c.arrDriverPhone,
+    c.departFlight,c.departTime,c.depTerminal,c.depCarTime,c.depCarFee,c.depBoat,
+    c.depPlate,c.depDriverPhone,c.checkin,c.checkout,c.roomType,c.roomNum,
+    c.gender,c.height,c.weight,c.clothSize,c.shoeSize,c.myopia,
+    c.wetsuitSize,c.finSize,c.bcdSize,c.certSystem,c.certNo,c.divExp,
+    c.gearNote,c.instructor,c.courseStart,c.courseEnd,c.deposit,c.notes]
+  return vals.filter(v=>v&&String(v).trim()).length+((c.items||[]).filter(i=>i.name).length)
+}
+function addSaveLog(c){
+  const log=JSON.parse(localStorage.getItem(SAVE_LOG_KEY)||'[]')
+  const now=new Date()
+  const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()]
+  const lbl=now.getDate()+' '+mo+' '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')
+  log.unshift({t:lbl,name:c.name||'unnamed',fields:countFilledFields(c)})
+  if(log.length>20)log.pop()
+  localStorage.setItem(SAVE_LOG_KEY,JSON.stringify(log))
+  renderSaveLog()
+}
+function renderSaveLog(){
+  const el=document.getElementById('save-log-list');if(!el)return
+  const log=JSON.parse(localStorage.getItem(SAVE_LOG_KEY)||'[]')
+  if(!log.length){el.innerHTML='<span style="font-size:12px;color:#94a3b8">No saves yet</span>';return}
+  el.innerHTML=log.slice(0,10).map(e=>'<div class="save-log-row">'+e.t+' &nbsp;·&nbsp; <strong>'+e.name+'</strong> &nbsp;·&nbsp; '+e.fields+' fields saved</div>').join('')
+}
 function saveCustomer(){
   const d=collect();if(!d.name){alert('请填写客户姓名');document.getElementById('f-name').focus();return}
   const all=getAll();const i=all.findIndex(c=>c.id===d.id)
@@ -1247,6 +1301,7 @@ function saveCustomer(){
   saveAll(all);sv('f-id',d.id);sv('f-custno-stored',d.custNo)
   document.getElementById('custno-display').textContent=d.custNo
   const a=document.getElementById('save-alert');a.style.display='block';setTimeout(()=>a.style.display='none',3000)
+  addSaveLog(d)
   updateFormMode()
   cloudSave()
 }
@@ -1570,7 +1625,7 @@ function parseAndApply(){
     KV.forEach(([re,key])=>{if(!R[key]){const m=line.match(re);if(m&&m[1]!==undefined)R[key]=m[1].trim()}})
   })
   if(R._arrive){const fi=pFlight(R._arrive);if(fi.flight)R.arriveFlight=fi.flight;if(fi.datetime)R.arriveTime=fi.datetime;if(fi.terminal)R.terminal=fi.terminal;delete R._arrive}
-  if(R._depart){const fi=pFlight(R._depart);if(fi.flight)R.departFlight=fi.flight;if(fi.datetime)R.departTime=fi.datetime;delete R._depart}
+  if(R._depart){const fi=pFlight(R._depart);if(fi.flight)R.departFlight=fi.flight;if(fi.datetime)R.departTime=fi.datetime;if(fi.terminal)R.depTerminal=fi.terminal;delete R._depart}
   if(R._atonly){const dt=pDT(R._atonly);if(dt.includes('T'))R.arriveTime=dt;delete R._atonly}
   if(R._dtonly){const dt=pDT(R._dtonly);if(dt.includes('T'))R.departTime=dt;delete R._dtonly}
   if(R._term){const m=R._term.match(/T?([1-4])/i);if(m)R.terminal='T'+m[1];delete R._term}
@@ -1666,7 +1721,7 @@ function parseAndApply(){
   // Apply to form
   if(R.name)sv('f-name',R.name);if(R.email)sv('f-email',R.email);if(R.dob)sv('f-dob',R.dob)
   if(R.arriveFlight)sv('f-af',R.arriveFlight);if(R.arriveTime)setFlightTime(R.arriveTime,'f-at-date','f-at-h','f-at-m');if(R.terminal)sv('f-term',R.terminal)
-  if(R.departFlight)sv('f-df',R.departFlight);if(R.departTime)setFlightTime(R.departTime,'f-dt-date','f-dt-h','f-dt-m')
+  if(R.departFlight)sv('f-df',R.departFlight);if(R.departTime)setFlightTime(R.departTime,'f-dt-date','f-dt-h','f-dt-m');if(R.depTerminal)sv('f-dep-term',R.depTerminal)
   if(R.overnightHotel){sv('f-ovhot',R.overnightHotel);const on=document.querySelector('input[name=overnight][value="是"]');if(on){on.checked=true;toggleOvernightHotel()}}
   if(R.roomNum)sv('f-rnum',R.roomNum)
   if(R.roomType){sv('f-rtype',R.roomType);onRoomTypeChange()}
@@ -2068,13 +2123,16 @@ function schCard(c,mode,inCp,isSug){
   if(c.isHoliday==='是')tags+='<span class="tag th">🎉 Holiday</span>'
   if(c.roomNum)tags+='<span class="tag tr">🏨 '+c.roomNum+'</span>'
   const isArranged=mode==='arrive'?(c.arrCarTime||c.arrPlate||c.arrBoat):(c.depCarTime||c.depPlate||c.depBoat)
+  const isFullArranged=mode==='arrive'?(c.arrCarTime&&c.arrPlate&&c.arrCarFee):(c.depCarTime&&c.depPlate&&c.depCarFee)
+  if(isFullArranged)tags+='<span class="tag tc">✓ 已安排 Arranged</span>'
   const isPaid=mode==='arrive'?c.arrTransPaid==='1':c.depTransPaid==='1'
   const perFee=parseFloat(mode==='arrive'?c.arrCarFee:c.depCarFee)||0
   const cardBg=isPaid?'#dcfce7':isArranged?'#f0fdf4':'white'
   const cardBd=isPaid?'#4ade80':isArranged?'#86efac':'#e2e8f0'
   const plate=mode==='arrive'?c.arrPlate:c.depPlate
   const boat=mode==='arrive'?c.arrBoat:c.depBoat
-  const meta=[fl?'✈️ '+fl+(c.terminal?' '+c.terminal:''):'',plate?'🚗 '+plate:'',boat?'⛵ '+boat:''].filter(Boolean)
+  const depTerm=mode==='depart'?(c.depTerminal||''):''
+  const meta=[fl?'✈️ '+fl+(mode==='arrive'&&c.terminal?' '+c.terminal:'')+(depTerm?' '+depTerm:''):'',plate?'🚗 '+plate:'',boat?'⛵ '+boat:''].filter(Boolean)
   const {chk,panel}=arrangePanel(c,mode)
   const paidChk=isArranged?'<span onclick="event.stopPropagation();toggleTransPaid(\''+c.id+'\',\''+mode+'\')" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;font-weight:700;color:'+(isPaid?'#15803d':'#6b7280')+';background:'+(isPaid?'#bbf7d0':'#f1f5f9')+';padding:2px 8px;border-radius:10px;border:1px solid '+(isPaid?'#4ade80':'#d1d5db')+';margin-left:4px;flex-shrink:0"><span>'+(isPaid?'✅':'☐')+'</span>已付款'+(perFee>0?' ¥'+perFee.toFixed(0):'')+'</span>':''
   return'<div style="background:'+cardBg+';border-radius:10px;border:1px solid '+cardBd+';margin-bottom:8px;padding:0">'+
@@ -2187,11 +2245,11 @@ function renderBill(){
     if(holShare>0)roomRows+=mkRow('Holiday · 节假日 (shared 拼房 50%)','¥'+rate+'/nt × 50%',nts(holShare),(holShare*rate*0.5).toFixed(2))
     if(normSolo>0){
       const pl=rf<1?'¥'+rate+'/nt × '+discLbl:'¥'+rate+'/nt'
-      roomRows+=mkRow((discLbl?discLbl+' · 折扣':'full rate · 原价'),pl,nts(normSolo),(normSolo*rate*rf).toFixed(2))
+      roomRows+=mkRow((discLbl?discLbl+' · 折扣':''),pl,nts(normSolo),(normSolo*rate*rf).toFixed(2))
     }
     if(normShare>0){
       const pl=rf<1?'¥'+rate+'/nt × '+discLbl+' × 50%':'¥'+rate+'/nt × 50%'
-      roomRows+=mkRow((discLbl?discLbl:'full rate · 原价')+' · shared 拼房 50%',pl,nts(normShare),(normShare*rate*rf*0.5).toFixed(2))
+      roomRows+=mkRow((discLbl?discLbl+' · ':'')+'shared 拼房 50%',pl,nts(normShare),(normShare*rate*rf*0.5).toFixed(2))
     }
   }
   const nightDisp=nights>0?' ('+nights+' night'+(nights>1?'s':'')+')':''
@@ -2201,9 +2259,11 @@ function renderBill(){
 '<div><div class="blbl">Invoice No.</div><div class="bnum">'+(c.custNo||'INV-'+(c.id||'').slice(-6).toUpperCase())+'</div>'+
 '<div class="bdate">Date: '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})+'</div></div>'+
 '</div>'+
-'<div class="big">'+
-'<div class="bs"><div class="bst">Guest Info</div><div class="br"><span class="brl">Name</span><span class="brv">'+c.name+'</span>'+(c.email?'<span class="brl" style="margin-left:20px">Email</span><span class="brv">'+c.email+'</span>':'')+'</div></div>'+
-'</div>'+
+'<div class="bs"><div class="bst">Guest Info</div>'+
+'<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;white-space:nowrap;overflow:hidden">'+
+'<div style="display:flex;align-items:center;gap:7px;min-width:0"><span class="brl" style="flex-shrink:0">Name</span><span class="brv" style="overflow:hidden;text-overflow:ellipsis">'+c.name+'</span></div>'+
+(c.email?'<div style="display:flex;align-items:center;gap:7px;min-width:0;margin-left:20px"><span class="brl" style="flex-shrink:0">Email</span><span class="brv" style="overflow:hidden;text-overflow:ellipsis">'+c.email+'</span></div>':'')+
+'</div></div>'+
 (hasR?'<div class="bs"><div class="bst">Accommodation</div><div class="big">'+brow('Check-in',fdate(c.checkin))+brow('Check-out',fdate(c.checkout)+nightDisp)+brow('Room Type',c.roomType)+brow('Room No.',c.roomNum)+'</div>'+discNote+'</div>':'')+
 '<div class="bs"><div class="bst">Charges</div>'+
 '<table class="bit"><thead><tr><th>Item</th><th>Unit Price</th><th>Qty</th><th>Subtotal</th></tr></thead><tbody>'+
@@ -2218,7 +2278,7 @@ roomRows+
 '</div></div>'+
 (c.upgrade?'<div style="margin-top:12px;font-size:12px;color:#0284c7;background:#e0f2fe;padding:5px 12px;border-radius:20px;font-weight:600;display:inline-block">🎁 '+c.upgrade+'</div>':'')+
 (c.notes?'<div style="margin-top:12px;padding:10px 13px;background:#f8fafc;border-radius:8px;font-size:12px;color:#64748b;line-height:1.6">📝 <strong>Notes: </strong>'+c.notes+'</div>':'')+
-'<div class="bfoot">Thank you for diving with us! 🐠🌊</div></div>'
+'<div class="bfoot">Thank you for diving with us!</div></div>'
 }
 
 function generateBillImage(btn){
@@ -2503,7 +2563,7 @@ function renderElearning(){
 
 // ====== INIT ======
 document.getElementById('sch-date').value=new Date().toISOString().split('T')[0]
-addItem();initDiveCats();initTimeSelects();renderSemiCal()
+addItem();initDiveCats();initTimeSelects();renderSemiCal();renderSaveLog()
 if(getSyncUrl()){setNavSync('ok','Online');cloudLoad()}else setNavSync('none','Offline')
 </script>
 </body>
