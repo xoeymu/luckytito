@@ -759,8 +759,14 @@ function checkStayHasHoliday(ci,co){
 }
 
 // ====== DATA ======
-function getAll(){try{return JSON.parse(localStorage.getItem('dv_c')||'[]')}catch{return[]}}
+function getAll(){try{return JSON.parse(localStorage.getItem('dv_c')||'[]').filter(c=>c.id!=='__savelog__')}catch{return[]}}
 function saveAll(a){localStorage.setItem('dv_c',JSON.stringify(a))}
+function getCloudData(){
+  const customers=getAll()
+  const log=JSON.parse(localStorage.getItem(SAVE_LOG_KEY)||'[]')
+  if(log.length)return[...customers,{id:'__savelog__',log}]
+  return customers
+}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 
 // ====== NAV ======
@@ -810,7 +816,9 @@ function cloudLoad(){
   window[cb]=function(res){
     done=true;if(s.parentNode)document.head.removeChild(s);delete window[cb]
     if(res&&res.ok&&Array.isArray(res.data)){
-      const cloud=res.data,local=getAll();const ids=new Set(cloud.map(c=>c.id))
+      const logEntry=res.data.find(c=>c.id==='__savelog__')
+      if(logEntry&&Array.isArray(logEntry.log)){localStorage.setItem(SAVE_LOG_KEY,JSON.stringify(logEntry.log));renderSaveLog()}
+      const cloud=res.data.filter(c=>c.id!=='__savelog__'),local=getAll();const ids=new Set(cloud.map(c=>c.id))
       local.forEach(c=>{if(!ids.has(c.id))cloud.push(c)});saveAll(cloud)
       localStorage.setItem(TK,new Date().toISOString())
       setNavSync('ok','Synced '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));refreshModalUI()
@@ -824,7 +832,7 @@ function cloudLoad(){
 }
 function cloudSave(){
   const url=getSyncUrl();if(!url)return;setNavSync('ing','Saving…')
-  fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(getAll())})
+  fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(getCloudData())})
     .then(()=>{localStorage.setItem(TK,new Date().toISOString());setNavSync('ok','Synced '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));refreshModalUI()})
     .catch(()=>setNavSync('fail','Save failed'))
 }
@@ -2316,7 +2324,7 @@ function importData(e){
   r.onload=function(ev){
     try{const d=JSON.parse(ev.target.result);if(!Array.isArray(d)){alert('Invalid file format');return}
     const ex=getAll();const ids=new Set(ex.map(c=>c.id));let add=0,upd=0
-    d.forEach(c=>{if(ids.has(c.id)){ex[ex.findIndex(x=>x.id===c.id)]=c;upd++}else{ex.unshift(c);add++}})
+    d.filter(c=>c.id!=='__savelog__').forEach(c=>{if(ids.has(c.id)){ex[ex.findIndex(x=>x.id===c.id)]=c;upd++}else{ex.unshift(c);add++}})
     saveAll(ex);cloudSave();alert('Import complete: '+add+' added, '+upd+' updated')}catch{alert('File parse error')}
     e.target.value=''
   };r.readAsText(f)
