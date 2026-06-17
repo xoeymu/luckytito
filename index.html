@@ -6,8 +6,14 @@
 <title>LUCKY TITO PG TRANNING CENTER MANAGEMENT</title>
 <script>
 (function(){
-  const PW='20260616';
-  if(sessionStorage.getItem('lt_auth')===PW)return;
+  const USERS=[
+    {name:'Bonnie',pass:'88888'},
+    {name:'Xoey',pass:'7777'},
+    {name:'Front Desk',pass:'0616'},
+    {name:'Mer',pass:'5555'},
+    {name:'Admin',pass:'6666'}
+  ];
+  if(sessionStorage.getItem('lt_auth')==='ok')return;
   document.addEventListener('DOMContentLoaded',function(){
     const ov=document.createElement('div');
     ov.id='pw-overlay';
@@ -15,7 +21,7 @@
     ov.innerHTML='<div style="color:white;font-size:22px;font-weight:800;letter-spacing:1px">🤿 LUCKY TITO PG</div>'
       +'<div style="color:rgba(255,255,255,.7);font-size:13px;margin-top:-10px">TRAINING CENTER MANAGEMENT</div>'
       +'<div style="background:white;border-radius:14px;padding:28px 32px;display:flex;flex-direction:column;gap:14px;min-width:280px;text-align:center">'
-      +'<div style="font-size:13px;font-weight:700;color:#0b3d5e">请输入访问密码</div>'
+      +'<div style="font-size:13px;font-weight:700;color:#0b3d5e">Welcome / 欢迎</div>'
       +'<input id="pw-input" type="password" placeholder="Password" style="padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:15px;text-align:center;outline:none;font-family:inherit" autofocus>'
       +'<button id="pw-btn" style="background:#0ea5e9;color:white;border:none;border-radius:8px;padding:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">进入 Enter</button>'
       +'<div id="pw-err" style="color:#dc2626;font-size:12px;min-height:16px"></div>'
@@ -23,9 +29,19 @@
     document.body.appendChild(ov);
     document.body.style.overflow='hidden';
     function tryLogin(){
-      const val=document.getElementById('pw-input').value;
-      if(val===PW){sessionStorage.setItem('lt_auth',PW);ov.remove();document.body.style.overflow=''}
-      else{document.getElementById('pw-err').textContent='密码错误 Wrong password';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus()}
+      const val=document.getElementById('pw-input').value.trim();
+      const user=USERS.find(u=>u.pass===val);
+      if(user){
+        sessionStorage.setItem('lt_auth','ok');
+        sessionStorage.setItem('lt_user',user.name);
+        ov.remove();document.body.style.overflow='';
+        // Show username in nav if element exists
+        const unEl=document.getElementById('nav-username');if(unEl)unEl.textContent=user.name;
+      }else{
+        document.getElementById('pw-err').textContent='密码错误 Wrong password';
+        document.getElementById('pw-input').value='';
+        document.getElementById('pw-input').focus();
+      }
     }
     document.getElementById('pw-btn').onclick=tryLogin;
     document.getElementById('pw-input').onkeydown=function(e){if(e.key==='Enter')tryLogin()};
@@ -258,6 +274,7 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
     <div class="nav-tab" onclick="switchTab('elearning')" id="tab-elearning">📚 eLearning</div>
   </div>
   <div class="nav-tools">
+    <span id="nav-username" style="font-size:12px;color:rgba(255,255,255,.75);font-weight:600;padding:0 6px;white-space:nowrap"></span>
     <button class="nav-btn btn-hol" onclick="openHolModal()" style="background:#f59e0b;border-color:#f59e0b">📅 Holidays</button>
     <div class="sync-pill" onclick="openSyncModal()" title="Cloud Sync"><span class="sync-dot dot-none" id="sync-dot"></span><span id="sync-text">Offline</span></div>
     <button class="nav-btn" onclick="openSyncModal()">☁️ Cloud</button>
@@ -1391,7 +1408,8 @@ function addSaveLog(c){
   const now=new Date()
   const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()]
   const lbl=now.getDate()+' '+mo+' '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')
-  log.unshift({t:lbl,name:c.name||'unnamed',fields:countFilledFields(c)})
+  const user=sessionStorage.getItem('lt_user')||'Unknown'
+  log.unshift({t:lbl,user:user,name:c.name||'unnamed',fields:countFilledFields(c)})
   if(log.length>20)log.pop()
   localStorage.setItem(SAVE_LOG_KEY,JSON.stringify(log))
   renderSaveLog()
@@ -1400,7 +1418,7 @@ function renderSaveLog(){
   const el=document.getElementById('save-log-list');if(!el)return
   const log=JSON.parse(localStorage.getItem(SAVE_LOG_KEY)||'[]')
   if(!log.length){el.innerHTML='<span style="font-size:12px;color:#94a3b8">No saves yet</span>';return}
-  el.innerHTML=log.slice(0,10).map(e=>'<div class="save-log-row">'+e.t+' &nbsp;·&nbsp; <strong>'+e.name+'</strong> &nbsp;·&nbsp; '+e.fields+' fields saved</div>').join('')
+  el.innerHTML=log.slice(0,20).map(e=>'<div class="save-log-row">'+e.t+' &nbsp;·&nbsp; <span style="color:#0284c7;font-weight:700">'+(e.user||'?')+'</span> &nbsp;·&nbsp; <strong>'+e.name+'</strong> &nbsp;·&nbsp; '+e.fields+' fields</div>').join('')
 }
 function saveCustomer(){
   const d=collect();if(!d.name){alert('请填写客户姓名');document.getElementById('f-name').focus();return}
@@ -2688,6 +2706,8 @@ function renderElearning(){
 document.getElementById('sch-date').value=new Date().toISOString().split('T')[0]
 addItem();initDiveCats();initTimeSelects();renderSemiCal();renderSaveLog()
 if(getSyncUrl()){setNavSync('ok','Online');cloudLoad()}else setNavSync('none','Offline')
+// Restore username display after page refresh
+;(function(){const u=sessionStorage.getItem('lt_user');const el=document.getElementById('nav-username');if(u&&el)el.textContent='👤 '+u})()
 </script>
 </body>
 </html>
