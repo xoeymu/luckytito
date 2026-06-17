@@ -2257,21 +2257,36 @@ function empty(icon,txt){return'<div class="empty-state" style="padding:26px"><d
 // ====== LIST ======
 function renderList(q){
   const all=getAll();const s=(q||'').toLowerCase()
-  const f=(s?all.filter(c=>[c.name,c.email,c.custNo,c.location,c.instructor,c.roomNum,c.date].join(' ').toLowerCase().includes(s)):all)
-    .slice().sort((a,b)=>(a.arriveTime||'').localeCompare(b.arriveTime||''))
+  // Without search: hide checked-out guests. With search: show all matches including checked-out.
+  const f=(s
+    ?all.filter(c=>[c.name,c.email,c.custNo,c.location,c.instructor,c.roomNum,c.date].join(' ').toLowerCase().includes(s))
+    :all.filter(c=>!c.checkedOut)
+  ).slice().sort((a,b)=>(a.arriveTime||'').localeCompare(b.arriveTime||''))
   const el=document.getElementById('customer-list')
   if(!f.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🤿</div><p>'+(s?'No results found':'No guests yet — click New Guest to start')+'</p></div>';return}
   const bc={已付全款:'bp',已付定金:'bd',未付:'bu'}
   const payLbl={'已付全款':'Paid','已付定金':'Deposit Paid','未付':'Unpaid'}
   el.innerHTML=f.map(c=>{
     const tot=calcTotal(c);const b=bc[c.payStatus]||'bu'
+    const isOut=!!c.checkedOut
     const meta=[c.custNo?'🔢 '+c.custNo:'',c.date?'📅 '+c.date:'',c.location?'📍 '+c.location:'',c.instructor?'👨‍🏫 '+c.instructor:'',c.roomNum?'🏨 '+c.roomNum+(c.roomType?' ('+c.roomType.split(' ')[0]+')':''):'',tot>0?'💰 ¥'+tot.toFixed(0):''].filter(Boolean)
-    return'<div class="cc" onclick="editC(\''+c.id+'\')"><div class="ava">'+(c.name||'?').charAt(0)+'</div><div class="ci"><div class="cn">'+c.name+' <span class="badge '+b+'">'+(payLbl[c.payStatus]||'Unpaid')+'</span>'+(c.isHoliday==='是'?'<span class="tag th" style="font-size:10px">Holiday</span>':'')+'</div><div class="cm">'+meta.map(m=>'<span>'+m+'</span>').join('')+'</div></div><div class="ca" onclick="event.stopPropagation()"><button class="btn btn-secondary btn-sm" onclick="goBill(\''+c.id+'\')">Bill</button><button class="btn btn-danger btn-sm" onclick="delC(\''+c.id+'\')">Delete</button></div></div>'
+    const coBtn='<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;font-weight:600;color:'+(isOut?'#16a34a':'#64748b')+';white-space:nowrap"><input type="checkbox" '+(isOut?'checked':'')+' onchange="toggleCheckedOut(\''+c.id+'\',this)" style="width:14px;height:14px;cursor:pointer;accent-color:#16a34a"> Checked Out</label>'
+    return'<div class="cc" onclick="editC(\''+c.id+'\')" style="'+(isOut?'opacity:0.5;':'')+'"><div class="ava" style="'+(isOut?'background:#94a3b8':'')+'">'+( c.name||'?').charAt(0)+'</div><div class="ci"><div class="cn">'+c.name+' <span class="badge '+b+'">'+(payLbl[c.payStatus]||'Unpaid')+'</span>'+(isOut?'<span class="tag" style="font-size:10px;background:#dcfce7;color:#16a34a">✓ Checked Out</span>':'')+(c.isHoliday==='是'?'<span class="tag th" style="font-size:10px">Holiday</span>':'')+'</div><div class="cm">'+meta.map(m=>'<span>'+m+'</span>').join('')+'</div></div><div class="ca" onclick="event.stopPropagation()">'+coBtn+'<button class="btn btn-secondary btn-sm" onclick="goBill(\''+c.id+'\')">Bill</button><button class="btn btn-danger btn-sm" onclick="delC(\''+c.id+'\')">Delete</button></div></div>'
   }).join('')
 }
 function editC(id){const c=getAll().find(x=>x.id===id);if(!c)return;fillForm(c);switchTab('form');window.scrollTo(0,0)}
 function delC(id){if(!confirm('确认删除？'))return;saveAll(getAll().filter(c=>c.id!==id));cloudSave();renderList(document.querySelector('.sb')?.value||'')}
 function goBill(id){switchTab('bill');document.getElementById('bill-sel').value=id;renderBill()}
+function toggleCheckedOut(id,cb){
+  const all=getAll();const i=all.findIndex(c=>c.id===id);if(i<0)return
+  const isOut=all[i].checkedOut
+  if(!isOut){
+    if(!confirm('Confirm: '+all[i].name+' has checked out?\n确认该客人已结账？')){if(cb)cb.checked=false;return}
+  }
+  all[i].checkedOut=!isOut
+  saveAll(all);cloudSave()
+  renderList(document.querySelector('.sb')?.value||'')
+}
 
 // ====== BILL ======
 function calcTotal(c){
