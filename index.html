@@ -366,6 +366,7 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
   <div class="custno-bar no-print">
     <div><div class="custno-label">客户编号</div><div class="custno-val" id="custno-display">————</div></div>
     <div style="display:flex;align-items:center;gap:8px">
+      <button id="btn-copy-no" style="background:none;border:1px solid #bae6fd;font-size:12px;cursor:pointer;color:#0284c7;padding:3px 9px;border-radius:6px;font-weight:600" onclick="copyCustNo()" title="Copy No.">📋 Copy</button>
       <button style="background:none;border:none;font-size:16px;cursor:pointer;color:#0284c7;padding:3px 7px;border-radius:6px" onclick="regenCustNo()" title="Regenerate No.">🔄</button>
     </div>
   </div>
@@ -914,6 +915,15 @@ function updateCustNo(){
   document.getElementById('custno-display').textContent=stored||genCustNo(v('f-name'),getFlightTime('f-at-date','f-at-h','f-at-m'),v('f-ci'),v('f-rnum'))
 }
 function regenCustNo(){sv('f-custno-stored','');updateCustNo()}
+function copyCustNo(){
+  const no=document.getElementById('custno-display').textContent
+  if(!no||no==='————')return
+  navigator.clipboard.writeText(no).then(()=>{
+    const btn=document.getElementById('btn-copy-no')
+    btn.textContent='✓ Copied';btn.style.color='#16a34a';btn.style.borderColor='#86efac'
+    setTimeout(()=>{btn.textContent='📋 Copy';btn.style.color='#0284c7';btn.style.borderColor='#bae6fd'},1500)
+  })
+}
 
 // ====== ROOM TYPE ======
 function onRoomTypeChange(){
