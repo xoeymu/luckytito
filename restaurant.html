@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lucky Tito Restaurant 点餐系统 Ordering System</title>
+<style>
+:root{
+  --navy:#0b3d5e; --navy-dk:#082a42; --blue:#0284c7; --slate:#475569; --slate-lt:#94a3b8;
+  --bg:#f1f5f9; --card:#ffffff; --border:#e2e8f0; --green:#16a34a; --orange:#ea580c; --red:#dc2626;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,'Segoe UI',Roboto,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:#1e293b}
+header{background:var(--navy);color:#fff;padding:12px 18px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.15);position:sticky;top:0;z-index:50}
+header h1{font-size:17px;margin:0;font-weight:800;letter-spacing:.3px}
+header .clock{margin-left:auto;font-size:13px;color:#cbd5e1}
+header button{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;font-weight:600}
+header button:hover{background:rgba(255,255,255,.22)}
+.layout{display:flex;gap:12px;padding:12px;height:calc(100vh - 56px)}
+.panel{background:var(--card);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;flex-direction:column;overflow:hidden}
+.panel-header{padding:12px 14px;border-bottom:1px solid var(--border);font-weight:800;font-size:13px;color:var(--navy);display:flex;align-items:center;gap:8px}
+.panel-body{flex:1;overflow-y:auto;padding:10px}
+#tables-panel{width:230px;flex-shrink:0}
+#order-panel{width:340px;flex-shrink:0}
+#menu-panel{flex:1;min-width:0}
+.btn{border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s}
+.btn:hover{opacity:.85}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-ghost{background:var(--bg);color:var(--slate)}
+.btn-danger{background:#fee2e2;color:var(--red)}
+.btn-sm{padding:4px 9px;font-size:12px}
+.btn-block{width:100%}
+.table-tile{border:1.5px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;cursor:pointer;position:relative}
+.table-tile.active{border-color:var(--blue);background:#eff6ff}
+.table-tile.has-order{border-color:#fed7aa;background:#fff7ed}
+.table-tile.active.has-order{border-color:var(--blue);background:#eff6ff}
+.table-tile .t-name{font-weight:800;font-size:14px;color:var(--navy)}
+.table-tile .t-note{font-size:11px;color:var(--slate-lt);margin-top:1px}
+.table-tile .t-meta{display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--slate)}
+.table-tile .t-del{position:absolute;top:6px;right:6px;font-size:11px;color:var(--slate-lt);background:none;border:none;cursor:pointer;padding:2px 5px}
+.table-tile .t-del:hover{color:var(--red)}
+.cat-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid var(--border)}
+.cat-tab{padding:6px 12px;border-radius:20px;font-size:12.5px;font-weight:700;background:var(--bg);color:var(--slate);cursor:pointer;border:1.5px solid transparent;white-space:nowrap}
+.cat-tab.active{background:var(--navy);color:#fff}
+.search-row{padding:10px 12px;border-bottom:1px solid var(--border)}
+.search-row input{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;padding:4px}
+.item-card{border:1.5px solid var(--border);border-radius:10px;padding:9px 10px;cursor:pointer;background:#fff;position:relative}
+.item-card:hover{border-color:var(--blue);background:#f0f9ff}
+.item-card .ic-code{font-size:10.5px;color:var(--slate-lt);font-weight:700}
+.item-card .ic-hot{position:absolute;top:7px;right:8px;font-size:13px}
+.item-card .ic-name{font-size:13px;font-weight:700;color:#1e293b;margin-top:2px;line-height:1.3}
+.item-card .ic-en{font-size:10.5px;color:var(--slate-lt);margin-top:1px;line-height:1.25}
+.item-card .ic-price{font-size:13px;font-weight:800;color:var(--blue);margin-top:6px}
+.item-card .ic-price input{width:64px;padding:2px 4px;border:1.5px solid var(--blue);border-radius:5px;font-size:12px;font-weight:800;color:var(--blue)}
+.order-table-name{padding:10px 14px;border-bottom:1px solid var(--border)}
+.order-table-name .tn-label{font-weight:800;font-size:15px;color:var(--navy)}
+.order-table-name .tn-note{font-size:12px;color:var(--slate-lt);margin-top:2px}
+.order-table-name .tn-edit{font-size:11px;color:var(--blue);cursor:pointer;margin-left:6px}
+.order-line{display:flex;align-items:center;gap:6px;padding:8px 4px;border-bottom:1px solid #f1f5f9}
+.order-line .ol-info{flex:1;min-width:0}
+.order-line .ol-name{font-size:12.5px;font-weight:700;color:#1e293b}
+.order-line .ol-price{font-size:11px;color:var(--slate-lt)}
+.order-line .ol-qty{display:flex;align-items:center;gap:4px}
+.order-line .ol-qty button{width:22px;height:22px;border-radius:6px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:13px;line-height:1}
+.order-line .ol-sub{font-size:13px;font-weight:800;color:var(--navy);width:62px;text-align:right}
+.order-line .ol-del{color:var(--slate-lt);cursor:pointer;font-size:13px;padding:2px 4px}
+.order-line .ol-del:hover{color:var(--red)}
+.order-empty{padding:40px 16px;text-align:center;color:var(--slate-lt);font-size:13px}
+.order-footer{border-top:1.5px solid var(--border);padding:12px 14px}
+.order-total{display:flex;justify-content:space-between;font-size:17px;font-weight:800;color:var(--navy);margin-bottom:10px}
+.order-actions{display:flex;gap:8px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:20px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-box h3{margin:0 0 14px;font-size:15px;color:var(--navy)}
+.modal-box label{display:block;font-size:12px;color:var(--slate);margin:10px 0 4px;font-weight:700}
+.modal-box input{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.hist-row{display:flex;justify-content:space-between;padding:9px 4px;border-bottom:1px solid #f1f5f9;font-size:13px}
+.hist-row .h-meta{color:var(--slate-lt);font-size:11px}
+.hist-total-bar{background:var(--bg);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;font-weight:800;color:var(--navy);margin-bottom:10px}
+.receipt-print{display:none}
+@media print{
+  body *{visibility:hidden}
+  .receipt-print, .receipt-print *{visibility:visible}
+  .receipt-print{display:block;position:absolute;left:0;top:0;width:80mm;padding:3mm;font-family:'Courier New',monospace;color:#000;font-size:12px}
+  .receipt-print .r-title{text-align:center;font-weight:800;font-size:15px;margin-bottom:2mm}
+  .receipt-print .r-sub{text-align:center;font-size:10px;margin-bottom:2mm}
+  .receipt-print hr{border:none;border-top:1px dashed #000;margin:2mm 0}
+  .receipt-print .r-line{display:flex;justify-content:space-between;gap:4px;margin:1mm 0}
+  .receipt-print .r-line .rl-name{flex:1}
+  .receipt-print .r-total{display:flex;justify-content:space-between;font-weight:800;font-size:14px;margin-top:2mm}
+  .receipt-print .r-foot{text-align:center;font-size:10px;margin-top:3mm}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🍽️ Lucky Tito Restaurant 点餐结账</h1>
+  <button onclick="showHistory()">📊 今日流水 Today's Sales</button>
+  <button onclick="togglePriceEdit()" id="price-edit-btn">💲 编辑价格 Edit Prices</button>
+  <button onclick="setSyncUrl()" id="sync-btn">🔗 云同步 Cloud Sync</button>
+  <span class="clock" id="clock"></span>
+</header>
+
+<div class="layout">
+  <div class="panel" id="tables-panel">
+    <div class="panel-header">🪑 桌台 Tables<button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openNewTableModal()">＋ 开台 New Table</button></div>
+    <div class="panel-body" id="tables-list"></div>
+  </div>
+
+  <div class="panel" id="menu-panel">
+    <div class="search-row"><input type="text" id="search-input" placeholder="🔍 搜索编号/菜名 Search code or name..." oninput="renderMenu()"></div>
+    <div class="cat-tabs" id="cat-tabs"></div>
+    <div class="panel-body"><div class="menu-grid" id="menu-grid"></div></div>
+  </div>
+
+  <div class="panel" id="order-panel">
+    <div class="order-table-name" id="order-table-name"></div>
+    <div class="panel-body" id="order-lines" style="padding:0 10px"></div>
+    <div class="order-footer">
+      <div class="order-total"><span>总计 Total</span><span id="order-total-amt">₱0</span></div>
+      <div class="order-actions">
+        <button class="btn btn-ghost" style="flex:1" onclick="clearOrder()">🗑 清空 Clear</button>
+        <button class="btn btn-green" style="flex:2" onclick="checkoutTable()">🖨️ 结账打印 Checkout & Print</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW TABLE MODAL -->
+<div class="modal-overlay" id="new-table-modal">
+  <div class="modal-box">
+    <h3>开台 New Table</h3>
+    <label>桌号/名称 Table Name</label>
+    <input type="text" id="nt-label" placeholder="例如：3号桌 / 外带1 e.g. Table 3 / Takeout 1">
+    <label>备注 Note（可选，如客人姓名/房号，方便前台核对 Optional — guest name/room no.）</label>
+    <input type="text" id="nt-note" placeholder="例如：Dani Room 12">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('new-table-modal')">取消 Cancel</button>
+      <button class="btn btn-primary" onclick="confirmNewTable()">确认开台 Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT TABLE MODAL -->
+<div class="modal-overlay" id="edit-table-modal">
+  <div class="modal-box">
+    <h3>编辑桌台 Edit Table</h3>
+    <label>桌号/名称 Table Name</label>
+    <input type="text" id="et-label">
+    <label>备注 Note</label>
+    <input type="text" id="et-note">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('edit-table-modal')">取消 Cancel</button>
+      <button class="btn btn-primary" onclick="confirmEditTable()">保存 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY MODAL -->
+<div class="modal-overlay" id="history-modal">
+  <div class="modal-box" style="max-width:560px">
+    <h3>📊 今日流水 Today's Sales</h3>
+    <div class="hist-total-bar"><span id="hist-date"></span><span id="hist-total"></span></div>
+    <div id="hist-list"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('history-modal')">关闭 Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="receipt-print" id="receipt-print"></div>
+
+<script>
+// ====================================================================
+//   MENU DATA — extracted from Lucky Tito restaurant menu photos
+//   Prices in ₱ (PHP). hot:true = 👍 chef recommendation marker.
+//   NOTE: two photographed versions of the Rice Bowl/Noodle page had
+//   conflicting prices for M6/M7/M9/M12 (and M8 was missing from one
+//   version). The more complete version is used below — confirm with
+//   Dani that these are correct: M6=420, M7=420, M9=400, M12=380.
+//   NOTE: code "C7" appears twice on the original menu (藤椒鸡丁 and
+//   浇汁锅巴) — kept as-is, distinguished internally by id.
+// ====================================================================
+const CATS=['主厨推荐 Chef Recommendation','饭面简餐 Rice Bowl / Noodle','自由搭配 All You Want','汤与主食 Soup / Rice','酒水饮料 Drinks & Beverages']
+const MENU=[
+// ---- 主厨推荐 Chef Recommendation ----
+{code:'A1',name:'秘制东星斑烤鱼',en:'Grilled Coral Trout (1.5kg, 3-4人)',price:4500,cat:CATS[0],hot:true},
+{code:'A0',name:'麻辣香锅虾',en:'Spicy Fried Shrimp Pot',price:1980,cat:CATS[0],hot:true},
+{code:'A2',name:'肥肠豆腐煲',en:'Pork Intestine Tofu Stew',price:780,cat:CATS[0],hot:true},
+{code:'B1',name:'凉拌香辣牛腱子',en:'Pickle Steamed Beef Shank',price:820,cat:CATS[0],hot:true},
+{code:'B2',name:'水煮嫩牛',en:'Chilli Oil Beef Tenderloin',price:880,cat:CATS[0]},
+{code:'B3',name:'泡椒牛肉',en:'Pickle Chilli Beef',price:580,cat:CATS[0],hot:true},
+{code:'B4',name:'黑椒牛柳',en:'Black Pepper Beef Tenderloin',price:540,cat:CATS[0]},
+{code:'P1',name:'肉沫茄子',en:'Minced Pork Eggplant',price:440,cat:CATS[0],hot:true},
+{code:'P2',name:'五花肉炖豆角',en:'Pork Belly with Green Bean',price:640,cat:CATS[0]},
+{code:'P3',name:'爆炒猪头肉',en:'Stir Fry Pork Cheek',price:680,cat:CATS[0],hot:true},
+{code:'P4',name:'回锅肉',en:'Double Cooked Pork',price:520,cat:CATS[0]},
+{code:'P5',name:'农家一碗香',en:'Egg and Pork with Chilli',price:500,cat:CATS[0]},
+{code:'P6',name:'辣椒小炒肉',en:'Chilli Stir Fry Pork',price:450,cat:CATS[0]},
+{code:'P7',name:'爆炒肥肠',en:'Stirfry Pork Large Intestine',price:680,cat:CATS[0],hot:true},
+{code:'P8',name:'脆豆腐烧肉',en:'Crispy Tofu with Pork',price:400,cat:CATS[0]},
+{code:'P9',name:'两只软糯猪手',en:'Braised Pata',price:680,cat:CATS[0],hot:true},
+{code:'P10',name:'鲜虾腐皮卷',en:'Tofu Roll with Shrimp',price:440,cat:CATS[0]},
+{code:'P11',name:'麻辣粉蒸肉',en:'Rice Powder Steam Pork',price:480,cat:CATS[0]},
+{code:'V1',name:'干煸豆角',en:'Minced Pork with Green Bean',price:400,cat:CATS[0],hot:true},
+{code:'V2',name:'上汤大白菜',en:'Dried Shrimp with Cabbage',price:420,cat:CATS[0]},
+{code:'V3',name:'干锅包菜',en:'Stir Fry Round Cabbage',price:400,cat:CATS[0]},
+{code:'V4',name:'洋葱炒蛋',en:'Onion with Egg',price:380,cat:CATS[0]},
+{code:'V5',name:'蒜蓉空心菜',en:'Garlic Kangkong',price:280,cat:CATS[0]},
+{code:'V6',name:'酸辣土豆丝',en:'Sour Spicy Potato',price:300,cat:CATS[0],hot:true},
+{code:'V7',name:'清炒佛手瓜',en:'Stir Fry Sayote',price:280,cat:CATS[0]},
+{code:'V8',name:'风味茄子',en:'Oyster Sauce Eggplant',price:380,cat:CATS[0]},
+{code:'V9',name:'麻婆豆腐',en:'Mapo Tofu',price:380,cat:CATS[0],hot:true},
+{code:'V11',name:'苔皮锅巴土豆',en:'Stirfry Potato Starch Sheet',price:400,cat:CATS[0],hot:true},
+{code:'C1',name:'口水鸡',en:'Chilli Oil Chicken',price:540,cat:CATS[0],hot:true},
+{code:'C2',name:'酥炸鸡块',en:'Fried Chicken',price:520,cat:CATS[0],hot:true},
+{code:'C3',name:'泡椒炒鸡杂',en:'Stir Fry Gizzard',price:440,cat:CATS[0],hot:true},
+{code:'C7',name:'藤椒鸡丁',en:'Sichuan Pepper Chicken',price:480,cat:CATS[0]},
+{code:'E2',name:'开阳肉饼蒸蛋',en:'Scallop Steamed Pork',price:480,cat:CATS[0]},
+{code:'C4',name:'辣椒炒蛋',en:'Chilli Stir Fry Eggs',price:350,cat:CATS[0]},
+{code:'C5',name:'三色蒸蛋',en:'Steamed Egg',price:350,cat:CATS[0],hot:true},
+{code:'C6',name:'番茄炒蛋',en:'Tomato Egg',price:350,cat:CATS[0]},
+{code:'C7',name:'浇汁锅巴',en:'Rice Crecker',price:380,cat:CATS[0],hot:true},
+{code:'E1',name:'凉拌皮蛋',en:'Century Egg Salad',price:320,cat:CATS[0]},
+// ---- 饭面简餐 Rice Bowl / Noodle ----
+{code:'M1',name:'整只猪手饭',en:'Braised Pata Rice Bowl',price:450,cat:CATS[1],hot:true},
+{code:'M2',name:'麻辣粉蒸肉盖饭',en:'Rice Powder Steam Pork Rice Bowl',price:420,cat:CATS[1]},
+{code:'M3',name:'辣椒炒肉盖饭',en:'Green Chilli With Pork Rice Bowl',price:400,cat:CATS[1]},
+{code:'M4',name:'黑椒牛柳盖饭',en:'Black Pepper Beef Rice Bowl',price:480,cat:CATS[1]},
+{code:'M5',name:'爆炒猪头肉盖饭',en:'Pork Head Meat Rice Bowl',price:440,cat:CATS[1]},
+{code:'M6',name:'白菜肉丝盖饭',en:'Shredded Pork Cabbage Rice Bowl',price:420,cat:CATS[1],hot:true},
+{code:'M7',name:'肉沫茄子盖饭',en:'Eggplant Minced Pork Rice Bowl',price:420,cat:CATS[1]},
+{code:'M8',name:'辣椒炒鸡杂盖饭',en:'Chili Gizzard Rice Bowl',price:420,cat:CATS[1]},
+{code:'M9',name:'肉沫豆腐盖饭',en:'Mapo Tofu Rice Bowl',price:400,cat:CATS[1]},
+{code:'M11',name:'红烧牛腘盖饭',en:'Beef Belly Rice Bowl',price:480,cat:CATS[1],hot:true},
+{code:'M12',name:'卤肉饭',en:'Lu Rou Rice Bowl',price:380,cat:CATS[1]},
+{code:'M13',name:'卤鸡腿盖饭',en:'Braised Chick Legs Rice Bowl',price:400,cat:CATS[1]},
+{code:'M14',name:'牛肉炒乌冬',en:'Beef Udon',price:440,cat:CATS[1]},
+{code:'M15',name:'牛腘面',en:'Beef Belly Noodle',price:460,cat:CATS[1],hot:true},
+{code:'M16',name:'榨菜皮肚肉丝面',en:'Pickle and Pork Noodle',price:380,cat:CATS[1],hot:true},
+{code:'M17',name:'牛肉小面',en:'Chilli Oil Beef Noodles',price:460,cat:CATS[1],hot:true},
+{code:'M18',name:'辣鸡拌面',en:'Spicy Chicken Noodles',price:400,cat:CATS[1],hot:true},
+{code:'T1',name:'飘香馄饨拌面',en:'Peanut Sauce Wonton Noodles',price:280,cat:CATS[1]},
+{code:'T2',name:'豆角猪肉水饺(20只)',en:'Pork Beans Dumpling (20pcs)',price:300,cat:CATS[1]},
+{code:'T4',name:'鸡汤馄饨',en:'Wonton Soup',price:200,cat:CATS[1]},
+{code:'T5',name:'红油拌馄饨',en:'Wonton Noodle Soup',price:320,cat:CATS[1],hot:true},
+{code:'T7',name:'鲜虾馄饨',en:'Shrimp Wonton',price:300,cat:CATS[1]},
+// ---- 自由搭配 All You Want ----
+{code:'X0',name:'椒麻凉面',en:'Chilli Oil Cold Noodle',price:160,cat:CATS[2],hot:true},
+{code:'E0',name:'蔬菜咖喱盖饭',en:'Vegetable Curry',price:220,cat:CATS[2],hot:true},
+{code:'X1',name:'单加卤鸡腿',en:'Braised Chicken Legs',price:160,cat:CATS[2]},
+{code:'X2',name:'单加卤牛肉',en:'Braised Beef',price:240,cat:CATS[2],hot:true},
+{code:'X3',name:'单加卤肥肠',en:'Braised Pork Intestine',price:260,cat:CATS[2]},
+{code:'X4',name:'单加卤脆豆腐',en:'Braised Tofu',price:120,cat:CATS[2]},
+{code:'X5',name:'单加猪头肉',en:'Braised Pork Cheek',price:260,cat:CATS[2]},
+{code:'E6',name:'单加炸鸡腿',en:'Fried Chicken Leg',price:180,cat:CATS[2]},
+{code:'E7',name:'单加炸猪排',en:'Fried Pork Chop',price:220,cat:CATS[2],hot:true},
+{code:'E8',name:'单加辣鸡',en:'Spicy Chicken',price:220,cat:CATS[2],hot:true},
+{code:'T6',name:'煎蛋',en:'Fried Egg',price:50,cat:CATS[2]},
+{code:'E4',name:'整盘油炸花生',en:'Fried Peanuts',price:220,cat:CATS[2]},
+// ---- 汤与主食 Soup / Rice ----
+{code:'S1',name:'白菜肉圆汤',en:'Chinese Cabbage Meat Ball Soup',price:380,cat:CATS[3],hot:true},
+{code:'S2',name:'裙带菜牛肉汤',en:'Seaweed Beef Soup',price:480,cat:CATS[3]},
+{code:'S3',name:'紫菜蛋汤',en:'Seaweed Egg Soup',price:300,cat:CATS[3]},
+{code:'S4',name:'番茄蛋汤',en:'Tomato Egg Soup',price:300,cat:CATS[3]},
+{code:'R1',name:'咸牛肉炒饭(3人份)',en:'Corned Beef Fried Rice',price:320,cat:CATS[3],hot:true},
+{code:'R2',name:'葱头油蛋炒饭(3人份)',en:'Onion Oil Fried Rice',price:320,cat:CATS[3],hot:true},
+{code:'R3',name:'肉沫咖喱炒饭(3人份)',en:'Curry Fried Rice',price:320,cat:CATS[3]},
+{code:'R4',name:'白米饭',en:'Plain Rice',price:35,cat:CATS[3]},
+{code:'R5',name:'大盆白米饭(5人份)',en:'Plain Rice Platter',price:180,cat:CATS[3]},
+// ---- 酒水饮料 Drinks & Beverages ----
+{code:'D1',name:'可乐/健怡/零度',en:'Coke / Light / Zero',price:80,cat:CATS[4]},
+{code:'D4',name:'雪碧',en:'Sprite',price:80,cat:CATS[4]},
+{code:'D5',name:'芬达',en:'Royal/Fanta',price:80,cat:CATS[4]},
+{code:'D6',name:'王老吉',en:'Wang Lao Ji',price:90,cat:CATS[4]},
+{code:'D7',name:'绿茶',en:'Green Tea',price:90,cat:CATS[4]},
+{code:'D8',name:'冰红茶',en:'Iced Tea',price:90,cat:CATS[4]},
+{code:'D10',name:'红牛',en:'RedBull',price:120,cat:CATS[4]},
+{code:'D21',name:'宝矿力',en:'Pocari Sweat',price:120,cat:CATS[4]},
+{code:'D9',name:'瓶装水',en:'Bottled Water',price:20,cat:CATS[4]},
+{code:'D12',name:'烧酒',en:'Soju',price:180,cat:CATS[4]},
+{code:'D14',name:'生力啤酒',en:'SMB',price:120,cat:CATS[4]},
+{code:'D15',name:'生力淡啤酒',en:'SML',price:100,cat:CATS[4]},
+{code:'D16',name:'红马',en:'Red Horse Bottle/Can',price:100,cat:CATS[4]},
+]
+MENU.forEach((m,i)=>{m.id='i'+i})
+
+// ====================================================================
+//   STATE / STORAGE
+// ====================================================================
+let curTableId=null, curCat='ALL', priceEditMode=false
+function uid(){return 't'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function loadTables(){try{return JSON.parse(localStorage.getItem('rt_tables')||'[]')}catch{return[]}}
+function saveTables(t){localStorage.setItem('rt_tables',JSON.stringify(t))}
+function loadHistory(){try{return JSON.parse(localStorage.getItem('rt_history')||'[]')}catch{return[]}}
+function saveHistory(h){localStorage.setItem('rt_history',JSON.stringify(h))}
+function loadPriceOverrides(){try{return JSON.parse(localStorage.getItem('rt_price_overrides')||'{}')}catch{return{}}}
+function savePriceOverrides(o){localStorage.setItem('rt_price_overrides',JSON.stringify(o))}
+function getPrice(item){const o=loadPriceOverrides();return(o[item.id]!=null)?o[item.id]:item.price}
+
+// ====================================================================
+//   CLOUD BRIDGE — push checkout charges to the same Apps Script backend
+//   index.html syncs to, so staff can pull them into a guest's bill there.
+//   Best-effort only: never blocks or breaks local checkout if it fails.
+// ====================================================================
+function getSyncUrl(){return localStorage.getItem('rt_syncUrl')||''}
+function setSyncUrl(){
+  const cur=getSyncUrl()
+  const url=prompt('请粘贴与前台 index.html 相同的云同步地址 (Apps Script URL)\nPaste the same cloud sync URL (Apps Script URL) configured in index.html.\n两边需用同一地址，结账后订单才能推送到账单 Both sides must use the same URL for checkout charges to sync.\n留空可取消连接 Leave blank to disconnect.',cur)
+  if(url===null)return
+  localStorage.setItem('rt_syncUrl',url.trim())
+  updateSyncBtn()
+}
+function updateSyncBtn(){
+  const b=document.getElementById('sync-btn');if(!b)return
+  const on=!!getSyncUrl()
+  b.textContent=on?'🔗 已连接 Connected':'🔗 云同步 Cloud Sync'
+  b.style.background=on?'rgba(34,197,94,.35)':''
+}
+function pushChargeToCloud(record){
+  const url=getSyncUrl();if(!url)return
+  const summary=record.items.map(it=>it.name+'×'+it.qty).join('、')
+  const charge={id:record.id,table:record.tableLabel,note:record.note,summary,total:record.total,date:record.paidAt.slice(0,16).replace('T',' '),claimed:false}
+  fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
+    if(!res||!res.ok||!Array.isArray(res.data))throw new Error('load failed')
+    const data=res.data
+    let rc=data.find(c=>c.id==='__restaurant_charges__')
+    if(!rc){rc={id:'__restaurant_charges__',charges:[]};data.push(rc)}
+    if(!Array.isArray(rc.charges))rc.charges=[]
+    rc.charges.push(charge)
+    return fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)})
+  }).catch(()=>{/* offline or unreachable — local checkout/receipt already succeeded, just skip the push */})
+}
+function fmt(n){return'₱'+Number(n).toLocaleString('en-US',{maximumFractionDigits:0})}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+function ensureDefaultTables(){
+  let t=loadTables()
+  if(t.length===0){
+    t=[1,2,3,4,5,6].map(n=>({id:uid(),label:n+'号桌',note:'',items:[],openedAt:new Date().toISOString()}))
+    saveTables(t)
+  }
+  return t
+}
+
+// ====================================================================
+//   TABLES
+// ====================================================================
+function renderTables(){
+  const tables=loadTables()
+  const el=document.getElementById('tables-list')
+  el.innerHTML=tables.map(t=>{
+    const total=orderTotal(t)
+    const hasOrder=t.items.length>0
+    const cls='table-tile'+(t.id===curTableId?' active':'')+(hasOrder?' has-order':'')
+    return '<div class="'+cls+'" onclick="selectTable(\''+t.id+'\')">'
+      +'<button class="t-del" onclick="event.stopPropagation();removeTable(\''+t.id+'\')" title="删除桌台 Delete Table">✕</button>'
+      +'<div class="t-name">'+esc(t.label)+'</div>'
+      +(t.note?'<div class="t-note">'+esc(t.note)+'</div>':'')
+      +'<div class="t-meta"><span>'+t.items.reduce((s,i)=>s+i.qty,0)+' 件 items</span><span>'+fmt(total)+'</span></div>'
+      +'</div>'
+  }).join('')||'<div class="order-empty">暂无桌台，点击"＋开台"新建 No tables yet — click "+ New Table" to add one</div>'
+}
+function orderTotal(t){return t.items.reduce((s,it)=>{const m=MENU.find(x=>x.id===it.id);return s+(m?getPrice(m):0)*it.qty},0)}
+function selectTable(id){curTableId=id;renderTables();renderOrderPanel()}
+function openNewTableModal(){
+  document.getElementById('nt-label').value=''
+  document.getElementById('nt-note').value=''
+  document.getElementById('new-table-modal').classList.add('show')
+  setTimeout(()=>document.getElementById('nt-label').focus(),50)
+}
+function confirmNewTable(){
+  const label=document.getElementById('nt-label').value.trim()
+  const note=document.getElementById('nt-note').value.trim()
+  if(!label){alert('请输入桌号/名称 Please enter a table name/number');return}
+  const t=loadTables()
+  const nt={id:uid(),label,note,items:[],openedAt:new Date().toISOString()}
+  t.push(nt)
+  saveTables(t)
+  closeModal('new-table-modal')
+  selectTable(nt.id)
+}
+function removeTable(id){
+  const t=loadTables()
+  const tbl=t.find(x=>x.id===id)
+  if(tbl&&tbl.items.length>0){if(!confirm('该桌台还有未结账的订单，确定删除吗？This table still has an unpaid order. Delete anyway?'))return}
+  const nt=t.filter(x=>x.id!==id)
+  saveTables(nt)
+  if(curTableId===id)curTableId=null
+  renderTables();renderOrderPanel()
+}
+function openEditTableModal(){
+  if(!curTableId)return
+  const t=loadTables().find(x=>x.id===curTableId)
+  if(!t)return
+  document.getElementById('et-label').value=t.label
+  document.getElementById('et-note').value=t.note||''
+  document.getElementById('edit-table-modal').classList.add('show')
+}
+function confirmEditTable(){
+  const label=document.getElementById('et-label').value.trim()
+  const note=document.getElementById('et-note').value.trim()
+  if(!label){alert('请输入桌号/名称 Please enter a table name/number');return}
+  const t=loadTables()
+  const tbl=t.find(x=>x.id===curTableId)
+  if(tbl){tbl.label=label;tbl.note=note;saveTables(t)}
+  closeModal('edit-table-modal')
+  renderTables();renderOrderPanel()
+}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+
+// ====================================================================
+//   MENU
+// ====================================================================
+function renderCatTabs(){
+  const el=document.getElementById('cat-tabs')
+  const all=[{label:'全部 All',val:'ALL'}].concat(CATS.map(c=>({label:c,val:c})))
+  el.innerHTML=all.map(c=>'<div class="cat-tab'+(curCat===c.val?' active':'')+'" onclick="setCat(\''+c.val+'\')">'+esc(c.label)+'</div>').join('')
+}
+function setCat(c){curCat=c;renderCatTabs();renderMenu()}
+function renderMenu(){
+  const search=(document.getElementById('search-input').value||'').trim().toLowerCase()
+  let items=MENU
+  if(curCat!=='ALL')items=items.filter(m=>m.cat===curCat)
+  if(search)items=items.filter(m=>m.code.toLowerCase().includes(search)||m.name.toLowerCase().includes(search)||m.en.toLowerCase().includes(search))
+  const el=document.getElementById('menu-grid')
+  el.innerHTML=items.map(m=>{
+    const price=getPrice(m)
+    const priceHtml=priceEditMode
+      ?'<input type="number" value="'+price+'" onclick="event.stopPropagation()" onchange="updatePrice(\''+m.id+'\',this.value)">'
+      :fmt(price)
+    return '<div class="item-card" onclick="'+(priceEditMode?'':'addItemToOrder(\''+m.id+'\')')+'">'
+      +(m.hot?'<span class="ic-hot">👍</span>':'')
+      +'<div class="ic-code">'+esc(m.code)+'</div>'
+      +'<div class="ic-name">'+esc(m.name)+'</div>'
+      +'<div class="ic-en">'+esc(m.en)+'</div>'
+      +'<div class="ic-price">'+priceHtml+'</div>'
+      +'</div>'
+  }).join('')||'<div class="order-empty">没有找到匹配的菜品 No matching dishes found</div>'
+}
+function updatePrice(itemId,val){
+  const o=loadPriceOverrides()
+  const n=parseFloat(val)
+  if(val===''||isNaN(n)||n<0)delete o[itemId];else o[itemId]=n
+  savePriceOverrides(o)
+  renderMenu();renderOrderPanel();renderTables()
+}
+function togglePriceEdit(){
+  priceEditMode=!priceEditMode
+  document.getElementById('price-edit-btn').style.background=priceEditMode?'#ea580c':''
+  renderMenu()
+}
+
+// ====================================================================
+//   ORDER (per table)
+// ====================================================================
+function addItemToOrder(itemId){
+  if(!curTableId){alert('请先选择或开一个桌台 Please select or open a table first');return}
+  const t=loadTables()
+  const tbl=t.find(x=>x.id===curTableId)
+  if(!tbl)return
+  const line=tbl.items.find(i=>i.id===itemId)
+  if(line)line.qty++
+  else tbl.items.push({id:itemId,qty:1})
+  saveTables(t)
+  renderOrderPanel();renderTables()
+}
+function changeQty(itemId,delta){
+  const t=loadTables()
+  const tbl=t.find(x=>x.id===curTableId)
+  if(!tbl)return
+  const line=tbl.items.find(i=>i.id===itemId)
+  if(!line)return
+  line.qty+=delta
+  if(line.qty<=0)tbl.items=tbl.items.filter(i=>i.id!==itemId)
+  saveTables(t)
+  renderOrderPanel();renderTables()
+}
+function removeOrderItem(itemId){
+  const t=loadTables()
+  const tbl=t.find(x=>x.id===curTableId)
+  if(!tbl)return
+  tbl.items=tbl.items.filter(i=>i.id!==itemId)
+  saveTables(t)
+  renderOrderPanel();renderTables()
+}
+function clearOrder(){
+  if(!curTableId)return
+  const t=loadTables()
+  const tbl=t.find(x=>x.id===curTableId)
+  if(!tbl||tbl.items.length===0)return
+  if(!confirm('确定清空该桌台的订单吗？（不会生成流水记录）Clear this table\'s order? (No sales record will be created)'))return
+  tbl.items=[]
+  saveTables(t)
+  renderOrderPanel();renderTables()
+}
+function renderOrderPanel(){
+  const nameEl=document.getElementById('order-table-name')
+  const linesEl=document.getElementById('order-lines')
+  const totalEl=document.getElementById('order-total-amt')
+  if(!curTableId){
+    nameEl.innerHTML='<div class="tn-label" style="color:#94a3b8">未选择桌台 No table selected</div>'
+    linesEl.innerHTML='<div class="order-empty">从左侧选择或新开一个桌台 Select or open a table from the left</div>'
+    totalEl.textContent=fmt(0)
+    return
+  }
+  const t=loadTables().find(x=>x.id===curTableId)
+  if(!t){curTableId=null;renderOrderPanel();return}
+  nameEl.innerHTML='<span class="tn-label">'+esc(t.label)+'</span><span class="tn-edit" onclick="openEditTableModal()">✏️ 编辑 Edit</span>'
+    +(t.note?'<div class="tn-note">'+esc(t.note)+'</div>':'')
+  if(t.items.length===0){
+    linesEl.innerHTML='<div class="order-empty">还没有点菜<br>从中间菜单点击菜品添加 No items yet<br>Click a dish from the menu to add</div>'
+  }else{
+    linesEl.innerHTML=t.items.map(line=>{
+      const m=MENU.find(x=>x.id===line.id)
+      if(!m)return''
+      const price=getPrice(m)
+      return '<div class="order-line">'
+        +'<div class="ol-info"><div class="ol-name">'+esc(m.code)+' '+esc(m.name)+'</div><div class="ol-price">'+fmt(price)+' / 份 each</div></div>'
+        +'<div class="ol-qty"><button onclick="changeQty(\''+m.id+'\',-1)">－</button><span>'+line.qty+'</span><button onclick="changeQty(\''+m.id+'\',1)">＋</button></div>'
+        +'<div class="ol-sub">'+fmt(price*line.qty)+'</div>'
+        +'<span class="ol-del" onclick="removeOrderItem(\''+m.id+'\')">✕</span>'
+        +'</div>'
+    }).join('')
+  }
+  totalEl.textContent=fmt(orderTotal(t))
+}
+
+// ====================================================================
+//   CHECKOUT + RECEIPT PRINT
+// ====================================================================
+function checkoutTable(){
+  if(!curTableId)return
+  const t=loadTables().find(x=>x.id===curTableId)
+  if(!t||t.items.length===0){alert('该桌台没有订单 This table has no order');return}
+  const total=orderTotal(t)
+  if(!confirm('确认结账 '+t.label+'，总计 '+fmt(total)+' 吗？Confirm checkout for '+t.label+', total '+fmt(total)+'?\n（结账后会生成小票并清空该桌）(A receipt will print and the table will be cleared)'))return
+
+  const now=new Date()
+  const lines=t.items.map(line=>{
+    const m=MENU.find(x=>x.id===line.id)
+    const price=m?getPrice(m):0
+    return{code:m?m.code:'',name:m?m.name:'',qty:line.qty,price,sub:price*line.qty}
+  })
+  const record={id:uid(),tableLabel:t.label,note:t.note,items:lines,total,paidAt:now.toISOString()}
+  const hist=loadHistory()
+  hist.push(record)
+  saveHistory(hist)
+  pushChargeToCloud(record)
+
+  buildReceipt(record,now)
+
+  // reset table for next customer
+  const tables=loadTables()
+  const tbl=tables.find(x=>x.id===curTableId)
+  if(tbl){tbl.items=[];tbl.note=''}
+  saveTables(tables)
+  renderOrderPanel();renderTables()
+
+  setTimeout(()=>window.print(),150)
+}
+function buildReceipt(record,now){
+  const dateStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')
+  let html='<div class="r-title">Lucky Tito Restaurant</div>'
+    +'<div class="r-sub">'+esc(record.tableLabel)+(record.note?' · '+esc(record.note):'')+'</div>'
+    +'<div class="r-sub">'+dateStr+'</div>'
+    +'<hr>'
+  record.items.forEach(it=>{
+    html+='<div class="r-line"><span class="rl-name">'+esc(it.code)+' '+esc(it.name)+' x'+it.qty+'</span><span>'+fmt(it.sub)+'</span></div>'
+  })
+  html+='<hr><div class="r-total"><span>Total</span><span>'+fmt(record.total)+'</span></div>'
+    +'<div class="r-foot">谢谢光临 Thank you</div>'
+  document.getElementById('receipt-print').innerHTML=html
+}
+
+// ====================================================================
+//   HISTORY (today's sales)
+// ====================================================================
+function showHistory(){
+  const hist=loadHistory()
+  const today=new Date().toISOString().split('T')[0]
+  const todays=hist.filter(h=>h.paidAt.startsWith(today)).sort((a,b)=>b.paidAt.localeCompare(a.paidAt))
+  const total=todays.reduce((s,h)=>s+h.total,0)
+  document.getElementById('hist-date').textContent=today+' 共 '+todays.length+' 单 ('+todays.length+' orders)'
+  document.getElementById('hist-total').textContent=fmt(total)
+  document.getElementById('hist-list').innerHTML=todays.map(h=>{
+    const time=h.paidAt.slice(11,16)
+    return '<div class="hist-row"><div><div>'+esc(h.tableLabel)+(h.note?' · '+esc(h.note):'')+'</div><div class="h-meta">'+time+' · '+h.items.length+' 项 items</div></div><div>'+fmt(h.total)+'</div></div>'
+  }).join('')||'<div class="order-empty">今天还没有结账记录 No checkouts yet today</div>'
+  document.getElementById('history-modal').classList.add('show')
+}
+
+// ====================================================================
+//   INIT
+// ====================================================================
+function tickClock(){
+  const n=new Date()
+  document.getElementById('clock').textContent=n.toLocaleDateString('zh-CN')+' '+n.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})
+}
+function init(){
+  ensureDefaultTables()
+  renderCatTabs()
+  renderTables()
+  renderMenu()
+  renderOrderPanel()
+  updateSyncBtn()
+  tickClock()
+  setInterval(tickClock,30000)
+}
+init()
+</script>
+</body>
+</html>
