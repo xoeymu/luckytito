@@ -92,6 +92,10 @@ header button:hover{background:rgba(255,255,255,.22)}
   .receipt-print .r-line{display:flex;justify-content:space-between;gap:4px;margin:1mm 0}
   .receipt-print .r-line .rl-name{flex:1}
   .receipt-print .r-total{display:flex;justify-content:space-between;font-weight:800;font-size:14px;margin-top:2mm}
+  .receipt-print .r-pay{text-align:center;font-weight:800;font-size:11px;margin-top:2mm;border:1px solid #000;padding:1mm}
+  .receipt-print .r-sign{margin-top:8mm}
+  .receipt-print .r-sign-line{border-top:1px solid #000;margin-bottom:1mm}
+  .receipt-print .r-sign-label{text-align:center;font-size:9px}
   .receipt-print .r-foot{text-align:center;font-size:10px;margin-top:3mm}
 }
 </style>
@@ -157,6 +161,30 @@ header button:hover{background:rgba(255,255,255,.22)}
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('edit-table-modal')">取消 Cancel</button>
       <button class="btn btn-primary" onclick="confirmEditTable()">保存 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div class="modal-overlay" id="checkout-modal">
+  <div class="modal-box">
+    <h3>结账确认 Confirm Checkout</h3>
+    <div style="background:var(--bg);border-radius:8px;padding:10px 12px">
+      <div style="font-weight:800;color:var(--navy)" id="co-table-label"></div>
+      <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;color:var(--navy);margin-top:4px"><span>总计 Total</span><span id="co-total"></span></div>
+    </div>
+    <label>付款方式 Payment Method</label>
+    <div class="order-actions">
+      <button class="btn btn-primary" style="flex:1" id="co-btn-cash" onclick="setCheckoutRoomCharge(false)">💰 现金/卡 Cash/Card</button>
+      <button class="btn btn-ghost" style="flex:1" id="co-btn-room" onclick="setCheckoutRoomCharge(true)">🛏️ 房间挂账 Room Charge</button>
+    </div>
+    <div id="co-room-no-wrap" style="display:none">
+      <label>房号 Room Number</label>
+      <input type="text" id="co-room-no" placeholder="例如：12 / Villa 3">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('checkout-modal')">取消 Cancel</button>
+      <button class="btn btn-green" onclick="confirmCheckout()">🖨️ 确认结账 Confirm & Print</button>
     </div>
   </div>
 </div>
@@ -325,7 +353,7 @@ function updateSyncBtn(){
 function pushChargeToCloud(record){
   const url=getSyncUrl();if(!url)return
   const summary=record.items.map(it=>it.name+'×'+it.qty).join('、')
-  const charge={id:record.id,table:record.tableLabel,note:record.note,summary,total:record.total,date:record.paidAt.slice(0,16).replace('T',' '),claimed:false}
+  const charge={id:record.id,table:record.tableLabel,note:record.note,summary,total:record.total,date:record.paidAt.slice(0,16).replace('T',' '),claimed:false,roomCharge:!!record.roomCharge,roomNo:record.roomNo||''}
   fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
     if(!res||!res.ok||!Array.isArray(res.data))throw new Error('load failed')
     const data=res.data
@@ -534,12 +562,34 @@ function renderOrderPanel(){
 // ====================================================================
 //   CHECKOUT + RECEIPT PRINT
 // ====================================================================
+let coTableId=null,coRoomCharge=false
 function checkoutTable(){
   if(!curTableId)return
   const t=loadTables().find(x=>x.id===curTableId)
   if(!t||t.items.length===0){alert('该桌台没有订单 This table has no order');return}
+  coTableId=curTableId
+  document.getElementById('co-table-label').textContent=t.label+(t.note?' · '+t.note:'')
+  document.getElementById('co-total').textContent=fmt(orderTotal(t))
+  document.getElementById('co-room-no').value=''
+  setCheckoutRoomCharge(false)
+  document.getElementById('checkout-modal').classList.add('show')
+}
+function setCheckoutRoomCharge(isRoom){
+  coRoomCharge=isRoom
+  document.getElementById('co-btn-cash').className='btn '+(isRoom?'btn-ghost':'btn-primary')
+  document.getElementById('co-btn-room').className='btn '+(isRoom?'btn-primary':'btn-ghost')
+  document.getElementById('co-room-no-wrap').style.display=isRoom?'block':'none'
+  if(isRoom)setTimeout(()=>document.getElementById('co-room-no').focus(),50)
+}
+function confirmCheckout(){
+  const t=loadTables().find(x=>x.id===coTableId)
+  if(!t){closeModal('checkout-modal');return}
+  let roomNo=''
+  if(coRoomCharge){
+    roomNo=document.getElementById('co-room-no').value.trim()
+    if(!roomNo){alert('请输入房号 Please enter the room number');return}
+  }
   const total=orderTotal(t)
-  if(!confirm('确认结账 '+t.label+'，总计 '+fmt(total)+' 吗？Confirm checkout for '+t.label+', total '+fmt(total)+'?\n（结账后会生成小票并清空该桌）(A receipt will print and the table will be cleared)'))return
 
   const now=new Date()
   const lines=t.items.map(line=>{
@@ -547,17 +597,18 @@ function checkoutTable(){
     const price=m?getPrice(m):0
     return{code:m?m.code:'',name:m?m.name:'',qty:line.qty,price,sub:price*line.qty}
   })
-  const record={id:uid(),tableLabel:t.label,note:t.note,items:lines,total,paidAt:now.toISOString()}
+  const record={id:uid(),tableLabel:t.label,note:t.note,items:lines,total,paidAt:now.toISOString(),roomCharge:coRoomCharge,roomNo}
   const hist=loadHistory()
   hist.push(record)
   saveHistory(hist)
   pushChargeToCloud(record)
 
   buildReceipt(record,now)
+  closeModal('checkout-modal')
 
   // reset table for next customer
   const tables=loadTables()
-  const tbl=tables.find(x=>x.id===curTableId)
+  const tbl=tables.find(x=>x.id===coTableId)
   if(tbl){tbl.items=[];tbl.note=''}
   saveTables(tables)
   renderOrderPanel();renderTables()
@@ -574,6 +625,10 @@ function buildReceipt(record,now){
     html+='<div class="r-line"><span class="rl-name">'+esc(it.code)+' '+esc(it.name)+' x'+it.qty+'</span><span>'+fmt(it.sub)+'</span></div>'
   })
   html+='<hr><div class="r-total"><span>Total</span><span>'+fmt(record.total)+'</span></div>'
+  html+=record.roomCharge
+    ?'<div class="r-pay">ROOM CHARGE 房间挂账 · Room '+esc(record.roomNo)+'</div>'
+    :'<div class="r-pay">CASH / CARD 现金/卡</div>'
+  html+='<div class="r-sign"><div class="r-sign-line"></div><div class="r-sign-label">Guest Signature 客人签名</div></div>'
     +'<div class="r-foot">谢谢光临 Thank you</div>'
   document.getElementById('receipt-print').innerHTML=html
 }
@@ -590,7 +645,7 @@ function showHistory(){
   document.getElementById('hist-total').textContent=fmt(total)
   document.getElementById('hist-list').innerHTML=todays.map(h=>{
     const time=h.paidAt.slice(11,16)
-    return '<div class="hist-row"><div><div>'+esc(h.tableLabel)+(h.note?' · '+esc(h.note):'')+'</div><div class="h-meta">'+time+' · '+h.items.length+' 项 items</div></div><div>'+fmt(h.total)+'</div></div>'
+    return '<div class="hist-row"><div><div>'+esc(h.tableLabel)+(h.note?' · '+esc(h.note):'')+(h.roomCharge?' · 🛏️ Room '+esc(h.roomNo):'')+'</div><div class="h-meta">'+time+' · '+h.items.length+' 项 items</div></div><div>'+fmt(h.total)+'</div></div>'
   }).join('')||'<div class="order-empty">今天还没有结账记录 No checkouts yet today</div>'
   document.getElementById('history-modal').classList.add('show')
 }
