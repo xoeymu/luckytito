@@ -336,9 +336,8 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
     <span id="nav-username" style="font-size:12px;color:rgba(255,255,255,.75);font-weight:600;padding:0 6px;white-space:nowrap"></span>
     <button class="nav-btn btn-hol" onclick="openHolModal()" style="background:#f59e0b;border-color:#f59e0b">📅 节假日 Holidays</button>
     <div class="sync-pill" onclick="openSyncModal()" title="云同步 Cloud Sync"><span class="sync-dot dot-none" id="sync-dot"></span><span id="sync-text">离线 Offline</span></div>
-    <button class="nav-btn" onclick="openSyncModal()">☁️ 云端 Cloud</button>
-    <button class="nav-btn" onclick="exportData()">📤 导出 Export</button>
-    <label class="nav-btn" style="cursor:pointer">📥 导入 Import<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+    <button class="nav-btn" onclick="exportData()" title="导出 Export" style="padding:0 9px">📤</button>
+    <label class="nav-btn" style="cursor:pointer;padding:0 9px" title="导入 Import">📥<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
   </div>
 </div>
 
@@ -1164,7 +1163,7 @@ function generateInstLink(){
   ta.value=link;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta)
   ta.select();try{document.execCommand('copy')}catch(e){}
   document.body.removeChild(ta)
-  if(!url){alert('Link copied!\n\n⚠️ Cloud Sync is not connected, so this link will only show data on a device/browser that already has this app open with local data. Connect Cloud Sync (☁️ Cloud button) first so the instructor link works from any device.\n\n链接已复制！\n⚠️ 尚未连接云同步，此链接仅在已打开过本系统的设备上有效。请先点击「☁️ Cloud」连接云同步，分享链接才能在教练自己的手机/设备上显示数据。')}
+  if(!url){alert('Link copied!\n\n⚠️ Cloud Sync is not connected, so this link will only show data on a device/browser that already has this app open with local data. Connect Cloud Sync (top-right status pill) first so the instructor link works from any device.\n\n链接已复制！\n⚠️ 尚未连接云同步，此链接仅在已打开过本系统的设备上有效。请先点击右上角的同步状态条连接云同步，分享链接才能在教练自己的手机/设备上显示数据。')}
   else{alert('✅ Link copied to clipboard!\nShare this with the instructor — it opens a view-only schedule, no login or editing access.\n\n链接已复制！可直接分享给教练，打开后仅可查看排课，无需登录、无法编辑。\n\nNote: this file must be hosted somewhere reachable by the instructor (e.g. uploaded to a web host/Drive/Sites) — a local file path on this computer will not open on their device.\n注意：该文件需上传到教练可访问的网址（如网盘/网站托管），仅存于本机的文件无法在教练的设备上打开。')}
 }
 function cloudLoad(){
