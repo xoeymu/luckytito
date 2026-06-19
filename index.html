@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>LUCKY TITO PG TRANNING CENTER MANAGEMENT 潜店管理系统</title>
+<title>LUCKY TITO PG TRAINING CENTER MANAGEMENT 潜店管理系统</title>
 <script>
 (function(){
   const USERS=[
@@ -221,6 +221,10 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
 .bit th:not(:first-child){text-align:right}
 .bit td{padding:8px 9px;border-bottom:1px solid #f1f5f9;color:#1a202c}
 .bit td:not(:first-child){text-align:right}
+#gc-card .bs{margin-bottom:26px}
+#gc-card .bst{font-size:13px;margin-bottom:10px;padding-bottom:6px}
+#gc-card .br{padding:7px 0;font-size:18px}
+#gc-card .big{gap:6px 32px}
 .btb{background:#f8fafc;border-radius:10px;padding:13px 16px;margin-top:16px}
 .btr{display:flex;justify-content:space-between;padding:3px 0;font-size:13px;color:#475569}
 .btf{display:flex;justify-content:space-between;padding:11px 0 0;border-top:2px solid #e2e8f0;margin-top:8px;font-size:17px;font-weight:800;color:#0b3d5e}
@@ -297,15 +301,19 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
   .no-print{display:none!important}
   body{background:white}
   .nav{display:none}
-  .page{padding:0;max-width:100%}
+  .page{display:none!important}
   .bw{box-shadow:none;border:none;padding:20px}
   .bk-sheet{box-shadow:none;border:none;padding:20px}
-  #bill-modal{position:static!important;background:transparent!important;padding:0!important;display:block!important;overflow:visible!important}
+  #bill-modal{position:static!important;background:transparent!important;padding:0!important;overflow:visible!important}
   #bill-modal>div{box-shadow:none!important;border-radius:0!important;max-width:100%!important}
-  #ws-modal{position:static!important;background:transparent!important;padding:0!important;display:block!important;overflow:visible!important}
+  #ws-modal{position:static!important;background:transparent!important;padding:0!important;overflow:visible!important}
   #ws-modal>div{box-shadow:none!important;border-radius:0!important;max-width:100%!important}
-  #gc-modal{position:static!important;background:transparent!important;padding:0!important;display:block!important;overflow:visible!important}
-  #gc-modal>div{box-shadow:none!important;border-radius:0!important;max-width:100%!important}
+  #gc-modal{position:static!important;background:transparent!important;padding:0!important;overflow:visible!important}
+  #gc-modal>div{box-shadow:none!important;border-radius:0!important;max-width:100%!important;padding:0!important}
+  #wage-card-wrap{display:none!important}
+  .bh{flex-direction:row!important}
+  .bnum,.blbl,.bdate{text-align:right!important}
+  .big{grid-template-columns:1fr 1fr!important}
   @page{size:A4;margin:14mm}
 }
 /* ====== ROOM CALENDAR ====== */
@@ -326,7 +334,7 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
 </head>
 <body>
 <div class="nav no-print">
-  <div class="nav-brand">🤿 LUCKY TITO PG TRANNING CENTER</div>
+  <div class="nav-brand">🤿 LUCKY TITO PG TRAINING CENTER</div>
   <div class="nav-tabs">
     <div class="nav-tab active" onclick="switchTab('form')" id="tab-form">Guest Info</div>
     <div class="nav-tab" onclick="switchTab('schedule')" id="tab-schedule">Schedule</div>
@@ -574,9 +582,10 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
           <select id="f-bs"><option value="">请选择 Select</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option></select></div>
       </div>
       <div class="sec-div"><span class="sec-div-label">证书 & 经验 Cert & Experience</span><div class="sec-div-line"></div></div>
-      <div class="g3">
+      <div class="g4">
         <div class="fg"><label>认证系统 Cert. System</label>
           <select id="f-certsys"><option value="">无/未知 None</option><option>PADI</option><option>SSI</option><option>SDI</option><option>NAUI</option><option>AIDA</option><option>其他</option></select></div>
+        <div class="fg"><label>技能等级 Cert. Level</label><input type="text" id="f-certlevel" placeholder="OW / AOW / Rescue / DM…"></div>
         <div class="fg"><label>证书编号 Cert. No.</label><input type="text" id="f-certno" placeholder="P12345…"></div>
         <div class="fg"><label>潜水经验 Experience</label><input type="text" id="f-divexp" placeholder="零基础 / OW / AOW / 50潜… e.g. None / OW / AOW / 50 dives"></div>
       </div>
@@ -874,7 +883,7 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
 
 <!-- PAGE: DIVES -->
 <div id="page-dives" class="page">
-  <div style="display:grid;grid-template-columns:360px 1fr;gap:14px;align-items:start">
+  <div style="display:grid;grid-template-columns:1fr;gap:14px;align-items:start">
     <div class="card">
       <div class="card-header"><span class="card-title">记录潜水 Log a Dive</span></div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
@@ -910,9 +919,44 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
             <option value="">— 选择潜导 Select DM —</option>
           </select>
         </div>
+        <div style="display:flex;align-items:center;gap:6px;padding:2px 0">
+          <input type="checkbox" id="dl-dsd" style="width:16px;height:16px">
+          <label for="dl-dsd" class="form-label" style="margin:0">DSD 体验潜水 DSD Trial Dive</label>
+        </div>
+        <div>
+          <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
+            <span>教练 Instructor</span>
+            <button type="button" class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 6px" onclick="openAddInstructorModal()">＋ 添加教练 Add Instructor</button>
+          </label>
+          <select id="dl-instructor" class="form-control" onchange="toggleDlCourseSelect()">
+            <option value="">— 选择教练 Select Instructor —</option>
+          </select>
+        </div>
+        <div id="dl-course-wrap" style="display:none">
+          <label class="form-label">课程 Course</label>
+          <select id="dl-course" class="form-control">
+            <option value="">— 选择课程 Select Course —</option>
+            <option value="FD">FD</option>
+            <option value="POOL">POOL</option>
+            <option value="OW1">OW1</option>
+            <option value="OW2">OW2</option>
+            <option value="OW3">OW3</option>
+            <option value="OW4">OW4</option>
+            <option value="AOW1">AOW1</option>
+            <option value="AOW2">AOW2</option>
+            <option value="AOW3">AOW3</option>
+            <option value="AOW4">AOW4</option>
+            <option value="AOW5">AOW5</option>
+            <option value="SPECIALTY">SPECIALTY</option>
+          </select>
+        </div>
         <div>
           <label class="form-label">参与人员 Participants</label>
           <div id="dl-participants" style="max-height:220px;overflow-y:auto;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px"></div>
+        </div>
+        <div>
+          <label class="form-label">备注 Note</label>
+          <textarea id="dl-note" placeholder="可选备注… Optional note…" style="min-height:50px"></textarea>
         </div>
         <button class="btn btn-primary" id="dl-log-btn" onclick="logDive()">记录 Log Dive</button>
       </div>
@@ -1799,7 +1843,7 @@ function collect(){
     roomDiscount:v('f-rdisc'),roomDiscountCustom:v('f-rdisc-custom'),
     gender:v('f-gender'),height:v('f-ht'),weight:v('f-wt'),clothSize:v('f-cs'),shoeSize:v('f-shoe').trim(),myopia:v('f-myopia').trim(),
     wetsuitSize:v('f-ws'),finSize:v('f-fs').trim(),bcdSize:v('f-bs'),
-    certSystem:v('f-certsys'),certNumber:v('f-certno').trim(),divingExp:v('f-divexp').trim(),
+    certSystem:v('f-certsys'),certLevel:v('f-certlevel').trim(),certNumber:v('f-certno').trim(),divingExp:v('f-divexp').trim(),
     ownGear:getOwnGear(),gearNote:v('f-gn').trim(),
     instructor:v('f-inst').trim(),multiStudentDisc:document.getElementById('f-multi-student')?.checked||false,classmates:getClassmates(),courseStart:v('f-cstart'),courseEnd:v('f-cend'),
     items:getItems(),deposit:v('f-deposit'),actualReceived:v('f-actual-received').trim(),actualCurrency:v('f-actual-currency')||'CNY',holFdQty:_holFdQty||0,notes:v('f-note').trim(),
@@ -1831,7 +1875,7 @@ function fillForm(c){
   updateRoomFeePreview()
   sv('f-gender',c.gender);sv('f-ht',c.height);sv('f-wt',c.weight);sv('f-cs',c.clothSize);sv('f-shoe',c.shoeSize);sv('f-myopia',c.myopia)
   sv('f-ws',c.wetsuitSize);sv('f-fs',c.finSize);sv('f-bs',c.bcdSize)
-  sv('f-certsys',c.certSystem);sv('f-certno',c.certNumber);sv('f-divexp',c.divingExp)
+  sv('f-certsys',c.certSystem);sv('f-certlevel',c.certLevel);sv('f-certno',c.certNumber);sv('f-divexp',c.divingExp)
   setOwnGear(c.ownGear);sv('f-gn',c.gearNote);sv('f-inst',c.instructor)
   const msd=document.getElementById('f-multi-student');if(msd)msd.checked=!!c.multiStudentDisc
   setClassmates(c.classmates||[])
@@ -1866,7 +1910,7 @@ function _clearForm(){
   ;['f-name','f-dob','f-email','f-af','f-at-date','f-df','f-dt-date','f-ovhot',
     'f-arr-ct','f-arr-cf','f-arr-drv','f-dep-ct','f-dep-cf','f-dep-drv',
     'f-ci','f-co','f-rnum','f-rrate','f-rdisc-custom','f-ht','f-wt','f-shoe','f-myopia',
-    'f-fs','f-certno','f-divexp','f-gn','f-inst','f-deposit','f-actual-received','f-note',
+    'f-fs','f-certlevel','f-certno','f-divexp','f-gn','f-inst','f-deposit','f-actual-received','f-note',
     'f-arr-boat','f-arr-plate','f-dep-boat','f-dep-plate'
   ].forEach(id=>sv(id,''))
   ;['f-term','f-rtype','f-cs','f-ws','f-bs','f-certsys','f-rdisc','f-gender',
@@ -1910,7 +1954,7 @@ function countFilledFields(c){
     c.departFlight,c.departTime,c.depTerminal,c.depCarTime,c.depCarFee,c.depBoat,
     c.depPlate,c.depDriverPhone,c.checkin,c.checkout,c.roomType,c.roomNum,
     c.gender,c.height,c.weight,c.clothSize,c.shoeSize,c.myopia,
-    c.wetsuitSize,c.finSize,c.bcdSize,c.certSystem,c.certNumber,c.divingExp,
+    c.wetsuitSize,c.finSize,c.bcdSize,c.certSystem,c.certLevel,c.certNumber,c.divingExp,
     c.gearNote,c.instructor,c.courseStart,c.courseEnd,c.deposit,c.notes]
   return vals.filter(v=>v&&String(v).trim()).length+((c.items||[]).filter(i=>i.name).length)
 }
@@ -2227,6 +2271,7 @@ function parseAndApply(){
     [/^(?:性别|gender|sex)[^:：]*[:：]\s*(.+)/i,'_gender'],
     [/^(?:潜水经验|diving\s*exp(?:erience)?|experience)[^:：]*[:：]\s*(.+)/i,'divingExp'],
     [/^(?:认证系统?|cert(?:ification)?\s*sys(?:tem)?)[^:：]*[:：]\s*(PADI|SSI|SDI|NAUI|AIDA)/i,'certSystem'],
+    [/^(?:技能等级|认证等级|证书等级|cert(?:ification)?\s*level)[^:：]*[:：]\s*(.+)/i,'certLevel'],
     [/^(?:证书编号?|cert(?:ification)?\s*(?:no|number|#)|license)[^:：]*[:：]\s*(.+)/i,'certNumber'],
     [/^(?:地点|location|dive\s*site)[^:：]*[:：]\s*(.+)/i,'location'],
     [/^(?:教练|instructor|dm)[^:：]*[:：]\s*(.+)/i,'instructor'],
@@ -2380,7 +2425,7 @@ function parseAndApply(){
   if(R.clothSize)sv('f-cs',R.clothSize);if(R.wetsuitSize)sv('f-ws',R.wetsuitSize)
   if(R.myopia)sv('f-myopia',R.myopia);if(R.divingExp)sv('f-divexp',R.divingExp)
   if(R.gender)sv('f-gender',R.gender)
-  if(R.certSystem)sv('f-certsys',R.certSystem);if(R.certNumber)sv('f-certno',R.certNumber)
+  if(R.certSystem)sv('f-certsys',R.certSystem);if(R.certLevel)sv('f-certlevel',R.certLevel);if(R.certNumber)sv('f-certno',R.certNumber)
   if(R.instructor)sv('f-inst',R.instructor)
   if(R._multiStudent){const cb=document.getElementById('f-multi-student');if(cb)cb.checked=true;delete R._multiStudent}
   if(R.location)sv('f-loc',R.location)
@@ -2855,6 +2900,7 @@ function goBill(id){showBillModal(id)}
 function showBillModal(custId){
   const c=getAll().find(x=>x.id===custId)
   document.getElementById('bm-guest-name').textContent=(c?.name||'客人 Guest')+' · 账单 Invoice'
+  fillBillSel()
   document.getElementById('bill-sel').value=custId
   renderBill(custId)
   document.getElementById('bill-modal').style.display='block'
@@ -2983,8 +3029,9 @@ function fillBillSel(){
 function fdt(s){if(!s)return'—';const m=s.match(/\d{4}-(\d{2})-(\d{2})(?:T(\d{2}:\d{2}))?/);return m?(m[1]+'/'+m[2]+(m[3]?' '+m[3]:'')):s}
 function fdate(s){if(!s)return'—';const m=s.match(/\d{4}-(\d{2})-(\d{2})/);return m?(m[1]+'/'+m[2]):s}
 function brow(l,v2){return v2?'<div class="br"><span class="brl">'+l+'</span><span class="brv">'+v2+'</span></div>':''}
-function blankField(label){return'<div style="display:flex;align-items:baseline;gap:10px;padding:6px 0;font-size:13px"><span style="color:#64748b;white-space:nowrap;min-width:120px">'+label+'</span><span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:14px">&nbsp;</span></div>'}
-function blankField2(l1,l2){return'<div style="display:flex;gap:24px"><div style="flex:1">'+blankField(l1)+'</div><div style="flex:1">'+(l2?blankField(l2):'')+'</div></div>'}
+function blankField(label){return'<div style="display:flex;align-items:baseline;gap:12px;padding:9px 0;font-size:18px"><span style="color:#64748b;white-space:nowrap;min-width:150px">'+label+'</span><span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:24px">&nbsp;</span></div>'}
+function blankField2(l1,l2){return'<div style="display:flex;gap:32px"><div style="flex:1">'+blankField(l1)+'</div><div style="flex:1">'+(l2?blankField(l2):'')+'</div></div>'}
+function browOrBlank(l,v){return v?brow(l,v):blankField(l)}
 function renderBill(overrideCustId){
   const id=overrideCustId||document.getElementById('bill-sel')?.value||''
   if(!id){document.getElementById('bill-out').innerHTML='<div class="empty-state"><div class="empty-icon">🧾</div><p>请选择客户 Select a guest</p></div>';return}
@@ -3020,7 +3067,7 @@ function renderBill(overrideCustId){
   // Build room fee rows (split by holiday/non-holiday and solo/shared)
   let roomRows=''
   if(c.roomRate&&c.checkin&&c.checkout){
-    const rt=(c.roomType||'客房').split(' ')[0]
+    const rt=((c.roomType||'客房').match(/^[A-Za-z0-9 ]+/)||[''])[0].trim()||(c.roomType||'客房')
     const rate=parseFloat(c.roomRate)
     const isDormBill=(c.roomType||'').includes('学员宿舍')
     const rd=isDormBill?'':c.roomDiscount
@@ -3029,7 +3076,7 @@ function renderBill(overrideCustId){
     const hols=new Set(getHolidays())
     const sharedSet=isDormBill?new Set():getSharedNights(c)
     const{holSolo,holShare,normSolo,normShare}=computeRoomNights(c.checkin,c.checkout,rate,sharedSet,hols,rf)
-    const mkRow=(lbl,up,qty,sub)=>'<tr><td>'+rt+' ('+lbl+')</td><td>'+up+'</td><td>'+qty+'</td><td>¥ '+sub+'</td></tr>'
+    const mkRow=(lbl,up,qty,sub)=>'<tr><td>'+rt+(lbl?' ('+lbl+')':'')+'</td><td>'+up+'</td><td>'+qty+'</td><td>¥ '+sub+'</td></tr>'
     const nts=n=>n+' nt'+(n>1?'s':'')
     if(holSolo>0)roomRows+=mkRow('Holiday · 节假日 (full rate 原价)',('¥'+rate+'/nt'),nts(holSolo),(holSolo*rate).toFixed(2))
     if(holShare>0)roomRows+=mkRow('Holiday · 节假日 (shared 拼房 50%)','¥'+rate+'/nt × 50%',nts(holShare),(holShare*rate*0.5).toFixed(2))
@@ -3053,7 +3100,7 @@ function renderBill(overrideCustId){
     const rDiscLbl=c.restaurantDiscount==='instructor'?'10% 教练折扣 Instructor Discount':c.restaurantDiscount==='management'?'40% 管理折扣 Management Discount':''
     if(rIsRmb){
       const rRate=parseFloat(c.restaurantRate)
-      restSection='<div class="bs"><div class="bst">🍽 餐厅消费 Restaurant Charges · 人民币结算 RMB</div>'
+      restSection='<div class="bs"><div class="bst">餐厅消费 Restaurant Charges · 人民币结算 RMB</div>'
         +'<table class="bit"><thead><tr><th>日期 Date</th><th>小计 Subtotal (₱)</th><th>折算 Converted (¥)</th></tr></thead><tbody>'
         +rDates.map(d=>{
           const daySum=byDate[d].reduce((s,x)=>s+(Number(x.total)||0),0)
@@ -3061,15 +3108,15 @@ function renderBill(overrideCustId){
           return'<tr><td>'+fdate(d)+'</td><td>₱ '+daySum.toFixed(2)+'</td><td>¥ '+dayCny.toFixed(2)+'</td></tr>'
         }).join('')
         +'</tbody></table>'
-        +(rDiscLbl?'<div style="font-size:12px;color:#059669;margin-top:6px;font-weight:600">🏷️ '+rDiscLbl+'</div>':'')
+        +(rDiscLbl?'<div style="font-size:12px;color:#059669;margin-top:6px;font-weight:600">'+rDiscLbl+'</div>':'')
         +'<div style="font-size:11px;color:#64748b;margin-top:4px">汇率 Exchange Rate: 1 CNY = ₱'+rRate+' PHP · 已计入下方总额 Included in total below</div>'
         +'</div>'
     }else{
-      restSection='<div class="bs"><div class="bst">🍽 餐厅消费 Restaurant Charges · 另计 PHP (Settled Separately)</div>'
+      restSection='<div class="bs"><div class="bst">餐厅消费 Restaurant Charges · 另计 PHP (Settled Separately)</div>'
         +'<table class="bit"><thead><tr><th>日期 Date</th><th>小计 Subtotal</th></tr></thead><tbody>'
         +rDates.map(d=>{const daySum=byDate[d].reduce((s,x)=>s+(Number(x.total)||0),0);return'<tr><td>'+fdate(d)+'</td><td>₱ '+daySum.toFixed(2)+'</td></tr>'}).join('')
         +'</tbody></table>'
-        +(rDiscLbl?'<div style="font-size:12px;color:#059669;margin-top:6px;font-weight:600">🏷️ '+rDiscLbl+'</div>':'')
+        +(rDiscLbl?'<div style="font-size:12px;color:#059669;margin-top:6px;font-weight:600">'+rDiscLbl+'</div>':'')
         +'<div class="btr" style="font-weight:700;margin-top:6px;border-top:1px dashed #e2e8f0;padding-top:6px"><span>餐厅消费合计 Restaurant Total</span><span>₱ '+rAfterDiscPHP.toFixed(2)+'</span></div>'
         +'<div style="font-size:11px;color:#94a3b8;margin-top:4px">此金额未计入下方人民币总额，需单独以比索结算 Not included in CNY total below — settle separately in PHP</div>'
         +'</div>'
@@ -3078,7 +3125,7 @@ function renderBill(overrideCustId){
   const restSectionOut=(rIsRmb&&restSection)?restSection.replace(/\u00a5/g,'\u00a7YEN\u00a7'):restSection
   document.getElementById('bill-out').innerHTML=
 '<div class="bw"><div class="bh">'+
-'<div style="display:flex;align-items:center;gap:10px"><img src="'+LOGO_B64+'" style="height:48px;width:auto"><div><div class="bsn" style="color:#1a6bb5;font-size:28px;font-weight:900;letter-spacing:.5px">Lucky Tito Dive Resort</div><div class="bss">PG Training Center · 账单 Invoice</div></div></div>'+
+'<div style="display:flex;align-items:center;flex:1;gap:14px"><img src="'+LOGO_B64+'" style="height:81px;width:auto;flex-shrink:0"><div style="flex:1;text-align:center;min-width:0"><div class="bsn" style="color:#1a6bb5;font-size:21px;font-weight:900;letter-spacing:.2px;white-space:nowrap">Lucky Tito Dive Resort</div><div class="bss">PG Training Center · 账单 Invoice</div></div></div>'+
 '<div><div class="blbl">账单编号 Invoice No.</div><div class="bnum">'+(c.custNo||'INV-'+(c.id||'').slice(-6).toUpperCase())+'</div>'+
 '<div class="bdate">日期 Date: '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})+'</div></div>'+
 '</div>'+
@@ -3089,14 +3136,14 @@ function renderBill(overrideCustId){
 '</div></div>'+
 (hasR?'<div class="bs"><div class="bst">住宿 Accommodation</div><div class="big">'+brow('入住 Check-in',fdate(c.checkin))+brow('退房 Check-out',fdate(c.checkout)+nightDisp)+brow('房型 Room Type',c.roomType)+brow('房间号 Room No.',c.roomNum)+'</div>'+discNote+'</div>':'')+
 '<div class="bs"><div class="bst">费用明细 Charges</div>'+
-'<table class="bit"><thead><tr><th>项目 Item</th><th>单价 Unit Price</th><th>数量 Qty</th><th>小计 Subtotal</th></tr></thead><tbody>'+
+'<table class="bit" style="table-layout:fixed"><colgroup><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"></colgroup><thead><tr><th>项目 Item</th><th>单价 Unit Price</th><th>数量 Qty</th><th>小计 Subtotal</th></tr></thead><tbody>'+
 (c.items||[]).map(i=>'<tr><td>'+escHtml(i.name)+'</td><td>¥ '+(+i.price).toFixed(2)+'</td><td>'+i.qty+'</td><td>¥ '+(i.price*i.qty).toFixed(2)+'</td></tr>').join('')+
 (holFdQty>0?'<tr style="background:#fff1f1"><td>🎉 节假日FD Holiday Fun Dive</td><td>¥ 195.00</td><td>'+holFdQty+'</td><td>¥ '+holFdSub.toFixed(2)+'</td></tr>':'')+
 roomRows+
 '</tbody></table><div class="btb">'+
 '<div class="btr"><span>小计 Subtotal</span><span>¥ '+(iT+holFdSub+roomSub).toFixed(2)+'</span></div>'+
 (disc>0?'<div class="btr" style="color:#059669"><span>折扣 Discount</span><span>− ¥ '+disc.toFixed(2)+'</span></div>':'')+
-(rCNY>0?'<div class="btr"><span>🍽 餐厅消费 Restaurant (RMB)</span><span>¥ '+rCNY.toFixed(2)+'</span></div>':'')+
+(rCNY>0?'<div class="btr"><span>餐厅消费 Restaurant (RMB)</span><span>¥ '+rCNY.toFixed(2)+'</span></div>':'')+
 '<div class="btf"><span>应付总额 Total Due</span><span>¥ '+tot.toFixed(2)+'</span></div>'+
 (dep>0?'<div class="btr" style="margin-top:8px;padding-top:8px;border-top:1px dashed #e2e8f0"><span>已付定金 Deposit Paid</span><span style="color:#059669">− ¥ '+dep.toFixed(2)+'</span></div><div class="btr" style="font-weight:700;color:#dc2626"><span>尾款 Balance Due</span><span>¥ '+balance.toFixed(2)+'</span></div>':'')+
 '</div></div>'+
@@ -3117,6 +3164,12 @@ restSectionOut+
   if(rIsRmb&&restSection){const elx=document.getElementById('bill-out');elx.innerHTML=elx.innerHTML.replace(/§YEN§/g,'¥')}
 }
 
+function printClean(){
+  const t=document.title
+  document.title=' '
+  window.print()
+  setTimeout(()=>{document.title=t},300)
+}
 function generateBillImage(btn){
   const el=document.getElementById('bill-out')
   if(!el||el.querySelector('.empty-state')){alert('请先选择客户 Please select a guest first.');return}
@@ -3218,7 +3271,7 @@ function renderBooking(){
   out.innerHTML=`<div class="bk-sheet">
     <!-- Header -->
     <div style="text-align:center;padding-bottom:18px;border-bottom:3px solid #e0e0e0;margin-bottom:16px">
-      <img src="${LOGO_B64}" style="height:54px;width:auto;margin-bottom:6px">
+      <img src="${LOGO_B64}" style="height:70px;width:auto;margin-bottom:6px">
       <div class="bk-logo-title">Lucky Tito Dive Resort</div>
       <div style="font-size:13px;font-weight:800;color:#4a90c4;letter-spacing:4px;margin:5px 0 3px">BOOKING CONFIRMATION SHEET</div>
       <div style="font-size:13px;color:#999;letter-spacing:2px">行程预定确认单</div>
@@ -3586,6 +3639,7 @@ function rcalDrop(e){
 // ====== DIVE LOG ======
 const DIVE_SITES=['Sabang Bay','Sabang Wreck','Monkey Beach','Alma Jane','Dugong Wall','The Hill','Manila Channel','Canyons','Kilima Steps','Hole in the Wall','Coral Cove','Cinandigan Wall','West Escarceo']
 const DEFAULT_DMS=['Mer','Bonnie','Xoey']
+const DEFAULT_INSTRUCTORS=[]
 
 function getDivelog(){try{return JSON.parse(localStorage.getItem('lt_divelog')||'[]')}catch{return[]}}
 function saveDivelog(d){localStorage.setItem('lt_divelog',JSON.stringify(d));cloudSave()}
@@ -3605,6 +3659,30 @@ function openAddDmModal(){
   populateDmSelect()
   document.getElementById('dl-dm').value=name.trim()
 }
+function getInstructorList(){try{return JSON.parse(localStorage.getItem('lt_instructors')||'null')||[...DEFAULT_INSTRUCTORS]}catch{return[...DEFAULT_INSTRUCTORS]}}
+function saveInstructorList(d){localStorage.setItem('lt_instructors',JSON.stringify(d));cloudSave()}
+function populateInstructorSelect(){
+  const sel=document.getElementById('dl-instructor');if(!sel)return
+  const cur=sel.value
+  sel.innerHTML='<option value="">— 选择教练 Select Instructor —</option>'+getInstructorList().map(n=>`<option value="${escHtml(n)}">${escHtml(n)}</option>`).join('')
+  if(cur)sel.value=cur
+}
+function openAddInstructorModal(){
+  const name=prompt('Instructor name 教练姓名:')
+  if(!name||!name.trim())return
+  const list=getInstructorList()
+  if(!list.includes(name.trim())){list.push(name.trim());saveInstructorList(list)}
+  populateInstructorSelect()
+  document.getElementById('dl-instructor').value=name.trim()
+  toggleDlCourseSelect()
+}
+function toggleDlCourseSelect(){
+  const sel=document.getElementById('dl-instructor')
+  const wrap=document.getElementById('dl-course-wrap')
+  if(!sel||!wrap)return
+  wrap.style.display=sel.value?'':'none'
+  if(!sel.value){const c=document.getElementById('dl-course');if(c)c.value=''}
+}
 function getDiveCount(cid){return getDivelog().filter(e=>e.participants.includes(cid)).length}
 function getNightDiveCount(cid){return getDivelog().filter(e=>e.participants.includes(cid)&&e.isNight).length}
 function getGuestDives(cid){return getDivelog().filter(e=>e.participants.includes(cid)).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time))}
@@ -3617,6 +3695,7 @@ function initDiveLog(){
   const dd=document.getElementById('dl-date')
   if(dd&&!dd.value)dd.value=new Date().toISOString().split('T')[0]
   populateDmSelect()
+  populateInstructorSelect()
   populateWsNameSelect()
   renderDlParticipants()
   renderDiveLog()
@@ -3631,11 +3710,85 @@ function renderDlParticipants(){
   if(!el)return
   const all=getAll().filter(c=>!c.checkedOut)
   if(!all.length){el.innerHTML='<div style="font-size:12px;color:#94a3b8;padding:4px">暂无在店客人 No guests currently in-house</div>';return}
-  el.innerHTML=all.map(c=>`<label style="display:flex;align-items:center;gap:8px;padding:5px 2px;cursor:pointer;font-size:13px;border-bottom:1px solid #f1f5f9">
-    <input type="checkbox" class="dl-cb" value="${c.id}" style="width:15px;height:15px;cursor:pointer;accent-color:#0ea5e9">
-    <span style="font-weight:600">${escHtml(c.name||'—')}</span>
-    ${c.roomNum?`<span style="margin-left:auto;font-size:11px;color:#94a3b8">房 Rm ${escHtml(c.roomNum)}</span>`:''}
-  </label>`).join('')
+  el.innerHTML='<input type="text" id="dl-pfilter" class="form-control" placeholder="🔍 搜索姓名或房号… Search name/room" style="font-size:12px;padding:6px 8px;margin-bottom:6px" oninput="renderDlParticipantGroups()">'
+    +'<div id="dl-pcount" style="font-size:11px;color:#0284c7;font-weight:700;margin-bottom:4px;min-height:14px"></div>'
+    +'<div id="dl-pgroups"></div>'
+  renderDlParticipantGroups()
+}
+
+function dlGroupId(roomNum){return 'dlg-'+(roomNum||'none').replace(/[^a-zA-Z0-9]/g,'_')}
+
+function renderDlParticipantGroups(){
+  const wrap=document.getElementById('dl-pgroups')
+  if(!wrap)return
+  const checkedBefore=new Set([...document.querySelectorAll('.dl-cb:checked')].map(cb=>cb.value))
+  const q=(document.getElementById('dl-pfilter')?.value||'').trim().toLowerCase()
+  let all=getAll().filter(c=>!c.checkedOut)
+  if(q)all=all.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.roomNum||'').toLowerCase().includes(q))
+  const groups={}
+  all.forEach(c=>{
+    const key=(c.roomNum||'').trim()
+    if(!groups[key])groups[key]=[]
+    groups[key].push(c)
+  })
+  const keys=Object.keys(groups).sort((a,b)=>{
+    if(a===''&&b==='')return 0
+    if(a==='')return 1
+    if(b==='')return -1
+    const na=parseInt(a),nb=parseInt(b)
+    if(!isNaN(na)&&!isNaN(nb)&&na!==nb)return na-nb
+    return a.localeCompare(b)
+  })
+  if(!keys.length){wrap.innerHTML='<div style="font-size:12px;color:#94a3b8;padding:6px 2px">无匹配结果 No matches</div>';updateDlPCount();return}
+  wrap.innerHTML=keys.map(k=>{
+    const list=groups[k]
+    const label=k?('🏨 房 Rm '+escHtml(k)):'未分房 No Room'
+    const gid=dlGroupId(k)
+    return '<div style="margin-bottom:6px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">'
+      +'<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#f8fafc;cursor:pointer" onclick="toggleDlGroup(\''+gid+'\')">'
+      +'<input type="checkbox" class="dlg-all" data-group="'+gid+'" style="width:14px;height:14px;cursor:pointer;accent-color:#0ea5e9" onclick="event.stopPropagation();toggleDlGroupSelect(\''+gid+'\',this.checked)">'
+      +'<span style="font-weight:700;font-size:12px;color:#334155;flex:1">'+label+'</span>'
+      +'<span style="font-size:11px;color:#94a3b8">'+list.length+'人</span>'
+      +'<span class="dlg-arrow" id="arrow-'+gid+'" style="font-size:11px;color:#94a3b8">▾</span>'
+      +'</div>'
+      +'<div class="dlg-body" id="'+gid+'" style="padding:2px 8px 4px">'
+      +list.map(c=>`<label style="display:flex;align-items:center;gap:8px;padding:5px 2px;cursor:pointer;font-size:13px;border-bottom:1px solid #f1f5f9">
+        <input type="checkbox" class="dl-cb" data-group="${gid}" value="${c.id}" style="width:15px;height:15px;cursor:pointer;accent-color:#0ea5e9" onclick="updateDlPCount();syncDlGroupHeader('${gid}')">
+        <span style="font-weight:600">${escHtml(c.name||'—')}</span>
+      </label>`).join('')
+      +'</div>'
+      +'</div>'
+  }).join('')
+  document.querySelectorAll('.dl-cb').forEach(cb=>{if(checkedBefore.has(cb.value))cb.checked=true})
+  keys.forEach(k=>syncDlGroupHeader(dlGroupId(k)))
+  updateDlPCount()
+}
+
+function toggleDlGroup(gid){
+  const body=document.getElementById(gid)
+  const arrow=document.getElementById('arrow-'+gid)
+  if(!body)return
+  const hidden=body.style.display==='none'
+  body.style.display=hidden?'':'none'
+  if(arrow)arrow.textContent=hidden?'▾':'▸'
+}
+
+function toggleDlGroupSelect(gid,checked){
+  document.querySelectorAll('.dl-cb[data-group="'+gid+'"]').forEach(cb=>cb.checked=checked)
+  updateDlPCount()
+}
+
+function syncDlGroupHeader(gid){
+  const boxes=[...document.querySelectorAll('.dl-cb[data-group="'+gid+'"]')]
+  const allChecked=boxes.length>0&&boxes.every(cb=>cb.checked)
+  const header=document.querySelector('.dlg-all[data-group="'+gid+'"]')
+  if(header)header.checked=allChecked
+}
+
+function updateDlPCount(){
+  const n=document.querySelectorAll('.dl-cb:checked').length
+  const el=document.getElementById('dl-pcount')
+  if(el)el.textContent=n?('已选 '+n+' 人 Selected'):''
 }
 
 function logDive(){
@@ -3647,9 +3800,17 @@ function logDive(){
   if(!participants.length){alert('请至少选择一名参与者 Please select at least one participant');return}
   const log=getDivelog()
   const dm=document.getElementById('dl-dm')?.value||''
-  log.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,7),date,time,site,dm,participants,isNight:time==='18:00',loggedBy:sessionStorage.getItem('lt_user')||'',loggedAt:new Date().toISOString()})
+  const instructor=document.getElementById('dl-instructor')?.value||''
+  const course=document.getElementById('dl-course')?.value||''
+  const isDsd=document.getElementById('dl-dsd')?.checked||false
+  const note=document.getElementById('dl-note')?.value.trim()||''
+  log.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,7),date,time,site,dm,instructor,course,participants,isNight:time==='18:00',isDsd,note,loggedBy:sessionStorage.getItem('lt_user')||'',loggedAt:new Date().toISOString()})
   saveDivelog(log)
   document.querySelectorAll('.dl-cb:checked').forEach(cb=>cb.checked=false)
+  const dsdCb=document.getElementById('dl-dsd');if(dsdCb)dsdCb.checked=false
+  const noteEl=document.getElementById('dl-note');if(noteEl)noteEl.value=""
+  document.querySelectorAll('.dlg-all').forEach(cb=>cb.checked=false)
+  updateDlPCount()
   renderDiveLog()
   const btn=document.getElementById('dl-log-btn')
   if(btn){btn.textContent='✅ 已记录 Logged!';setTimeout(()=>btn.textContent='记录 Log Dive',1500)}
@@ -3666,25 +3827,27 @@ function renderDiveLog(){
   if(filterDate)log=log.filter(e=>e.date===filterDate)
   if(searchQ)log=log.filter(e=>{
     const names=e.participants.map(id=>(nameMap[id]||'')).join(' ').toLowerCase()
-    return(e.site||'').toLowerCase().includes(searchQ)||(e.dm||'').toLowerCase().includes(searchQ)||names.includes(searchQ)
+    return(e.site||'').toLowerCase().includes(searchQ)||(e.dm||'').toLowerCase().includes(searchQ)||(e.instructor||'').toLowerCase().includes(searchQ)||names.includes(searchQ)
   })
   const el=document.getElementById('dl-table')
   if(!el)return
   if(!log.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🤿</div><p>暂无潜水记录 No dives logged yet</p></div>';return}
-  el.innerHTML='<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="width:100%;min-width:560px;border-collapse:collapse;font-size:13px">'
+  el.innerHTML='<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="width:100%;min-width:640px;border-collapse:collapse;font-size:13px">'
     +'<thead><tr style="background:#f8fafc">'
     +'<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">日期 Date</th>'
     +'<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">时间 Time</th>'
     +'<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">潜点 Site</th>'
     +'<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">潜导 DM</th>'
+    +'<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">教练 Instructor</th>'
     +'<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">人员 Divers</th>'
     +'<th style="padding:9px 6px;width:32px"></th>'
     +'</tr></thead><tbody>'
     +log.map(e=>`<tr style="border-top:1px solid #f1f5f9">
       <td style="padding:8px 12px;white-space:nowrap">${dlFmtDate(e.date)}</td>
       <td style="padding:8px 12px;white-space:nowrap">${e.time}${e.isNight?' 🌙':''}</td>
-      <td style="padding:8px 12px;font-weight:600">${escHtml(e.site)}</td>
+      <td style="padding:8px 12px;font-weight:600">${escHtml(e.site)}${e.note?` <span title="${escHtml(e.note)}" style="cursor:help">📝</span>`:''}</td>
       <td style="padding:8px 12px;color:#0284c7;font-size:12px;font-weight:600">${escHtml(e.dm||'—')}</td>
+      <td style="padding:8px 12px;color:#7c3aed;font-size:12px;font-weight:600">${e.instructor?escHtml(e.instructor)+(e.course?' ('+escHtml(e.course)+')':''):'—'}</td>
       <td style="padding:8px 12px;color:#475569;font-size:12px">${e.participants.map(id=>escHtml(nameMap[id]||'?')).join(' · ')}</td>
       <td style="padding:8px 4px;text-align:center"><button onclick="deleteDive('${e.id}')" title="删除 Delete" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:16px;line-height:1;padding:2px 4px">✕</button></td>
     </tr>`).join('')
@@ -3708,12 +3871,18 @@ function showDiveHistory(custId){
     <td style="padding:7px 10px;white-space:nowrap">${dlFmtDate(e.date)}</td>
     <td style="padding:7px 10px;white-space:nowrap">${e.time}${e.isNight?' 🌙':''}</td>
     <td style="padding:7px 10px;font-weight:600;font-size:12px">${escHtml(e.site)}</td>
+    <td style="padding:7px 10px;color:#0284c7;font-size:12px;font-weight:600">${escHtml(e.dm||'—')}</td>
+    <td style="padding:7px 10px;color:#64748b;font-size:12px">${escHtml(e.note||'—')}</td>
   </tr>`).join('')
   document.getElementById('dh-modal-inner').innerHTML=`
     <div id="dh-card" style="background:#fff;padding:4px">
       <div style="text-align:center;margin-bottom:14px">
-        <img src="${LOGO_B64}" style="height:38px;width:auto;margin-bottom:4px">
+        <img src="${LOGO_B64}" style="height:64px;width:auto;margin-bottom:4px">
         <div style="font-size:10px;font-weight:700;color:#0ea5e9;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2px">Lucky Tito PG Training Center</div>
+        <div style="margin:6px 0 2px">
+          <div style="font-size:13px;font-weight:700;color:#475569;letter-spacing:.5px">潜水记录卡</div>
+          <div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:1px;margin-top:1px">DIVE LOG CARD</div>
+        </div>
         <div style="font-size:20px;font-weight:800;color:#0b3d5e;margin:4px 0">${escHtml(c.name||'Guest')}</div>
         ${c.checkin&&c.checkout?`<div style="font-size:12px;color:#64748b">${fdate(c.checkin)} — ${fdate(c.checkout)}</div>`:''}
       </div>
@@ -3723,6 +3892,8 @@ function showDiveHistory(custId){
           <th style="padding:7px 10px;font-size:11px;font-weight:700;color:#64748b;text-align:left">日期 Date</th>
           <th style="padding:7px 10px;font-size:11px;font-weight:700;color:#64748b;text-align:left">时间 Time</th>
           <th style="padding:7px 10px;font-size:11px;font-weight:700;color:#64748b;text-align:left">潜点 Dive Site</th>
+          <th style="padding:7px 10px;font-size:11px;font-weight:700;color:#64748b;text-align:left">潜导/教练 DM/Instructor</th>
+          <th style="padding:7px 10px;font-size:11px;font-weight:700;color:#64748b;text-align:left">备注 Note</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -3757,19 +3928,37 @@ function showGuestCard(custId){
   const sexMap={'男':'Male 男','女':'Female 女',M:'Male',F:'Female'}
   const sexLbl=sexMap[c.gender]||c.gender||''
   const gearList=(c.ownGear||[]).join('、')
-  const courseRows=(c.items||[]).map(i=>'<tr><td>'+escHtml(i.name)+'</td><td style="text-align:center">'+i.qty+'</td></tr>').join('')
+  const GEAR_ITEMS=[['潜水服','Wetsuit','尺码 Size'],['BCD','BCD','尺码 Size'],['调节器','Regulator','尺码 Size'],['脚蹼','Fins','尺码 Size'],['面镜','Mask','度数 Myopia'],['电脑表','Dive Computer','']]
+  const ownGearArr=c.ownGear||[]
+  const gearChecklist='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 28px;padding:8px 0 4px;font-size:18px">'+GEAR_ITEMS.map(function(g){
+    const checked=ownGearArr.includes(g[0])
+    const lbl=g[0]+(g[1]&&g[1]!==g[0]?' '+g[1]:'')
+    const sizeLbl=g[2]
+    return'<span style="display:inline-flex;align-items:center;gap:8px;white-space:nowrap;color:#0f172a;font-weight:500">'+(checked?'☑':'☐')+' '+lbl+(sizeLbl?'<span style="color:#94a3b8;font-weight:400;font-size:13px;margin-left:2px">'+sizeLbl+'</span><span style="border-bottom:1px solid #cbd5e1;display:inline-block;min-width:55px;height:18px"></span>':'')+'</span>'
+  }).join('')+'</div>'
+  const diveBox=(c.items&&c.items.length)?('<div style="max-width:200px;text-align:right;background:#f0f9ff;border:1.5px solid #0ea5e9;border-radius:8px;padding:6px 10px;font-size:11px;line-height:1.45">'
+    +'<div style="font-size:9px;font-weight:800;color:#0ea5e9;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px">潜水安排 Dive Arrangement</div>'
+    +c.items.map(i=>'<div style="font-weight:800;color:#0b3d5e;font-size:13px;line-height:1.25">'+escHtml(i.name)+'</div><div style="color:#475569;font-size:11px;margin-bottom:3px;text-align:left">教练/DM '+escHtml(c.instructor||'—')+'</div>').join('')
+    +'</div>'):''
   document.getElementById('gc-modal-inner').innerHTML=
-    '<div id="gc-card" class="bw" style="max-width:700px">'
-    +'<div style="text-align:center;border-bottom:2.5px solid #0b3d5e;padding-bottom:14px;margin-bottom:18px">'
-    +'<img src="'+LOGO_B64+'" style="height:44px;width:auto;margin-bottom:6px">'
-    +'<div style="font-size:19px;font-weight:800;color:#0b3d5e;letter-spacing:.5px">LUCKY TITO RESORT CORP.</div>'
-    +'<div style="font-size:11px;color:#94a3b8;letter-spacing:.5px;margin-top:2px">RESORT · DIVING · RESTAURANT · BAR · COFFEE · KTV</div>'
-    +'<div style="font-size:13px;font-weight:700;color:#475569;margin-top:10px;text-transform:uppercase;letter-spacing:1px">客人登记表 Guest Registration Form</div>'
+    '<div id="gc-card" class="bw" style="max-width:900px;width:100%">'
+    +'<div style="display:grid;grid-template-columns:auto 1fr auto;align-items:start;gap:10px;border-bottom:2.5px solid #0b3d5e;padding-bottom:14px;margin-bottom:18px">'
+    +'<img src="'+LOGO_B64+'" style="height:74px;width:auto">'
+    +'<div style="text-align:center;min-width:0;padding-top:2px">'
+    +'<div style="font-size:17px;font-weight:800;color:#0b3d5e;letter-spacing:.3px">LUCKY TITO RESORT CORP.</div>'
+    +'<div style="font-size:9px;color:#94a3b8;letter-spacing:0;margin-top:2px;white-space:nowrap">RESORT · DIVING · RESTAURANT · BAR · COFFEE · KTV</div>'
+    +'<div style="margin-top:8px">'
+    +'<div style="font-size:12px;font-weight:700;color:#475569;letter-spacing:.5px;white-space:nowrap">潜水员登记表</div>'
+    +'<div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:1px;margin-top:1px;white-space:nowrap">DIVER REGISTRATION FORM</div>'
     +'</div>'
-    +'<div class="bs"><div class="bst">住宿日期 Date of Staying</div><div class="big">'
-    +brow('入住 From',fdate(c.checkin))
-    +brow('退房 To',fdate(c.checkout))
-    +brow('房间号 Room No.',escHtml(c.roomNum||''))
+    +'</div>'
+    +diveBox
+    +'</div>'
+    +'<div class="bs"><div class="bst">住宿日期 Date of Staying</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 24px;padding:8px 0;font-size:18px">'
+    +'<span><span class="brl">入住 From</span> <span class="brv">'+fdate(c.checkin)+'</span></span>'
+    +'<span><span class="brl">退房 To</span> <span class="brv">'+fdate(c.checkout)+'</span></span>'
+    +'<span><span class="brl">房间号 Room No.</span> <span class="brv">'+escHtml(c.roomNum||'')+'</span></span>'
     +'</div></div>'
     +'<div class="bs"><div class="bst">客人信息 Customer Information</div><div class="big">'
     +brow('Name 姓名',escHtml(c.name||''))
@@ -3778,24 +3967,24 @@ function showGuestCard(custId){
     +brow('邮箱 Email',escHtml(c.email||''))
     +'</div></div>'
     +'<div class="bs"><div class="bst">潜水员信息 Diver\'s Information</div><div class="big">'
-    +brow('认证机构 Certification Authority',escHtml(c.certSystem||''))
-    +brow('证书编号 C-Card No.',escHtml(c.certNumber||''))
-    +brow('潜水经验 Diving Experience',escHtml(c.divingExp||''))
+    +browOrBlank('认证机构 Certification Authority',escHtml(c.certSystem||''))
+    +browOrBlank('技能等级 Cert. Level',escHtml(c.certLevel||''))
+    +browOrBlank('证书编号 C-Card No.',escHtml(c.certNumber||''))
+    +browOrBlank('潜水经验 Diving Experience',escHtml(c.divingExp||''))
     +'</div></div>'
     +'<div class="bs"><div class="bst">装备信息 Gear Info</div>'
-    +brow('随身携带 Own Gear',escHtml(gearList||''))
-    +(c.gearNote?'<div style="font-size:12px;color:#64748b;margin-top:4px">📝 '+escHtml(c.gearNote)+'</div>':'')
+    +'<div style="font-size:14px;color:#94a3b8;margin-bottom:4px">自有装备请打勾 Please check the box for gear you bring yourself</div>'
+    +gearChecklist
+    +(c.gearNote?'<div style="font-size:15px;color:#64748b;margin-top:6px">📝 '+escHtml(c.gearNote)+'</div>':'')
     +'</div>'
-    +(courseRows?'<div class="bs"><div class="bst">潜水安排 Dive Arrangement</div><table class="bit"><thead><tr><th>项目 Item</th><th style="text-align:center">数量 Qty</th></tr></thead><tbody>'+courseRows+'</tbody></table></div>':'')
     +'<div class="bs"><div class="bst">紧急联系人 Emergency Contact</div>'
     +blankField2('姓名 Name','电话 Phone Number')
     +blankField2('关系 Relationship','地址 Address')
-    +blankField2('国家 Country','')
     +'</div>'
     +'</div>'
     +'<div class="no-print" style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">'
     +'<button class="btn btn-primary" onclick="generateGuestCardImage(\''+custId+'\')">📸 保存/复制 Save / Copy</button>'
-    +'<button class="btn btn-secondary" onclick="window.print()">🖨️ 打印 Print</button>'
+    +'<button class="btn btn-secondary" onclick="printClean()">🖨️ 打印 Print</button>'
     +'<button class="btn btn-ghost btn-sm" onclick="document.getElementById(\'gc-modal\').style.display=\'none\'">关闭 Close</button>'
     +'</div>'
   document.getElementById('gc-modal').style.display='flex'
@@ -3817,10 +4006,32 @@ function generateGuestCardImage(custId){
 }
 
 // ====== WAGE SETTLEMENT (教练费 + DM工资) ======
-function getWageRates(){try{return JSON.parse(localStorage.getItem('lt_wageRates')||'null')||{courses:{},dmDay:0,dmNight:0}}catch{return{courses:{},dmDay:0,dmNight:0}}}
+function getWageRates(){
+  let r;try{r=JSON.parse(localStorage.getItem('lt_wageRates')||'null')}catch{r=null}
+  if(!r)r={}
+  if(!r.courses)r.courses={}
+  r.dmDay=r.dmDay||0
+  r.dmNight=r.dmNight||0
+  r.dmDsd=r.dmDsd||0
+  if(!r.instructorDive)r.instructorDive={fd:20,ow:166,aow:150,specialty:200}
+  return r
+}
 function saveWageRates(r){localStorage.setItem('lt_wageRates',JSON.stringify(r));cloudSave()}
 function updateCourseRate(name,val){const r=getWageRates();if(!r.courses)r.courses={};r.courses[name]=parseFloat(val)||0;saveWageRates(r);renderWageLedger()}
 function updateDmRate(field,val){const r=getWageRates();r[field]=parseFloat(val)||0;saveWageRates(r);renderWageLedger()}
+function updateInstructorDiveRate(tier,val){const r=getWageRates();if(!r.instructorDive)r.instructorDive={};r.instructorDive[tier]=parseFloat(val)||0;saveWageRates(r);renderWageLedger()}
+const DIVE_COURSE_TIER={FD:'fd',POOL:'ow',OW1:'ow',OW2:'ow',OW3:'ow',OW4:'ow',AOW1:'aow',AOW2:'aow',AOW3:'aow',AOW4:'aow',AOW5:'aow',SPECIALTY:'specialty'}
+function instructorDiveRate(course,rates){const tier=DIVE_COURSE_TIER[course];return tier?((rates.instructorDive&&rates.instructorDive[tier])||0):0}
+function computeInstructorDiveLines(name,inRange){
+  const rates=getWageRates()
+  const counts={}
+  getDivelog().forEach(e=>{
+    if((e.instructor||'').trim()!==name||!e.course)return
+    if(!inRange(e.date))return
+    counts[e.course]=(counts[e.course]||0)+1
+  })
+  return Object.entries(counts).map(([course,qty])=>{const rate=instructorDiveRate(course,rates);return{label:course+' 潜次 Dive',qty,rate,amount:qty*rate}})
+}
 function getWageLaunchDate(){let d=localStorage.getItem('lt_wageLaunch');if(!d){d=new Date().toISOString().split('T')[0];localStorage.setItem('lt_wageLaunch',d)}return d}
 function getWageLedger(){try{return JSON.parse(localStorage.getItem('lt_wageLedger')||'{}')}catch{return{}}}
 function saveWageLedger(l){localStorage.setItem('lt_wageLedger',JSON.stringify(l));cloudSave()}
@@ -3841,7 +4052,9 @@ function computeInstructorPending(name){
     })
   })
   const lines=Object.entries(counts).map(([n,qty])=>({label:n,qty,rate:rates[n]||0,amount:qty*(rates[n]||0)}))
-  return{lines,total:lines.reduce((s,l)=>s+l.amount,0)}
+  const diveLines=computeInstructorDiveLines(name,d=>d>cutoff)
+  const allLines=[...lines,...diveLines]
+  return{lines:allLines,total:allLines.reduce((s,l)=>s+l.amount,0)}
 }
 function computeDmPending(name){
   const cutoff=getWageCutoff(name)
@@ -3849,10 +4062,10 @@ function computeDmPending(name){
   const byDate={}
   getDivelog().forEach(e=>{
     if(e.dm!==name||!(e.date>cutoff))return
-    if(!byDate[e.date])byDate[e.date]={day:0,night:0}
-    if(e.isNight)byDate[e.date].night++;else byDate[e.date].day++
+    if(!byDate[e.date])byDate[e.date]={day:0,night:0,dsd:0}
+    if(e.isDsd)byDate[e.date].dsd++;else if(e.isNight)byDate[e.date].night++;else byDate[e.date].day++
   })
-  const lines=Object.keys(byDate).sort().map(d=>{const{day,night}=byDate[d];return{date:d,day,night,amount:day*(r.dmDay||0)+night*(r.dmNight||0)}})
+  const lines=Object.keys(byDate).sort().map(d=>{const{day,night,dsd}=byDate[d];return{date:d,day,night,dsd,amount:day*(r.dmDay||0)+night*(r.dmNight||0)+dsd*(r.dmDsd||0)}})
   return{lines,total:lines.reduce((s,l)=>s+l.amount,0)}
 }
 function renderWageRates(){
@@ -3868,9 +4081,17 @@ function renderWageRates(){
   })
   html+='</div>'
   html+='<div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">DM潜水工资 Dive Wage (₱ / 次)</div>'
-  html+='<div style="display:grid;grid-template-columns:1fr 110px;gap:6px 12px">'
+  html+='<div style="display:grid;grid-template-columns:1fr 110px;gap:6px 12px;margin-bottom:16px">'
   html+='<div style="font-size:13px;color:#475569;align-self:center">日潜 Day Dive</div><input type="number" value="'+(r.dmDay||0)+'" onchange="updateDmRate(\'dmDay\',this.value)" style="width:100%;padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;text-align:right">'
   html+='<div style="font-size:13px;color:#475569;align-self:center">夜潜 Night Dive</div><input type="number" value="'+(r.dmNight||0)+'" onchange="updateDmRate(\'dmNight\',this.value)" style="width:100%;padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;text-align:right">'
+  html+='<div style="font-size:13px;color:#475569;align-self:center">DSD 体验潜水</div><input type="number" value="'+(r.dmDsd||0)+'" onchange="updateDmRate(\'dmDsd\',this.value)" style="width:100%;padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;text-align:right">'
+  html+='</div>'
+  html+='<div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">教练潜次工资 Instructor Dive Wage (¥ / 每潜，按潜水日志记录)</div>'
+  html+='<div style="display:grid;grid-template-columns:1fr 110px;gap:6px 12px">'
+  ;[['fd','FD'],['ow','POOL / OW1-4'],['aow','AOW1-5'],['specialty','SPECIALTY']].forEach(([key,label])=>{
+    html+='<div style="font-size:13px;color:#475569;align-self:center">'+label+'</div>'
+    html+='<input type="number" value="'+((r.instructorDive&&r.instructorDive[key])||0)+'" onchange="updateInstructorDiveRate(\''+key+'\',this.value)" style="width:100%;padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;text-align:right">'
+  })
   html+='</div>'
   el.innerHTML=html
 }
@@ -3889,7 +4110,7 @@ function wageRow(name,role,roleLabel,lineTexts,total){
 }
 function renderWageLedger(){
   const el=document.getElementById('wage-ledger');if(!el)return
-  const instructors=[...new Set(getAll().map(c=>(c.instructor||'').trim()).filter(Boolean))].sort()
+  const instructors=[...new Set([...getAll().map(c=>(c.instructor||'').trim()),...getInstructorList(),...getDivelog().map(e=>(e.instructor||'').trim())].filter(Boolean))].sort()
   const dms=getDmList()
   let html=''
   instructors.forEach(name=>{
@@ -3900,7 +4121,7 @@ function renderWageLedger(){
   dms.forEach(name=>{
     const{lines,total}=computeDmPending(name)
     if(!lines.length)return
-    html+=wageRow(name,'dm','DM 潜导',lines.map(l=>dlFmtDate(l.date)+'：日潜×'+l.day+' 夜潜×'+l.night+' = '+wageCurrency('dm')+l.amount.toFixed(0)),total)
+    html+=wageRow(name,'dm','DM 潜导',lines.map(l=>dlFmtDate(l.date)+'：日潜×'+l.day+' 夜潜×'+l.night+(l.dsd?' DSD×'+l.dsd:'')+' = '+wageCurrency('dm')+l.amount.toFixed(0)),total)
   })
   el.innerHTML=html||'<div style="padding:18px;color:#94a3b8;font-size:13px;text-align:center">暂无待结算工资 No pending wages</div>'
 }
@@ -3956,10 +4177,10 @@ function generateWageSettlementImage(name,role,data,periodFrom,periodTo){
   const cur=wageCurrency(role)
   const lineRows=data.lines.map(l=>{
     if(role==='instructor')return'<tr><td>'+escHtml(l.label)+'</td><td style="text-align:center">'+l.qty+'</td><td style="text-align:right">'+cur+l.rate.toFixed(2)+'</td><td style="text-align:right">'+cur+l.amount.toFixed(2)+'</td></tr>'
-    return'<tr><td>'+dlFmtDate(l.date)+'</td><td style="text-align:center">日潜 '+l.day+' / 夜潜 '+l.night+'</td><td></td><td style="text-align:right">'+cur+l.amount.toFixed(2)+'</td></tr>'
+    return'<tr><td>'+dlFmtDate(l.date)+'</td><td style="text-align:center">日潜 '+l.day+' / 夜潜 '+l.night+(l.dsd?' / DSD '+l.dsd:'')+'</td><td></td><td style="text-align:right">'+cur+l.amount.toFixed(2)+'</td></tr>'
   }).join('')
   card.innerHTML='<div class="bw"><div class="bh">'
-    +'<div style="display:flex;align-items:center;gap:10px"><img src="'+LOGO_B64+'" style="height:42px;width:auto"><div><div class="bsn">Lucky Tito Dive Resort</div><div class="bss">工资结算单 Wage Settlement</div></div></div>'
+    +'<div style="display:flex;align-items:center;gap:10px"><img src="'+LOGO_B64+'" style="height:55px;width:auto"><div><div class="bsn">Lucky Tito Dive Resort</div><div class="bss">工资结算单 Wage Settlement</div></div></div>'
     +'<div><div class="blbl">日期 Date</div><div class="bdate" style="font-size:14px;font-weight:700;color:#0b3d5e">'+fdate(periodTo)+'</div></div>'
     +'</div>'
     +'<div class="bs"><div class="bst">收款人 Recipient</div><div class="big">'+brow('姓名 Name',escHtml(name))+brow('角色 Role',roleLabel)+brow('周期 Period',fdate(periodFrom)+' — '+fdate(periodTo))+'</div></div>'
@@ -3987,7 +4208,7 @@ function populateWsNameSelect(){
   const sel=document.getElementById('ws-name');if(!sel)return
   const cur=sel.value
   const names=role==='instructor'
-    ?[...new Set(getAll().map(c=>(c.instructor||'').trim()).filter(Boolean))].sort()
+    ?[...new Set([...getAll().map(c=>(c.instructor||'').trim()),...getInstructorList(),...getDivelog().map(e=>(e.instructor||'').trim())].filter(Boolean))].sort()
     :getDmList()
   sel.innerHTML=names.map(n=>'<option value="'+escHtml(n)+'"'+(n===cur?' selected':'')+'>'+escHtml(n)+'</option>').join('')||'<option value="">—</option>'
 }
@@ -4005,7 +4226,9 @@ function computeInstructorRange(name,from,to){
     })
   })
   const lines=Object.entries(counts).map(([n,qty])=>({label:n,qty,rate:rates[n]||0,amount:qty*(rates[n]||0)}))
-  return{lines,total:lines.reduce((s,l)=>s+l.amount,0)}
+  const diveLines=computeInstructorDiveLines(name,d=>d>=from&&d<=to)
+  const allLines=[...lines,...diveLines]
+  return{lines:allLines,total:allLines.reduce((s,l)=>s+l.amount,0)}
 }
 function computeDmRange(name,from,to){
   const r=getWageRates()
@@ -4013,10 +4236,10 @@ function computeDmRange(name,from,to){
   getDivelog().forEach(e=>{
     if(e.dm!==name)return
     if(e.date<from||e.date>to)return
-    if(!byDate[e.date])byDate[e.date]={day:0,night:0}
-    if(e.isNight)byDate[e.date].night++;else byDate[e.date].day++
+    if(!byDate[e.date])byDate[e.date]={day:0,night:0,dsd:0}
+    if(e.isDsd)byDate[e.date].dsd++;else if(e.isNight)byDate[e.date].night++;else byDate[e.date].day++
   })
-  const lines=Object.keys(byDate).sort().map(d=>{const{day,night}=byDate[d];return{date:d,day,night,amount:day*(r.dmDay||0)+night*(r.dmNight||0)}})
+  const lines=Object.keys(byDate).sort().map(d=>{const{day,night,dsd}=byDate[d];return{date:d,day,night,dsd,amount:day*(r.dmDay||0)+night*(r.dmNight||0)+dsd*(r.dmDsd||0)}})
   return{lines,total:lines.reduce((s,l)=>s+l.amount,0)}
 }
 function generateWageReport(){
@@ -4032,12 +4255,12 @@ function generateWageReport(){
   const cur=wageCurrency(role)
   const lineRows=data.lines.map(l=>{
     if(role==='instructor')return'<tr><td>'+escHtml(l.label)+'</td><td style="text-align:center">'+l.qty+'</td><td style="text-align:right">'+cur+l.rate.toFixed(2)+'</td><td style="text-align:right">'+cur+l.amount.toFixed(2)+'</td></tr>'
-    return'<tr><td>'+dlFmtDate(l.date)+'</td><td style="text-align:center">日潜 '+l.day+' / 夜潜 '+l.night+'</td><td></td><td style="text-align:right">'+cur+l.amount.toFixed(2)+'</td></tr>'
+    return'<tr><td>'+dlFmtDate(l.date)+'</td><td style="text-align:center">日潜 '+l.day+' / 夜潜 '+l.night+(l.dsd?' / DSD '+l.dsd:'')+'</td><td></td><td style="text-align:right">'+cur+l.amount.toFixed(2)+'</td></tr>'
   }).join('')
   const safeName=name.replace(/'/g,"\\'")
   document.getElementById('ws-modal-inner').innerHTML=
     '<div id="ws-card" class="bw">'
-    +'<div class="bh"><div style="display:flex;align-items:center;gap:10px"><img src="'+LOGO_B64+'" style="height:42px;width:auto"><div><div class="bsn">Lucky Tito Dive Resort</div><div class="bss">工资结算报告 Wage Settlement Report</div></div></div>'
+    +'<div class="bh"><div style="display:flex;align-items:center;gap:10px"><img src="'+LOGO_B64+'" style="height:55px;width:auto"><div><div class="bsn">Lucky Tito Dive Resort</div><div class="bss">工资结算报告 Wage Settlement Report</div></div></div>'
     +'<div><div class="blbl">生成日期 Generated</div><div class="bdate" style="font-size:14px;font-weight:700;color:#0b3d5e">'+fdate(new Date().toISOString().split('T')[0])+'</div></div></div>'
     +'<div class="bs"><div class="bst">人员信息 Recipient</div><div class="big">'+brow('姓名 Name',escHtml(name))+brow('角色 Role',roleLabel)+brow('周期 Period',fdate(from)+' — '+fdate(to))+'</div></div>'
     +'<div class="bs"><div class="bst">明细 Breakdown</div>'
@@ -4047,7 +4270,7 @@ function generateWageReport(){
     +'<div class="bfoot">Lucky Tito Resort · 内部记录 Internal Record</div>'
     +'<div class="no-print" style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">'
     +'<button class="btn btn-primary" onclick="generateWsReportImage(\''+safeName+'\',\''+from+'\',\''+to+'\')">📸 保存图片 Save Image</button>'
-    +'<button class="btn btn-secondary" onclick="window.print()">🖨️ 打印 Print</button>'
+    +'<button class="btn btn-secondary" onclick="printClean()">🖨️ 打印 Print</button>'
     +'<button class="btn btn-ghost btn-sm" onclick="closeWsModal()">关闭 Close</button>'
     +'</div>'
   openWsModal()
@@ -4225,7 +4448,7 @@ setInterval(()=>{if(getSyncUrl())cloudSave()},5*60*1000)
       <div style="margin-left:auto;display:flex;gap:8px">
         <button class="btn btn-secondary btn-sm" onclick="showDiveSync()" title="从潜水日志同步 Sync dives from dive log">📋 同步潜水 Sync Dives</button>
         <button class="btn btn-primary" onclick="generateBillImage(this)">📸 保存/复制 Save / Copy</button>
-        <button class="btn btn-secondary" onclick="window.print()">🖨️ 打印 Print</button>
+        <button class="btn btn-secondary" onclick="printClean()">🖨️ 打印 Print</button>
         <button class="btn btn-ghost btn-sm" onclick="closeBillModal()">✕</button>
       </div>
     </div>
@@ -4250,7 +4473,7 @@ setInterval(()=>{if(getSyncUrl())cloudSave()},5*60*1000)
 </div>
 
 <!-- WAGE SETTLEMENT CAPTURE (hidden, used only for html2canvas) -->
-<div style="position:fixed;left:-9999px;top:0">
+<div id="wage-card-wrap" style="position:fixed;left:-9999px;top:0">
   <div id="wage-card"></div>
 </div>
 
