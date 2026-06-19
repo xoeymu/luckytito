@@ -62,6 +62,7 @@ header button:hover{background:rgba(255,255,255,.22)}
 .order-line .ol-info{flex:1;min-width:0}
 .order-line .ol-name{font-size:12.5px;font-weight:700;color:#1e293b}
 .order-line .ol-price{font-size:11px;color:var(--slate-lt)}
+.order-line .ol-en{font-size:10px;color:var(--slate-lt)}
 .order-line .ol-qty{display:flex;align-items:center;gap:4px}
 .order-line .ol-qty button{width:22px;height:22px;border-radius:6px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:13px;line-height:1}
 .order-line .ol-sub{font-size:13px;font-weight:800;color:var(--navy);width:62px;text-align:right}
@@ -82,6 +83,7 @@ header button:hover{background:rgba(255,255,255,.22)}
 .hist-row .h-meta{color:var(--slate-lt);font-size:11px}
 .hist-total-bar{background:var(--bg);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;font-weight:800;color:var(--navy);margin-bottom:10px}
 .receipt-print{display:none}
+.kitchen-print{display:none}
 @media print{
   @page{size:80mm auto;margin:0}
   html,body{width:80mm;margin:0;padding:0}
@@ -95,10 +97,21 @@ header button:hover{background:rgba(255,255,255,.22)}
   .receipt-print .r-line .rl-name{flex:1}
   .receipt-print .r-total{display:flex;justify-content:space-between;font-weight:800;font-size:14px;margin-top:2mm}
   .receipt-print .r-pay{text-align:center;font-weight:800;font-size:11px;margin-top:2mm;border:1px solid #000;padding:1mm}
-  .receipt-print .r-sign{margin-top:8mm}
-  .receipt-print .r-sign-line{border-top:1px solid #000;margin-bottom:1mm}
-  .receipt-print .r-sign-label{text-align:center;font-size:9px}
+  .receipt-print .r-sign{margin-top:8mm;text-align:left}
+  .receipt-print .r-sign-line{border-top:1px solid #000;margin-bottom:1mm;width:55%}
+  .receipt-print .r-sign-label{text-align:left;font-size:9px}
   .receipt-print .r-foot{text-align:center;font-size:10px;margin-top:3mm}
+  body.print-kitchen .receipt-print{display:none!important}
+  body:not(.print-kitchen) .kitchen-print{display:none!important}
+  .kitchen-print, .kitchen-print *{visibility:visible}
+  .kitchen-print{display:block;position:absolute;left:0;top:0;width:80mm;padding:3mm;font-family:'Courier New',monospace;color:#000;font-size:12px;box-sizing:border-box}
+  .kitchen-print .k-title{text-align:center;font-weight:800;font-size:16px;margin-bottom:2mm}
+  .kitchen-print .k-sub{text-align:center;font-size:11px;margin-bottom:1mm}
+  .kitchen-print hr{border:none;border-top:1px dashed #000;margin:2mm 0}
+  .kitchen-print .k-line{display:flex;gap:5px;margin:1.8mm 0;font-size:14px;font-weight:700}
+  .kitchen-print .kl-code{width:26px;flex-shrink:0}
+  .kitchen-print .kl-name{flex:1}
+  .kitchen-print .kl-qty{flex-shrink:0}
 }
 </style>
 </head>
@@ -107,7 +120,6 @@ header button:hover{background:rgba(255,255,255,.22)}
 <header>
   <h1>🍽️ Lucky Tito Restaurant 点餐结账</h1>
   <button onclick="showHistory()">📊 今日流水 Today's Sales</button>
-  <button onclick="togglePriceEdit()" id="price-edit-btn">💲 编辑价格 Edit Prices</button>
   <button onclick="setSyncUrl()" id="sync-btn">🔗 云同步 Cloud Sync</button>
   <span class="clock" id="clock"></span>
 </header>
@@ -131,6 +143,7 @@ header button:hover{background:rgba(255,255,255,.22)}
       <div class="order-total"><span>总计 Total</span><span id="order-total-amt">₱0</span></div>
       <div class="order-actions">
         <button class="btn btn-ghost" style="flex:1" onclick="clearOrder()">🗑 清空 Clear</button>
+        <button class="btn btn-primary" style="flex:1" onclick="printKitchenTicket()">🍳 厨房单 Kitchen</button>
         <button class="btn btn-green" style="flex:2" onclick="checkoutTable()">🖨️ 结账打印 Checkout & Print</button>
       </div>
     </div>
@@ -204,6 +217,7 @@ header button:hover{background:rgba(255,255,255,.22)}
 </div>
 
 <div class="receipt-print" id="receipt-print"></div>
+<div class="kitchen-print" id="kitchen-print"></div>
 
 <script>
 // ====================================================================
@@ -323,15 +337,13 @@ MENU.forEach((m,i)=>{m.id='i'+i})
 // ====================================================================
 //   STATE / STORAGE
 // ====================================================================
-let curTableId=null, curCat='ALL', priceEditMode=false
+let curTableId=null, curCat='ALL'
 function uid(){return 't'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function loadTables(){try{return JSON.parse(localStorage.getItem('rt_tables')||'[]')}catch{return[]}}
 function saveTables(t){localStorage.setItem('rt_tables',JSON.stringify(t))}
 function loadHistory(){try{return JSON.parse(localStorage.getItem('rt_history')||'[]')}catch{return[]}}
 function saveHistory(h){localStorage.setItem('rt_history',JSON.stringify(h))}
-function loadPriceOverrides(){try{return JSON.parse(localStorage.getItem('rt_price_overrides')||'{}')}catch{return{}}}
-function savePriceOverrides(o){localStorage.setItem('rt_price_overrides',JSON.stringify(o))}
-function getPrice(item){const o=loadPriceOverrides();return(o[item.id]!=null)?o[item.id]:item.price}
+function getPrice(item){return item.price}
 
 // ====================================================================
 //   CLOUD BRIDGE — push checkout charges to the same Apps Script backend
@@ -461,29 +473,14 @@ function renderMenu(){
   const el=document.getElementById('menu-grid')
   el.innerHTML=items.map(m=>{
     const price=getPrice(m)
-    const priceHtml=priceEditMode
-      ?'<input type="number" value="'+price+'" onclick="event.stopPropagation()" onchange="updatePrice(\''+m.id+'\',this.value)">'
-      :fmt(price)
-    return '<div class="item-card" onclick="'+(priceEditMode?'':'addItemToOrder(\''+m.id+'\')')+'">'
+    return '<div class="item-card" onclick="addItemToOrder(\''+m.id+'\')">'
       +(m.hot?'<span class="ic-hot">👍</span>':'')
       +'<div class="ic-code">'+esc(m.code)+'</div>'
       +'<div class="ic-name">'+esc(m.name)+'</div>'
       +'<div class="ic-en">'+esc(m.en)+'</div>'
-      +'<div class="ic-price">'+priceHtml+'</div>'
+      +'<div class="ic-price">'+fmt(price)+'</div>'
       +'</div>'
   }).join('')||'<div class="order-empty">没有找到匹配的菜品 No matching dishes found</div>'
-}
-function updatePrice(itemId,val){
-  const o=loadPriceOverrides()
-  const n=parseFloat(val)
-  if(val===''||isNaN(n)||n<0)delete o[itemId];else o[itemId]=n
-  savePriceOverrides(o)
-  renderMenu();renderOrderPanel();renderTables()
-}
-function togglePriceEdit(){
-  priceEditMode=!priceEditMode
-  document.getElementById('price-edit-btn').style.background=priceEditMode?'#ea580c':''
-  renderMenu()
 }
 
 // ====================================================================
@@ -551,7 +548,7 @@ function renderOrderPanel(){
       if(!m)return''
       const price=getPrice(m)
       return '<div class="order-line">'
-        +'<div class="ol-info"><div class="ol-name">'+esc(m.code)+' '+esc(m.name)+'</div><div class="ol-price">'+fmt(price)+' / 份 each</div></div>'
+        +'<div class="ol-info"><div class="ol-name">'+esc(m.code)+' '+esc(m.name)+'</div><div class="ol-en">'+esc(m.en)+'</div><div class="ol-price">'+fmt(price)+' / 份 each</div></div>'
         +'<div class="ol-qty"><button onclick="changeQty(\''+m.id+'\',-1)">－</button><span>'+line.qty+'</span><button onclick="changeQty(\''+m.id+'\',1)">＋</button></div>'
         +'<div class="ol-sub">'+fmt(price*line.qty)+'</div>'
         +'<span class="ol-del" onclick="removeOrderItem(\''+m.id+'\')">✕</span>'
@@ -597,7 +594,7 @@ function confirmCheckout(){
   const lines=t.items.map(line=>{
     const m=MENU.find(x=>x.id===line.id)
     const price=m?getPrice(m):0
-    return{code:m?m.code:'',name:m?m.name:'',qty:line.qty,price,sub:price*line.qty}
+    return{code:m?m.code:'',name:m?m.name:'',en:m?m.en:'',qty:line.qty,price,sub:price*line.qty}
   })
   const record={id:uid(),tableLabel:t.label,note:t.note,items:lines,total,paidAt:now.toISOString(),roomCharge:coRoomCharge,roomNo}
   const hist=loadHistory()
@@ -624,7 +621,7 @@ function buildReceipt(record,now){
     +'<div class="r-sub">'+dateStr+'</div>'
     +'<hr>'
   record.items.forEach(it=>{
-    html+='<div class="r-line"><span class="rl-name">'+esc(it.code)+' '+esc(it.name)+' x'+it.qty+'</span><span>'+fmt(it.sub)+'</span></div>'
+    html+='<div class="r-line"><span class="rl-name">'+esc(it.code)+' '+esc(it.name)+(it.en?' '+esc(it.en):'')+' x'+it.qty+'</span><span>'+fmt(it.sub)+'</span></div>'
   })
   html+='<hr><div class="r-total"><span>Total</span><span>'+fmt(record.total)+'</span></div>'
   html+=record.roomCharge
@@ -634,6 +631,33 @@ function buildReceipt(record,now){
     +'<div class="r-foot">谢谢光临 Thank you</div>'
   document.getElementById('receipt-print').innerHTML=html
 }
+
+// ====================================================================
+//   KITCHEN TICKET (English-only print for kitchen staff)
+// ====================================================================
+function buildKitchenTicket(t){
+  const now=new Date()
+  const dateStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')
+  let html='<div class="k-title">KITCHEN ORDER</div>'
+    +'<div class="k-sub">Table: '+esc(t.label)+(t.note?' - '+esc(t.note):'')+'</div>'
+    +'<div class="k-sub">'+dateStr+'</div>'
+    +'<hr>'
+  t.items.forEach(line=>{
+    const m=MENU.find(x=>x.id===line.id)
+    if(!m)return
+    html+='<div class="k-line"><span class="kl-code">'+esc(m.code)+'</span><span class="kl-name">'+esc(m.en)+'</span><span class="kl-qty">x'+line.qty+'</span></div>'
+  })
+  document.getElementById('kitchen-print').innerHTML=html
+}
+function printKitchenTicket(){
+  if(!curTableId){alert('请先选择桌台 Please select a table first');return}
+  const t=loadTables().find(x=>x.id===curTableId)
+  if(!t||t.items.length===0){alert('该桌台没有订单 This table has no order');return}
+  buildKitchenTicket(t)
+  document.body.classList.add('print-kitchen')
+  setTimeout(()=>window.print(),100)
+}
+window.addEventListener('afterprint',()=>document.body.classList.remove('print-kitchen'))
 
 // ====================================================================
 //   HISTORY (today's sales)
