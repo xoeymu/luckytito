@@ -777,8 +777,14 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
 <!-- PAGE: ELEARNING -->
 <div id="page-elearning" class="page">
   <div class="card">
-    <div class="card-header">
-      <div class="card-title">📚 网课与证书跟踪 eLearning &amp; Certification Tracker</div>
+    <div class="card-header" style="flex-wrap:wrap;gap:8px">
+      <div class="card-title" style="align-items:flex-start;line-height:1.35;min-width:0">
+        <span>📚</span>
+        <div style="min-width:0">
+          <div>网课与证书跟踪</div>
+          <div style="font-size:11px;font-weight:600;color:#94a3b8">eLearning &amp; Certification Tracker</div>
+        </div>
+      </div>
       <button class="btn btn-secondary btn-sm" onclick="renderElearning()">🔄 刷新 Refresh</button>
     </div>
     <div class="card-body" style="padding:0">
