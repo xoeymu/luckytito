@@ -221,10 +221,10 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
 .bit th:not(:first-child){text-align:right}
 .bit td{padding:8px 9px;border-bottom:1px solid #f1f5f9;color:#1a202c}
 .bit td:not(:first-child){text-align:right}
-#gc-card .bs{margin-bottom:26px}
-#gc-card .bst{font-size:13px;margin-bottom:10px;padding-bottom:6px}
-#gc-card .br{padding:7px 0;font-size:18px}
-#gc-card .big{gap:6px 32px}
+#gc-card .bs{margin-bottom:18px}
+#gc-card .bst{font-size:17px;margin-bottom:6px;padding-bottom:4px}
+#gc-card .br{padding:9px 0;font-size:21px}
+#gc-card .big{gap:8px 32px}
 .btb{background:#f8fafc;border-radius:10px;padding:13px 16px;margin-top:16px}
 .btr{display:flex;justify-content:space-between;padding:3px 0;font-size:13px;color:#475569}
 .btf{display:flex;justify-content:space-between;padding:11px 0 0;border-top:2px solid #e2e8f0;margin-top:8px;font-size:17px;font-weight:800;color:#0b3d5e}
@@ -314,7 +314,8 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
   .bh{flex-direction:row!important}
   .bnum,.blbl,.bdate{text-align:right!important}
   .big{grid-template-columns:1fr 1fr!important}
-  @page{size:A4;margin:14mm}
+  #gc-card{width:100%!important;max-width:190mm!important;padding:14px 18px!important}
+  @page{size:A4;margin:10mm}
 }
 /* ====== ROOM CALENDAR ====== */
 .rcal-table{border-collapse:collapse;table-layout:fixed;min-width:max-content;font-size:12px}
@@ -361,21 +362,14 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
     <h2 style="font-size:16px;font-weight:800;color:#d97706">📅 节假日管理 · Holiday Settings</h2>
     <button onclick="closeHolModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#94a3b8;line-height:1;padding:2px 5px">✕</button>
   </div>
-  <p style="font-size:13px;color:#64748b;margin-bottom:14px">标记节假日后，客户住宿日期中含节假日时将自动提示，且住宿不享受学员折扣。<br><span style="color:#94a3b8">Marked holidays will be flagged on guest stays; student discounts don't apply on holiday nights.</span></p>
-  <div style="display:flex;gap:8px;margin-bottom:10px">
+  <p style="font-size:13px;color:#64748b;margin-bottom:14px">2025-2026年中国法定节假日已自动内置识别，无需手动添加。如有额外停业日期/未来年份（官方通常每年11-12月公布），可在下方手动添加补充。<br><span style="color:#94a3b8">2025-2026 official Chinese statutory holidays are auto-detected. Add extra dates or future years (announced ~Nov-Dec each year) below.</span></p>
+  <div style="display:flex;gap:8px;margin-bottom:14px">
     <input type="date" id="hol-from" style="flex:1">
     <span style="align-self:center;color:#94a3b8;font-size:13px">至 to</span>
     <input type="date" id="hol-to" style="flex:1">
     <button class="btn btn-primary btn-sm" onclick="addHolRange()">➕ 添加 Add</button>
   </div>
-  <div style="margin-bottom:12px;font-size:12px;color:#94a3b8">或快速添加 Quick add：
-    <button class="btn btn-sm btn-secondary" style="margin:2px" onclick="addPreset('2026-05-01','2026-05-05')">劳动节 Labor Day 2026</button>
-    <button class="btn btn-sm btn-secondary" style="margin:2px" onclick="addPreset('2026-06-19','2026-06-21')">端午节 Dragon Boat 2026</button>
-    <button class="btn btn-sm btn-secondary" style="margin:2px" onclick="addPreset('2026-10-01','2026-10-07')">国庆节 National Day 2026</button>
-    <button class="btn btn-sm btn-secondary" style="margin:2px" onclick="addPreset('2027-01-01','2027-01-03')">元旦 New Year 2027</button>
-    <button class="btn btn-sm btn-secondary" style="margin:2px" onclick="addPreset('2027-01-28','2027-02-04')">春节 CNY 2027</button>
-  </div>
-  <div id="hol-list" style="min-height:60px;max-height:200px;overflow-y:auto;background:#f8fafc;border-radius:8px;padding:10px"></div>
+  <div id="hol-list" style="min-height:60px;max-height:240px;overflow-y:auto;background:#f8fafc;border-radius:8px;padding:10px"></div>
   <div style="margin-top:14px;text-align:right">
     <button class="btn btn-ghost btn-sm" onclick="closeHolModal()">关闭 Close</button>
   </div>
@@ -890,7 +884,7 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
     <div class="card">
       <div class="card-header"><span class="card-title">记录潜水 Log a Dive</span></div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px">
           <div>
             <label class="form-label">日期 Date</label>
             <input type="date" id="dl-date" class="form-control">
@@ -906,34 +900,36 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
               <option value="18:00">18:00 🌙 夜潜 Night</option>
             </select>
           </div>
+          <div>
+            <label class="form-label">潜点 Dive Site</label>
+            <select id="dl-site" class="form-control">
+              <option value="">— 选择潜点 Select Site —</option>
+            </select>
+          </div>
         </div>
-        <div>
-          <label class="form-label">潜点 Dive Site</label>
-          <select id="dl-site" class="form-control">
-            <option value="">— 选择潜点 Select Site —</option>
-          </select>
-        </div>
-        <div>
-          <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
-            <span>DM / 潜导</span>
-            <button type="button" class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 6px" onclick="openAddDmModal()">＋ 添加潜导 Add DM</button>
-          </label>
-          <select id="dl-dm" class="form-control">
-            <option value="">— 选择潜导 Select DM —</option>
-          </select>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
+              <span>DM / 潜导</span>
+              <button type="button" class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 6px" onclick="openAddDmModal()">＋ 添加潜导 Add DM</button>
+            </label>
+            <select id="dl-dm" class="form-control">
+              <option value="">— 选择潜导 Select DM —</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
+              <span>教练 Instructor</span>
+              <button type="button" class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 6px" onclick="openAddInstructorModal()">＋ 添加教练 Add Instructor</button>
+            </label>
+            <select id="dl-instructor" class="form-control" onchange="toggleDlCourseSelect()">
+              <option value="">— 选择教练 Select Instructor —</option>
+            </select>
+          </div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;padding:2px 0">
           <input type="checkbox" id="dl-dsd" style="width:16px;height:16px">
           <label for="dl-dsd" class="form-label" style="margin:0">DSD 体验潜水 DSD Trial Dive</label>
-        </div>
-        <div>
-          <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
-            <span>教练 Instructor</span>
-            <button type="button" class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 6px" onclick="openAddInstructorModal()">＋ 添加教练 Add Instructor</button>
-          </label>
-          <select id="dl-instructor" class="form-control" onchange="toggleDlCourseSelect()">
-            <option value="">— 选择教练 Select Instructor —</option>
-          </select>
         </div>
         <div id="dl-course-wrap" style="display:none">
           <label class="form-label">课程 Course</label>
@@ -1096,14 +1092,40 @@ const DIVE_ITEMS=[
 ]
 
 // ====== HOLIDAYS ======
-function getHolidays(){try{return JSON.parse(localStorage.getItem('dv_holidays')||'[]')}catch{return[]}}
+// Official Chinese statutory holiday schedule (国务院办公厅节假日安排通知), built in so holiday
+// dives/rates are recognized automatically without manually clicking each date every year.
+// Source: 国办发明电〔2024〕12号 (2025) and 国办发明电〔2025〕7号 (2026).
+// NOTE: each year's schedule is normally announced by the State Council around Nov/Dec of the
+// prior year. Once a new year is announced, add a row here. Until then, use "手动添加 Add" below.
+const BUILTIN_HOLIDAY_RANGES=[
+  {name:'元旦 New Year 2025',from:'2025-01-01',to:'2025-01-01'},
+  {name:'春节 Spring Festival 2025',from:'2025-01-28',to:'2025-02-04'},
+  {name:'清明节 Qingming 2025',from:'2025-04-04',to:'2025-04-06'},
+  {name:'劳动节 Labor Day 2025',from:'2025-05-01',to:'2025-05-05'},
+  {name:'端午节 Dragon Boat 2025',from:'2025-05-31',to:'2025-06-02'},
+  {name:'国庆节·中秋节 National Day & Mid-Autumn 2025',from:'2025-10-01',to:'2025-10-08'},
+  {name:'元旦 New Year 2026',from:'2026-01-01',to:'2026-01-03'},
+  {name:'春节 Spring Festival 2026',from:'2026-02-15',to:'2026-02-23'},
+  {name:'清明节 Qingming 2026',from:'2026-04-04',to:'2026-04-06'},
+  {name:'劳动节 Labor Day 2026',from:'2026-05-01',to:'2026-05-05'},
+  {name:'端午节 Dragon Boat 2026',from:'2026-06-19',to:'2026-06-21'},
+  {name:'中秋节 Mid-Autumn 2026',from:'2026-09-25',to:'2026-09-27'},
+  {name:'国庆节 National Day 2026',from:'2026-10-01',to:'2026-10-07'}
+]
+function getBuiltinHolidayDates(){
+  const s=new Set()
+  BUILTIN_HOLIDAY_RANGES.forEach(r=>{const d=new Date(r.from);const e=new Date(r.to);while(d<=e){s.add(d.toISOString().split('T')[0]);d.setDate(d.getDate()+1)}})
+  return s
+}
+function getCustomHolidays(){try{return JSON.parse(localStorage.getItem('dv_holidays')||'[]')}catch{return[]}}
+function getHolidays(){return[...new Set([...getBuiltinHolidayDates(),...getCustomHolidays()])].sort()}
 function saveHolidays(h){localStorage.setItem('dv_holidays',JSON.stringify(h));cloudSave()}
 function isHolidayDate(d){return getHolidays().includes(d)}
 function addHolRange(){
   const from=document.getElementById('hol-from').value
   const to=document.getElementById('hol-to').value||from
   if(!from)return
-  const h=getHolidays();const s=new Set(h)
+  const s=new Set(getCustomHolidays())
   const d=new Date(from);const e=new Date(to)
   while(d<=e){s.add(d.toISOString().split('T')[0]);d.setDate(d.getDate()+1)}
   saveHolidays([...s].sort());renderHolList()
@@ -1113,23 +1135,30 @@ function addPreset(from,to){
   document.getElementById('hol-to').value=to
   addHolRange()
 }
-function removeHolDate(d){const h=getHolidays().filter(x=>x!==d);saveHolidays(h);renderHolList()}
+function removeHolDate(d){const h=getCustomHolidays().filter(x=>x!==d);saveHolidays(h);renderHolList()}
 function renderHolList(){
-  const h=getHolidays();const el=document.getElementById('hol-list')
-  if(!h.length){el.innerHTML='<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">暂无节假日设置 No holidays set</div>';return}
-  // Group consecutive dates into ranges for display
-  const ranges=[];let start=h[0],prev=h[0]
-  for(let i=1;i<=h.length;i++){
-    const cur=h[i]
-    const nextDay=new Date(prev);nextDay.setDate(nextDay.getDate()+1)
-    const nextStr=nextDay.toISOString().split('T')[0]
-    if(cur!==nextStr){ranges.push({from:start,to:prev});start=cur;prev=cur}
-    else prev=cur
+  const el=document.getElementById('hol-list')
+  const builtinHtml='<div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:6px">📌 系统自动识别 Auto-detected (法定节假日)</div>'
+    +'<div style="margin-bottom:12px">'+BUILTIN_HOLIDAY_RANGES.map(r=>'<span class="hol-chip" style="opacity:.75" title="自动识别，无需手动添加 Auto — no action needed">'+r.name+' '+r.from+(r.from!==r.to?' ~ '+r.to:'')+'</span>').join('')+'</div>'
+  const h=getCustomHolidays()
+  let customHtml='<div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:6px">✏️ 手动添加 Custom added</div>'
+  if(!h.length){customHtml+='<div style="color:#94a3b8;font-size:13px;text-align:center;padding:10px">暂无 None</div>'}
+  else{
+    // Group consecutive dates into ranges for display
+    const ranges=[];let start=h[0],prev=h[0]
+    for(let i=1;i<=h.length;i++){
+      const cur=h[i]
+      const nextDay=new Date(prev);nextDay.setDate(nextDay.getDate()+1)
+      const nextStr=nextDay.toISOString().split('T')[0]
+      if(cur!==nextStr){ranges.push({from:start,to:prev});start=cur;prev=cur}
+      else prev=cur
+    }
+    customHtml+=ranges.map(r=>'<span class="hol-chip">'+r.from+(r.from!==r.to?' ~ '+r.to:'')+'<button onclick="removeHolRange(\''+r.from+'\',\''+r.to+'\')">×</button></span>').join('')
   }
-  el.innerHTML=ranges.map(r=>'<span class="hol-chip">'+r.from+(r.from!==r.to?' ~ '+r.to:'')+'<button onclick="removeHolRange(\''+r.from+'\',\''+r.to+'\')">×</button></span>').join('')
+  el.innerHTML=builtinHtml+customHtml
 }
 function removeHolRange(from,to){
-  let h=getHolidays();const d=new Date(from);const e=new Date(to)
+  let h=getCustomHolidays();const d=new Date(from);const e=new Date(to)
   while(d<=e){const s=d.toISOString().split('T')[0];h=h.filter(x=>x!==s);d.setDate(d.getDate()+1)}
   saveHolidays(h);renderHolList()
 }
@@ -1149,7 +1178,7 @@ function saveAll(a){localStorage.setItem('dv_c',JSON.stringify(a))}
 function getCloudData(){
   const customers=getAll()
   const log=JSON.parse(localStorage.getItem(SAVE_LOG_KEY)||'[]')
-  const extras=[{id:'__meta__',holidays:getHolidays(),divelog:getDivelog(),dms:getDmList(),groups:getGroups(),wageRates:getWageRates(),wageLedger:getWageLedger(),wagePayments:getWagePayments()}]
+  const extras=[{id:'__meta__',holidays:getCustomHolidays(),divelog:getDivelog(),dms:getDmList(),groups:getGroups(),wageRates:getWageRates(),wageLedger:getWageLedger(),wagePayments:getWagePayments()}]
   if(log.length)extras.push({id:'__savelog__',log})
   extras.push({id:'__restaurant_charges__',charges:getRestaurantCharges()})
   return[...customers,...extras]
@@ -1400,6 +1429,8 @@ function onRoomNumChange(){
       updateRoomFeePreview()
     }
   }
+  // Room number drives walk-in/solo/shared FD pricing — re-evaluate existing FD rows
+  updateSub()
 }
 function toggleFreeUpgrade(){
   const panel=document.getElementById('free-upgrade-panel')
@@ -1443,7 +1474,7 @@ function cancelFreeUpgrade(){
 }
 function onCheckinChange(){
   updateCustNo()
-  const ci=v('f-ci'),co=v('f-co');if(!ci||!co){updateRoomFeePreview();return}
+  const ci=v('f-ci'),co=v('f-co');if(!ci||!co){updateRoomFeePreview();updateSub();return}
   const hols=checkStayHasHoliday(ci,co)
   const el=document.getElementById('hol-alert')
   if(hols.length){
@@ -1451,11 +1482,12 @@ function onCheckinChange(){
     el.innerHTML='<div class="hol-badge">🎉 节假日 Holiday dates: '+hols.join(', ')+'&nbsp;&nbsp;<button onclick="setHolidayYes()" style="background:none;border:1px solid #991b1b;border-radius:4px;color:#991b1b;cursor:pointer;font-size:11px;font-weight:700;padding:1px 7px;margin-left:4px">标记为节假日 Mark as Holiday</button></div>'
     +'<div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;background:#fff1f1;border-radius:8px;border:1px solid #fecaca">'
     +'<span style="font-size:12px;font-weight:700;color:#991b1b">🤿 节假日FD潜数 Holiday FD dives</span>'
-    +'<input type="number" id="f-hol-fd-qty" min="0" placeholder="0" value="'+(_holFdQty||'')+'" style="width:65px;padding:4px 8px;border:1.5px solid #fecaca;border-radius:6px;font-size:13px;text-align:center" oninput="_holFdQty=parseInt(this.value)||0;updateFormTotal()">'
+    +'<input type="number" id="f-hol-fd-qty" min="0" placeholder="0" value="'+(_holFdQty||'')+'" style="width:65px;padding:4px 8px;border:1.5px solid #fecaca;border-radius:6px;font-size:13px;text-align:center" oninput="_holFdQty=parseInt(this.value)||0;updateSub()">'
     +'<span style="font-size:12px;color:#991b1b">潜 × ¥195 = ¥ <span id="hol-fd-preview">'+(_holFdQty*195||0)+'</span> — 自动计入费用和账单</span>'
     +'</div>'
   }else el.style.display='none'
   updateRoomFeePreview()
+  updateSub()
 }
 function setHolidayYes(){
   const ci=v('f-ci'),co=v('f-co');if(!ci||!co)return
@@ -1799,21 +1831,38 @@ const FD_TIERS=[
   {low:'FD 住店单人 1-8潜',  lowP:160, high:'FD 住店单人 8潜以上',   highP:155},
   {low:'FD 住店双人+ 1-8潜', lowP:155, high:'FD 住店双人+ 8潜以上',  highP:150},
 ]
+const FD_WALKIN_NAME='Regular Fun Dive 平日欢乐潜',FD_WALKIN_PRICE=175
+const FD_ALL_NAMES=[FD_WALKIN_NAME,...FD_TIERS.flatMap(t=>[t.low,t.high])]
+// Determines the current guest's FD pricing bucket: 'walkin' (no room number, or room number
+// is "WI") · 'solo' (has a room, not shared) · 'shared' (room shared with another guest on
+// overlapping dates, via getSharedNights). Drives autoFdTier's auto rename/reprice below.
+function fdRoomStatus(){
+  const rnum=v('f-rnum').trim()
+  if(!rnum||/^wi$/i.test(rnum))return'walkin'
+  const ci=v('f-ci'),co=v('f-co')
+  if(!ci||!co)return'solo'
+  const tempC={id:v('f-id')||'__preview__',roomNum:rnum,checkin:ci,checkout:co}
+  return getSharedNights(tempC).size>0?'shared':'solo'
+}
 function autoFdTier(tr){
   const nameIn=tr.querySelector('input[type=text]')
   const priceIn=tr.querySelectorAll('input[type=number]')[0]
   const qtyIn=tr.querySelectorAll('input[type=number]')[1]
   if(!nameIn||!priceIn||!qtyIn)return
   const name=nameIn.value.trim(),qty=parseFloat(qtyIn.value)||0
-  for(const t of FD_TIERS){
-    if(name===t.low||name===t.high){
-      const useHigh=qty>=8
-      const newName=useHigh?t.high:t.low,newP=useHigh?t.highP:t.lowP
-      if(nameIn.value!==newName)nameIn.value=newName
-      if(parseFloat(priceIn.value)!==newP)priceIn.value=newP
-      break
-    }
+  if(!FD_ALL_NAMES.includes(name))return
+  const status=fdRoomStatus()
+  let newName,newP
+  if(status==='walkin'){
+    newName=FD_WALKIN_NAME;newP=FD_WALKIN_PRICE
+  }else{
+    const t=status==='shared'?FD_TIERS[1]:FD_TIERS[0]
+    const holQ=parseInt(_holFdQty)||0
+    const useHigh=(qty+holQ)>=8
+    newName=useHigh?t.high:t.low;newP=useHigh?t.highP:t.lowP
   }
+  if(nameIn.value!==newName)nameIn.value=newName
+  if(parseFloat(priceIn.value)!==newP)priceIn.value=newP
 }
 function updateSub(){
   let tot=0
@@ -1858,7 +1907,7 @@ function collect(){
     certSystem:v('f-certsys'),certLevel:v('f-certlevel').trim(),certNumber:v('f-certno').trim(),divingExp:v('f-divexp').trim(),
     ownGear:getOwnGear(),gearNote:v('f-gn').trim(),
     instructor:v('f-inst').trim(),multiStudentDisc:document.getElementById('f-multi-student')?.checked||false,classmates:getClassmates(),courseStart:v('f-cstart'),courseEnd:v('f-cend'),
-    items:mergeCourseInfoIntoItems(getItems()),deposit:v('f-deposit'),actualReceived:v('f-actual-received').trim(),actualCurrency:v('f-actual-currency')||'CNY',holFdQty:_holFdQty||0,notes:v('f-note').trim(),
+    items:mergeCourseInfoIntoItems(getItems()),deposit:v('f-deposit'),actualReceived:v('f-actual-received').trim(),actualCurrency:v('f-actual-currency')||'CNY',holFdQty:(document.getElementById('f-hol-fd-qty')?parseInt(v('f-hol-fd-qty'))||0:_holFdQty)||0,notes:v('f-note').trim(),
     restaurantCharges:_claimedRestaurantCharges,restaurantDiscount:_restaurantDiscount,restaurantRmb:_restaurantRmb,restaurantRate:_restaurantRate,
     savedAt:new Date().toISOString(),lastMod:Date.now()}
 }
@@ -3090,7 +3139,7 @@ function showDiveSync(){
   if(!id){panel.innerHTML='<div style="margin:0 18px 14px;padding:10px 14px;background:#fef3c7;border-radius:10px;font-size:13px;color:#92400e">请先选择客户 Select a guest first</div>';return}
   const c=getAll().find(x=>x.id===id);if(!c)return
   const total=getDiveCount(id),night=getNightDiveCount(id),day=total-night
-  const billedQty=(c.items||[]).filter(i=>/dive|潜/i.test(i.name||'')).reduce((s,i)=>s+(parseFloat(i.qty)||0),0)
+  const billedQty=(c.items||[]).filter(i=>/dive|潜/i.test(i.name||'')).reduce((s,i)=>s+(parseFloat(i.qty)||0),0)+(parseInt(c.holFdQty)||0)
   const gap=total-billedQty
   let statusHtml
   if(gap>0)statusHtml='<div style="margin-top:8px;color:#b45309;font-weight:700">⚠️ 还差 '+gap+' 次未计入账单 Missing from bill</div>'
@@ -3204,12 +3253,12 @@ function fillBillSel(){
 function fdt(s){if(!s)return'—';const m=s.match(/\d{4}-(\d{2})-(\d{2})(?:T(\d{2}:\d{2}))?/);return m?(m[1]+'/'+m[2]+(m[3]?' '+m[3]:'')):s}
 function fdate(s){if(!s)return'—';const m=s.match(/\d{4}-(\d{2})-(\d{2})/);return m?(m[1]+'/'+m[2]):s}
 function brow(l,v2){return v2?'<div class="br"><span class="brl">'+l+'</span><span class="brv">'+v2+'</span></div>':''}
-function blankField(label){return'<div style="display:flex;align-items:baseline;gap:12px;padding:9px 0;font-size:18px"><span style="color:#64748b;white-space:nowrap;min-width:150px">'+label+'</span><span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:24px">&nbsp;</span></div>'}
+function blankField(label){return'<div style="display:flex;align-items:baseline;gap:14px;padding:11px 0;font-size:18px"><span style="color:#64748b;white-space:nowrap;min-width:170px">'+label+'</span><span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:26px">&nbsp;</span></div>'}
 function blankField2(l1,l2){return'<div style="display:flex;gap:32px"><div style="flex:1">'+blankField(l1)+'</div><div style="flex:1">'+(l2?blankField(l2):'')+'</div></div>'}
 function browOrBlank(l,v){return v?brow(l,v):blankField(l)}
 function renderBill(overrideCustId){
   const id=overrideCustId||document.getElementById('bill-sel')?.value||''
-  if(!id){document.getElementById('bill-out').innerHTML='<div class="empty-state"><div class="empty-icon">🧾</div><p>请选择客户 Select a guest</p></div>';return}
+  if(!id){document.getElementById('bill-out').innerHTML='<div class="empty-state"><p>请选择客户 Select a guest</p></div>';return}
   const c=getAll().find(x=>x.id===id);if(!c)return
   const iT=(c.items||[]).reduce((s,i)=>s+i.price*i.qty,0)
   const holFdQty=parseInt(c.holFdQty)||0
@@ -3235,9 +3284,9 @@ function renderBill(overrideCustId){
     const d=(c.roomType||'').includes('学员宿舍')?'':c.roomDiscount
     const f=roomDiscountFactor(d,c.roomDiscountCustom)
     const saved=rNorm*rate*(1-f)
-    if(rHol>0&&rNorm>0&&f<1)discNote='<div style="font-size:12px;color:#0284c7;margin-top:5px;font-weight:600">🎉 '+rHol+' holiday night(s) at full rate 节假日原价 · 🏷️ '+rNorm+' discounted night(s) 折扣晚, saved 省 ¥'+saved.toFixed(2)+'</div>'
-    else if(rHol>0&&rNorm===0)discNote='<div style="font-size:12px;color:#92400e;margin-top:5px;font-weight:600">🎉 All nights are public holidays · 全部节假日 — no discount applied 不享折扣</div>'
-    else if(f<1&&saved>0){const lb={'9折':'10% off 九折','85折':'15% off 八五折','8折':'20% off 八折','custom':'custom disc 自定义折扣'}[d]||d;discNote='<div style="font-size:12px;color:#059669;margin-top:5px;font-weight:600">🏷️ '+lb+' — saved 省 ¥'+saved.toFixed(2)+'</div>'}
+    if(rHol>0&&rNorm>0&&f<1)discNote='<div style="font-size:12px;color:#0284c7;margin-top:5px;font-weight:600">'+rHol+' holiday night(s) at full rate 节假日原价 · '+rNorm+' discounted night(s) 折扣晚, saved 省 ¥'+saved.toFixed(2)+'</div>'
+    else if(rHol>0&&rNorm===0)discNote='<div style="font-size:12px;color:#92400e;margin-top:5px;font-weight:600">All nights are public holidays · 全部节假日 — no discount applied 不享折扣</div>'
+    else if(f<1&&saved>0){const lb={'9折':'10% off 九折','85折':'15% off 八五折','8折':'20% off 八折','custom':'custom disc 自定义折扣'}[d]||d;discNote='<div style="font-size:12px;color:#059669;margin-top:5px;font-weight:600">'+lb+' — saved 省 ¥'+saved.toFixed(2)+'</div>'}
   }
   // Build room fee rows (split by holiday/non-holiday and solo/shared)
   let roomRows=''
@@ -3251,7 +3300,7 @@ function renderBill(overrideCustId){
     const hols=new Set(getHolidays())
     const sharedSet=isDormBill?new Set():getSharedNights(c)
     const{holSolo,holShare,normSolo,normShare}=computeRoomNights(c.checkin,c.checkout,rate,sharedSet,hols,rf)
-    const mkRow=(lbl,up,qty,sub)=>'<tr><td>'+rt+(lbl?' ('+lbl+')':'')+'</td><td>'+up+'</td><td>'+qty+'</td><td>¥ '+sub+'</td></tr>'
+    const mkRow=(lbl,up,qty,sub)=>{const nm=rt+(lbl?' ('+lbl+')':'');return'<tr><td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+nm+'">'+nm+'</td><td>'+up+'</td><td>'+qty+'</td><td>¥ '+sub+'</td></tr>'}
     const nts=n=>n+' nt'+(n>1?'s':'')
     if(holSolo>0)roomRows+=mkRow('Holiday · 节假日 (full rate 原价)',('¥'+rate+'/nt'),nts(holSolo),(holSolo*rate).toFixed(2))
     if(holShare>0)roomRows+=mkRow('Holiday · 节假日 (shared 拼房 50%)','¥'+rate+'/nt × 50%',nts(holShare),(holShare*rate*0.5).toFixed(2))
@@ -3311,9 +3360,9 @@ function renderBill(overrideCustId){
 '</div></div>'+
 (hasR?'<div class="bs"><div class="bst">住宿 Accommodation</div><div class="big">'+brow('入住 Check-in',fdate(c.checkin))+brow('退房 Check-out',fdate(c.checkout)+nightDisp)+brow('房型 Room Type',c.roomType)+brow('房间号 Room No.',c.roomNum)+'</div>'+discNote+'</div>':'')+
 '<div class="bs"><div class="bst">费用明细 Charges</div>'+
-'<table class="bit" style="table-layout:fixed"><colgroup><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"></colgroup><thead><tr><th>项目 Item</th><th>单价 Unit Price</th><th>数量 Qty</th><th>小计 Subtotal</th></tr></thead><tbody>'+
-(c.items||[]).map(i=>'<tr><td>'+escHtml(i.name)+'</td><td>¥ '+(+i.price).toFixed(2)+'</td><td>'+i.qty+'</td><td>¥ '+(i.price*i.qty).toFixed(2)+'</td></tr>').join('')+
-(holFdQty>0?'<tr style="background:#fff1f1"><td>🎉 节假日FD Holiday Fun Dive</td><td>¥ 195.00</td><td>'+holFdQty+'</td><td>¥ '+holFdSub.toFixed(2)+'</td></tr>':'')+
+'<table class="bit" style="table-layout:fixed"><colgroup><col style="width:50%"><col style="width:16%"><col style="width:10%"><col style="width:24%"></colgroup><thead><tr><th>项目 Item</th><th>单价 Unit Price</th><th>数量 Qty</th><th>小计 Subtotal</th></tr></thead><tbody>'+
+(c.items||[]).map(i=>'<tr><td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+escHtml(i.name)+'">'+escHtml(i.name)+'</td><td>¥ '+(+i.price).toFixed(2)+'</td><td>'+i.qty+'</td><td>¥ '+(i.price*i.qty).toFixed(2)+'</td></tr>').join('')+
+(holFdQty>0?'<tr style="background:#fff1f1"><td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">节假日FD Holiday Fun Dive</td><td>¥ 195.00</td><td>'+holFdQty+'</td><td>¥ '+holFdSub.toFixed(2)+'</td></tr>':'')+
 roomRows+
 '</tbody></table><div class="btb">'+
 '<div class="btr"><span>小计 Subtotal</span><span>¥ '+(iT+holFdSub+roomSub).toFixed(2)+'</span></div>'+
@@ -3323,8 +3372,8 @@ roomRows+
 (dep>0?'<div class="btr" style="margin-top:8px;padding-top:8px;border-top:1px dashed #e2e8f0"><span>已付定金 Deposit Paid</span><span style="color:#059669">− ¥ '+dep.toFixed(2)+'</span></div><div class="btr" style="font-weight:700;color:#dc2626"><span>尾款 Balance Due</span><span>¥ '+balance.toFixed(2)+'</span></div>':'')+
 '</div></div>'+
 restSectionOut+
-(c.upgrade?'<div style="margin-top:12px;font-size:12px;color:#0284c7;background:#e0f2fe;padding:5px 12px;border-radius:20px;font-weight:600;display:inline-block">🎁 '+escHtml(c.upgrade)+'</div>':'')+
-(c.notes?'<div style="margin-top:12px;padding:10px 13px;background:#f8fafc;border-radius:8px;font-size:12px;color:#64748b;line-height:1.6">📝 <strong>备注 Notes: </strong>'+escHtml(c.notes)+'</div>':'')+
+(c.upgrade?'<div style="margin-top:12px;font-size:12px;color:#0284c7;background:#e0f2fe;padding:5px 12px;border-radius:20px;font-weight:600;display:inline-block">'+escHtml(c.upgrade)+'</div>':'')+
+(c.notes?'<div style="margin-top:12px;padding:10px 13px;background:#f8fafc;border-radius:8px;font-size:12px;color:#64748b;line-height:1.6"><strong>备注 Notes: </strong>'+escHtml(c.notes)+'</div>':'')+
 '<div class="bfoot">感谢您与我们一起潜水！Thank you for diving with us!</div></div>'
   // PHP conversion: replace all ¥ amounts with ₱ equivalents
   if(c.checkoutCurrency==='PHP'&&c.phpRate){
@@ -4199,71 +4248,67 @@ function showGuestCard(custId){
   if(!c)return
   const sexMap={'男':'Male 男','女':'Female 女',M:'Male',F:'Female'}
   const sexLbl=sexMap[c.gender]||c.gender||''
-  const gearList=(c.ownGear||[]).join('、')
-  const GEAR_ITEMS=[['潜水服','Wetsuit','尺码 Size'],['BCD','BCD','尺码 Size'],['调节器','Regulator','尺码 Size'],['脚蹼','Fins','尺码 Size'],['面镜','Mask','度数 Myopia'],['电脑表','Dive Computer','']]
   const ownGearArr=c.ownGear||[]
-  const gearChecklist='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 28px;padding:8px 0 4px;font-size:18px">'+GEAR_ITEMS.map(function(g){
-    const checked=ownGearArr.includes(g[0])
-    const lbl=g[0]+(g[1]&&g[1]!==g[0]?' '+g[1]:'')
-    const sizeLbl=g[2]
-    return'<span style="display:inline-flex;align-items:center;gap:8px;white-space:nowrap;color:#0f172a;font-weight:500">'+(checked?'☑':'☐')+' '+lbl+(sizeLbl?'<span style="color:#94a3b8;font-weight:400;font-size:13px;margin-left:2px">'+sizeLbl+'</span><span style="border-bottom:1px solid #cbd5e1;display:inline-block;min-width:55px;height:18px"></span>':'')+'</span>'
+  const GEAR_DISPLAY=[
+    {label:'潜水服 Wetsuit (size)',keys:['潜水服']},
+    {label:'BCD (size)',keys:['BCD']},
+    {label:'调节器 Regulator',keys:['调节器']},
+    {label:'脚蹼 Fins (size)',keys:['脚蹼']},
+    {label:'面镜 Mask (Myopia)',keys:['面镜']},
+    {label:'电脑表 Dive Computer',keys:['电脑表']}
+  ]
+  const gearChecklist='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 28px;padding:3px 0;font-size:19px">'+GEAR_DISPLAY.map(g=>{
+    const checked=g.keys.some(k=>ownGearArr.includes(k))
+    return'<div style="display:flex;align-items:center;gap:11px;color:'+(checked?'#0f172a;font-weight:700':'#94a3b8;font-weight:400')+'">'+(checked?'☑':'☐')+' '+escHtml(g.label)+'</div>'
   }).join('')+'</div>'
-  const diveBox=(c.items&&c.items.length)?('<div style="max-width:300px;width:max-content;text-align:center;background:#f0f9ff;border:1.5px solid #0ea5e9;border-radius:8px;padding:6px 10px;font-size:11px;line-height:1.45">'
-    +'<div style="font-size:9px;font-weight:800;color:#0ea5e9;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px;white-space:nowrap">潜水安排 Dive Arrangement</div>'
-    +c.items.map(i=>'<div style="font-weight:800;color:#0b3d5e;font-size:13px;line-height:1.25;white-space:nowrap">'+escHtml(isCourseItem(i.name)?shortCourseName(i.name):(/^FD\b/i.test(i.name)?'FD':i.name))+'</div><div style="color:#475569;font-size:11px;margin-bottom:3px;text-align:center;white-space:nowrap">教练/DM '+escHtml(i.instructor||c.instructor||'—')+'</div>').join('')
-    +'</div>'):''
+  // label+value-or-blank row (mirrors blankField but fills in the value when known)
+  const fld=(label,val)=>'<div style="display:flex;align-items:baseline;gap:14px;padding:7px 0;font-size:18px"><span style="color:#64748b;white-space:nowrap;min-width:0">'+label+'</span>'+(val?'<span style="flex:1;color:#0f172a;font-weight:600;border-bottom:1px solid #cbd5e1;padding-bottom:2px">'+val+'</span>':'<span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:26px">&nbsp;</span>')+'</div>'
+  const fld2=(l1,v1,l2,v2,r1,r2)=>'<div style="display:flex;gap:32px"><div style="flex:'+(r1||1)+'">'+fld(l1,v1)+'</div><div style="flex:'+(r2||1)+'">'+fld(l2,v2)+'</div></div>'
+  // top header row: label + inline value, whole row underlined in navy (matches the edited card layout). r1/r2 let a long label/value side claim more width.
+  const topRow=(l1,v1,l2,v2,r1,r2)=>'<div style="display:flex;gap:20px;padding:7px 0;border-bottom:2px solid #0b3d5e">'
+    +'<div style="flex:'+(r1||1)+';display:flex;align-items:baseline;gap:10px;min-width:0"><span style="font-size:18px;color:#64748b;white-space:nowrap">'+l1+'</span>'+(v1?'<span style="color:#0f172a;font-weight:600;font-size:18px">'+v1+'</span>':'')+'</div>'
+    +'<div style="flex:'+(r2||1)+';display:flex;align-items:baseline;gap:10px;min-width:0"><span style="font-size:18px;color:#64748b;white-space:nowrap">'+l2+'</span>'+(v2?'<span style="color:#0f172a;font-weight:600;font-size:18px">'+v2+'</span>':'')+'</div>'
+    +'</div>'
+  const fdateB=s=>s?fdate(s):'' // blank-safe date: avoid rendering the '—' placeholder as a fake value
+  const courseSchedule=(c.items&&c.items.length)?c.items.map(i=>isCourseItem(i.name)?shortCourseName(i.name):(/^FD\b/i.test(i.name)?'FD':i.name)).join(', '):''
   document.getElementById('gc-modal-inner').innerHTML=
     '<div id="gc-card" class="bw" style="max-width:900px;width:100%">'
-    +'<div style="display:grid;grid-template-columns:auto 1fr auto;align-items:start;gap:10px;border-bottom:2.5px solid #0b3d5e;padding-bottom:14px;margin-bottom:18px">'
-    +'<img src="'+LOGO_B64+'" style="height:74px;width:auto">'
-    +'<div style="text-align:center;min-width:0;padding-top:2px">'
-    +'<div style="font-size:17px;font-weight:800;color:#0b3d5e;letter-spacing:.3px">LUCKY TITO RESORT CORP.</div>'
-    +'<div style="font-size:9px;color:#94a3b8;letter-spacing:0;margin-top:2px;white-space:nowrap">RESORT · DIVING · RESTAURANT · BAR · COFFEE · KTV</div>'
-    +'<div style="margin-top:8px">'
-    +'<div style="font-size:12px;font-weight:700;color:#475569;letter-spacing:.5px;white-space:nowrap">潜水员登记表</div>'
-    +'<div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:1px;margin-top:1px;white-space:nowrap">DIVER REGISTRATION FORM</div>'
+    +'<div>'
+    +topRow('GROUP INFORMATION 团队信息','','NAME 姓名',escHtml(c.name||''))
+    +topRow('CHECK-IN 到店日期',fdateB(c.checkin),'CHECK-OUT 离店时间',fdateB(c.checkout))
+    +topRow('ROOM NO. 房号',escHtml(c.roomNum||''),'SCHEDULE 行程',escHtml(courseSchedule),38,62)
+    +topRow('EQP. CRATE NO. 装备框编号','','INSTRUCTOR 教练',escHtml(c.instructor||''))
     +'</div>'
+    +'<div style="text-align:center;margin:10px 0 8px">'
+    +'<img src="'+LOGO_B64+'" style="height:88px;width:auto">'
+    +'<div style="font-size:29px;font-weight:800;color:#0b3d5e;letter-spacing:.3px;margin-top:4px">LUCKY TITO RESORT CORP.</div>'
+    +'<div style="font-size:11px;color:#94a3b8;letter-spacing:0;margin-top:3px">RESORT · DIVING · RESTAURANT · BAR · COFFEE · KTV</div>'
     +'</div>'
-    +diveBox
+    +'<div class="bs"><div class="bst">潜水员基本信息表 Diver\'s Information Sheet</div>'
+    +fld2('Date of Birth 生日 (DD/MM/YR)',fdateB(c.dob),'Sex 性别',escHtml(sexLbl),62,38)
+    +fld('Email 邮箱',escHtml(c.email||''))
     +'</div>'
-    +'<div class="bs"><div class="bst">住宿日期 Date of Staying</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 24px;padding:8px 0;font-size:18px">'
-    +'<span><span class="brl">入住 From</span> <span class="brv">'+fdate(c.checkin)+'</span></span>'
-    +'<span><span class="brl">退房 To</span> <span class="brv">'+fdate(c.checkout)+'</span></span>'
-    +'<span><span class="brl">房间号 Room No.</span> <span class="brv">'+escHtml(c.roomNum||'')+'</span></span>'
-    +'</div></div>'
-    +'<div class="bs"><div class="bst">客人信息 Customer Information</div><div class="big">'
-    +brow('Name 姓名',escHtml(c.name||''))
-    +brow('出生日期 Date of Birth',fdate(c.dob))
-    +brow('Sex 性别',escHtml(sexLbl))
-    +brow('邮箱 Email',escHtml(c.email||''))
-    +'</div></div>'
-    +'<div class="bs"><div class="bst">潜水员信息 Diver\'s Information</div><div class="big">'
-    +browOrBlank('认证系统 Cert. System',escHtml(c.certSystem||''))
-    +browOrBlank('技能等级 Cert. Level',escHtml(c.certLevel||''))
-    +browOrBlank('证书编号 C-Card No.',escHtml(c.certNumber||''))
-    +browOrBlank('潜水经验 Diving Experience',escHtml(c.divingExp||''))
-    +'</div></div>'
-    +'<div class="bs"><div class="bst">装备信息 Gear Info</div>'
-    +'<div style="font-size:14px;color:#94a3b8;margin-bottom:4px">自有装备请打勾 Please check the box for gear you bring yourself</div>'
+    +'<div class="bs"><div class="bst">持证信息 Certification Information</div>'
+    +fld2('发证机构 Certification Authority',escHtml(c.certSystem||''),'持证级别 Cert. Level',escHtml(c.certLevel||''))
+    +fld2('证照编号 C-card No.',escHtml(c.certNumber||''),'潜水经验 Diving Experience',escHtml(c.divingExp||''))
+    +'</div>'
+    +'<div class="bs"><div class="bst">装备信息 Gear Info · 自有装备请打勾 Own Gear</div>'
     +gearChecklist
-    +(c.gearNote?'<div style="font-size:15px;color:#64748b;margin-top:6px">📝 '+escHtml(c.gearNote)+'</div>':'')
     +'</div>'
     +'<div class="bs"><div class="bst">紧急联系人 Emergency Contact</div>'
     +blankField2('姓名 Name','电话 Phone Number')
     +'</div>'
     +'<div class="bs"><div class="bst">未成年人信息 Juveniles</div>'
-    +blankField2('法定监护人 Legal Guardian','签名 Signature')
-    +blankField('日期 Date')
+    +'<div style="display:flex;gap:16px;padding:4px 4px 2px;font-size:18px;font-weight:700;color:#64748b"><span style="flex:1">姓名</span><span style="flex:1">签名</span><span style="flex:1">日期</span></div>'
+    +'<div style="display:flex;gap:16px;padding:2px 4px 4px"><span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:20px">&nbsp;</span><span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:20px">&nbsp;</span><span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:20px">&nbsp;</span></div>'
     +'</div>'
-    +'<div style="font-size:12px;color:#94a3b8;text-align:center;margin-top:10px;padding:0 6px;line-height:1.5">以上信息仅用于签发证书及联络，无任何商业用途。<br>The above information is for issuing certificates and contact only, not for any commercial purposes.</div>'
+    +'<div style="font-size:14px;color:#94a3b8;text-align:center;margin-top:14px;padding:0 6px;line-height:1.6">以上信息仅用于签发证书及联络，无任何商业用途。<br>The above information is for issuing certificates and contact only, not for any commercial purposes.</div>'
     +'</div>'
-    
-+'<div class="no-print" style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">'
+  document.getElementById('gc-toolbar').innerHTML=
+    '<span style="font-size:14px;font-weight:700;color:#0b3d5e;margin-right:auto">潜水员信息卡 Diver Card</span>'
     +'<button class="btn btn-primary" onclick="generateGuestCardImage(\''+custId+'\')">📸 保存/复制 Save / Copy</button>'
     +'<button class="btn btn-secondary" onclick="printClean()">🖨️ 打印 Print</button>'
     +'<button class="btn btn-ghost btn-sm" onclick="document.getElementById(\'gc-modal\').style.display=\'none\'">关闭 Close</button>'
-    +'</div>'
   document.getElementById('gc-modal').style.display='flex'
 }
 function generateGuestCardImage(custId){
@@ -4744,7 +4789,8 @@ setInterval(()=>{if(getSyncUrl())cloudSave()},5*60*1000)
 
 <!-- GUEST INFO CARD MODAL -->
 <div id="gc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;overflow-y:auto;padding:20px" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:white;border-radius:16px;width:100%;max-width:760px;margin:0 auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+  <div style="background:white;border-radius:16px;width:100%;max-width:960px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div class="no-print" id="gc-toolbar" style="display:flex;gap:8px;padding:14px 18px;border-bottom:1px solid #f1f5f9;align-items:center;position:sticky;top:0;background:white;border-radius:16px 16px 0 0;z-index:10"></div>
     <div id="gc-modal-inner"></div>
   </div>
 </div>
