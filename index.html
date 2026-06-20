@@ -602,25 +602,9 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
       <span class="card-title">🌊 潜水安排 Dive Schedule</span>
     </div>
     <div class="card-body">
-      <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;margin-bottom:8px">
-        <div style="font-size:12px;font-weight:800;color:#0b3d5e;margin-bottom:6px">🌐 整体默认 Overall Default <span style="font-weight:400;color:#94a3b8">无课程专属设置时使用 Used as fallback when a course below has no specific setting</span></div>
-        <div class="g2" style="gap:8px">
-          <div class="fg"><label>教练/DM Instructor/DM</label><input type="text" id="f-inst" placeholder="负责教练或 DM 姓名 Responsible instructor or DM name"></div>
-          <div class="fg"><label>课程日期 Course Dates</label><div style="display:flex;gap:6px"><input type="date" id="f-cstart" style="flex:1"><input type="date" id="f-cend" style="flex:1"></div></div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
-          <label class="cbl" style="margin:0"><input type="checkbox" id="f-multi-student" onchange="autoApplyMultiStudentDisc()"> 多人课程折扣 Multiple Student Discount</label>
-          <div style="position:relative;display:inline-flex;align-items:center;gap:6px">
-            <span style="font-size:12px;color:#64748b;font-weight:600">同学 Classmates:</span>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="toggleClassmatePicker()" id="classmate-btn" style="padding:2px 10px;font-size:12px">＋ 同学 Add Classmate</button>
-            <div id="classmate-picker" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;background:white;border:1.5px solid #e2e8f0;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:50;min-width:220px;max-height:260px;overflow-y:auto;padding:6px 0"></div>
-          </div>
-          <div id="classmate-tags" style="display:flex;flex-wrap:wrap;gap:4px"></div>
-        </div>
-      </div>
-      <div class="sec-div"><span class="sec-div-label">📘 分课程教练/日期/同学 Per-Course Instructor / Dates / Classmates</span><div class="sec-div-line"></div></div>
+      <div class="sec-div"><span class="sec-div-label">📘 课程/FD：教练 · 日期 · 同学 · 折扣 Course/FD: Instructor · Dates · Classmates · Discount</span><div class="sec-div-line"></div></div>
       <div id="course-blocks-wrap"></div>
-      <div id="course-blocks-empty-hint" style="font-size:12px;color:#94a3b8;padding:4px 2px 2px">暂无课程项目 — 在下方"快速添加"中添加课程后，可在此为每个课程单独设置教练/日期/同学。No course items yet — add a course below to set its own instructor/dates/classmates here.</div>
+      <div id="course-blocks-empty-hint" style="font-size:12px;color:#94a3b8;padding:4px 2px 2px">暂无课程/FD项目 — 在下方"快速添加"中添加课程或FD后，可在此为每个项目单独设置教练/日期/同学/折扣。No course/FD items yet — add one below to set its own instructor/dates/classmates/discount here.</div>
       <div class="sec-div"><span class="sec-div-label">快速添加 Quick Add</span><div class="sec-div-line"></div></div>
       <div class="quick-add-bar">
         <div class="dive-cat-pills" id="dive-cat-pills"></div>
@@ -1588,14 +1572,15 @@ function applyMSDToClassmates(apply){
   if(changed){saveAll(all);cloudSave()}
 }
 function autoApplyMultiStudentDisc(){
-  const checked=document.getElementById('f-multi-student')?.checked
+  // Checked = ANY course/FD block has its own multi-student-discount flag set
+  const checked=Object.values(_courseInfo).some(info=>info&&info.multiStudentDisc)
   // Remove existing multiple student discount line
   document.querySelectorAll('#items-body tr').forEach(tr=>{
     const name=(tr.querySelector('input[type=text]')?.value||'').trim()
     if(name===MULTI_STU_DISC_NAME)tr.remove()
   })
   rowIds=rowIds.filter(id=>document.getElementById('ir-'+id))
-  // Add only when checkbox is checked
+  // Add only when at least one block has the discount enabled
   if(checked)addItem(MULTI_STU_DISC_NAME,MULTI_STU_DISC_AMT,1)
   updateSub()
   // Also save/remove MSD from all linked classmates in stored data
@@ -1912,10 +1897,25 @@ function collect(){
     wetsuitSize:v('f-ws'),finSize:v('f-fs').trim(),bcdSize:v('f-bs'),
     certSystem:v('f-certsys'),certLevel:v('f-certlevel').trim(),certNumber:v('f-certno').trim(),divingExp:v('f-divexp').trim(),
     ownGear:getOwnGear(),gearNote:v('f-gn').trim(),
-    instructor:v('f-inst').trim(),multiStudentDisc:document.getElementById('f-multi-student')?.checked||false,classmates:getClassmates(),courseStart:v('f-cstart'),courseEnd:v('f-cend'),
+    ...courseSummary(mergeCourseInfoIntoItems(getItems())),classmates:getClassmates(),
     items:mergeCourseInfoIntoItems(getItems()),deposit:v('f-deposit'),actualReceived:v('f-actual-received').trim(),actualCurrency:v('f-actual-currency')||'CNY',holFdQty:(document.getElementById('f-hol-fd-qty')?parseInt(v('f-hol-fd-qty'))||0:_holFdQty)||0,notes:v('f-note').trim(),
     restaurantCharges:_claimedRestaurantCharges,restaurantDiscount:_restaurantDiscount,restaurantRmb:_restaurantRmb,restaurantRate:_restaurantRate,
     savedAt:new Date().toISOString(),lastMod:Date.now()}
+}
+// Derives the legacy top-level instructor/courseStart/courseEnd/multiStudentDisc fields from the
+// per-course/FD blocks, so search, schedules and wage tools (which key off these) keep working
+// without the removed global "Overall Default" inputs.
+function courseSummary(mergedItems){
+  const withInfo=(mergedItems||[]).filter(i=>i.instructor||i.cStart||i.cEnd||i.multiStudentDisc)
+  const instructors=[...new Set(withInfo.filter(i=>i.instructor).map(i=>i.instructor))]
+  const starts=withInfo.filter(i=>i.cStart).map(i=>i.cStart).sort()
+  const ends=withInfo.filter(i=>i.cEnd).map(i=>i.cEnd).sort()
+  return{
+    instructor:instructors.join(', '),
+    multiStudentDisc:mergedItems.some(i=>i.multiStudentDisc),
+    courseStart:starts[0]||'',
+    courseEnd:ends[ends.length-1]||''
+  }
 }
 function fillForm(c){
   sv('f-id',c.id);sv('f-custno-stored',c.custNo||'')
@@ -1943,14 +1943,12 @@ function fillForm(c){
   sv('f-gender',c.gender);sv('f-ht',c.height);sv('f-wt',c.weight);sv('f-cs',c.clothSize);sv('f-shoe',c.shoeSize);sv('f-myopia',c.myopia)
   sv('f-ws',c.wetsuitSize);sv('f-fs',c.finSize);sv('f-bs',c.bcdSize)
   sv('f-certsys',c.certSystem);sv('f-certlevel',c.certLevel);sv('f-certno',c.certNumber);sv('f-divexp',c.divingExp)
-  setOwnGear(c.ownGear);sv('f-gn',c.gearNote);sv('f-inst',c.instructor)
-  const msd=document.getElementById('f-multi-student');if(msd)msd.checked=!!c.multiStudentDisc
+  setOwnGear(c.ownGear);sv('f-gn',c.gearNote)
   setClassmates(c.classmates||[])
-  sv('f-cstart',c.courseStart||'');sv('f-cend',c.courseEnd||'')
   _courseInfo={}
   ;(c.items||[]).forEach(item=>{
-    if(item.name&&isCourseItem(item.name)&&(item.instructor||item.cStart||item.cEnd)){
-      _courseInfo[item.name]={instructor:item.instructor||'',cStart:item.cStart||'',cEnd:item.cEnd||''}
+    if(item.name&&(isCourseItem(item.name)||isFDItem(item.name))&&(item.instructor||item.cStart||item.cEnd||item.multiStudentDisc)){
+      _courseInfo[item.name]={instructor:item.instructor||'',cStart:item.cStart||'',cEnd:item.cEnd||'',multiStudentDisc:!!item.multiStudentDisc}
     }
   })
   loadItems(c.items)
@@ -1983,7 +1981,7 @@ function _clearForm(){
   ;['f-name','f-dob','f-email','f-af','f-at-date','f-df','f-dt-date','f-ovhot',
     'f-arr-ct','f-arr-cf','f-arr-drv','f-dep-ct','f-dep-cf','f-dep-drv',
     'f-ci','f-co','f-rnum','f-rrate','f-rdisc-custom','f-ht','f-wt','f-shoe','f-myopia',
-    'f-fs','f-certlevel','f-certno','f-divexp','f-gn','f-inst','f-deposit','f-actual-received','f-note',
+    'f-fs','f-certlevel','f-certno','f-divexp','f-gn','f-deposit','f-actual-received','f-note',
     'f-arr-boat','f-arr-plate','f-dep-boat','f-dep-plate'
   ].forEach(id=>sv(id,''))
   ;['f-term','f-rtype','f-cs','f-ws','f-bs','f-certsys','f-rdisc','f-gender',
@@ -2000,7 +1998,6 @@ function _clearForm(){
   document.getElementById('free-upgrade-panel').style.display='none'
   resetFreeUpgradeUI()
   setOwnGear([]);_courseInfo={};loadItems([])
-  const msd=document.getElementById('f-multi-student');if(msd)msd.checked=false
   setClassmates([])
   _claimedRestaurantCharges=[];_restaurantDiscount='';_restaurantRmb=false;_restaurantRate=null;renderClaimedRestaurantCharges()
   document.getElementById('custno-display').textContent='————'
@@ -2085,14 +2082,15 @@ function renderClassmateTags(){
   wrap.innerHTML=classmateTagsHtml(e=>!courseNames.includes(e.course))
 }
 function removeClassmate(idx){
+  const entry=_classmateEntries[idx]
   _classmateEntries.splice(idx,1)
   renderClassmateTags()
-  renderCourseBlocks()
-  // If no classmates remain, auto-uncheck MSD and remove it from everyone
-  if(!_classmateEntries.length){
-    const msdCb=document.getElementById('f-multi-student')
-    if(msdCb&&msdCb.checked){msdCb.checked=false;autoApplyMultiStudentDisc()}
+  // If no classmates remain for this entry's course, auto-uncheck that course's MSD
+  if(entry&&entry.course&&!_classmateEntries.some(e=>e.course===entry.course)){
+    if(_courseInfo[entry.course])_courseInfo[entry.course].multiStudentDisc=false
   }
+  renderCourseBlocks()
+  autoApplyMultiStudentDisc()
 }
 let _cmCourseCtx=''   // course name string when opened from a per-course block, else ''
 let _cmPickerSuffix=''  // '' for the general picker, '-N' for per-course picker N
@@ -2158,12 +2156,14 @@ function addClassmate(idx){
     _classmateEntries.push({id:c.id,course})
   const picker=document.getElementById('classmate-picker'+(_cmPickerSuffix||''))
   if(picker)picker.style.display='none'
+  // Auto-enable multi-student discount for this specific course/FD block when a classmate is added
+  if(course){
+    if(!_courseInfo[course])_courseInfo[course]={}
+    _courseInfo[course].multiStudentDisc=true
+  }
   renderClassmateTags()
   renderCourseBlocks()
-  // Auto-check MSD checkbox and apply discount when classmate added
-  const msdCb=document.getElementById('f-multi-student')
-  if(msdCb&&!msdCb.checked){msdCb.checked=true;autoApplyMultiStudentDisc()}
-  else applyMSDToClassmates(true)
+  autoApplyMultiStudentDisc()
 }
 // ====== PER-COURSE INSTRUCTOR / DATES BLOCKS ======
 let _courseBlockRows=[]  // [{name,price,qty}] — one per course-type Fee Details row, index = block idx
@@ -2171,7 +2171,7 @@ function renderCourseBlocks(){
   const wrap=document.getElementById('course-blocks-wrap');if(!wrap)return
   const hint=document.getElementById('course-blocks-empty-hint')
   const items=getItems()
-  _courseBlockRows=items.filter(i=>i.name&&isCourseItem(i.name))
+  _courseBlockRows=items.filter(i=>i.name&&(isCourseItem(i.name)||isFDItem(i.name)))
   if(!_courseBlockRows.length){wrap.innerHTML='';if(hint)hint.style.display='';return}
   if(hint)hint.style.display='none'
   wrap.innerHTML=_courseBlockRows.map((r,idx)=>{
@@ -2181,8 +2181,8 @@ function renderCourseBlocks(){
     return '<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;margin-bottom:8px">'
       +'<div style="font-size:12px;font-weight:800;color:#0b3d5e;margin-bottom:6px">📘 '+escHtml(shortCourseName(r.name))+'</div>'
       +'<div class="g2" style="gap:8px">'
-      +'<div class="fg"><label>教练 Instructor</label><div style="display:flex;gap:4px"><select onchange="setCourseInfo('+idx+',\'instructor\',this.value)" style="flex:1"><option value="">— 选择 Select —</option>'+instOpts+'</select><button type="button" class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 6px" onclick="addInstructorForCourse('+idx+')">＋</button></div></div>'
-      +'<div class="fg"><label>课程日期 Course Dates</label><div style="display:flex;gap:6px"><input type="date" value="'+escHtml(info.cStart||'')+'" onchange="setCourseInfo('+idx+',\'cStart\',this.value)" style="flex:1"><input type="date" value="'+escHtml(info.cEnd||'')+'" onchange="setCourseInfo('+idx+',\'cEnd\',this.value)" style="flex:1"></div></div>'
+      +'<div class="fg"><label>教练/DM Instructor/DM</label><div style="display:flex;gap:4px"><select onchange="setCourseInfo('+idx+',\'instructor\',this.value)" style="flex:1"><option value="">— 选择 Select —</option>'+instOpts+'</select><button type="button" class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 6px" onclick="addInstructorForCourse('+idx+')">＋</button></div></div>'
+      +'<div class="fg"><label>日期 Dates</label><div style="display:flex;gap:6px"><input type="date" value="'+escHtml(info.cStart||'')+'" onchange="setCourseInfo('+idx+',\'cStart\',this.value)" style="flex:1"><input type="date" value="'+escHtml(info.cEnd||'')+'" onchange="setCourseInfo('+idx+',\'cEnd\',this.value)" style="flex:1"></div></div>'
       +'</div>'
       +'<div style="display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap;position:relative">'
       +'<span style="font-size:12px;color:#64748b;font-weight:600">同学 Classmates:</span>'
@@ -2190,6 +2190,7 @@ function renderCourseBlocks(){
       +'<div id="classmate-picker-'+idx+'" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;background:white;border:1.5px solid #e2e8f0;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:50;min-width:220px;max-height:260px;overflow-y:auto;padding:6px 0"></div>'
       +'</div>'
       +'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">'+tags+'</div>'
+      +'<label class="cbl" style="margin:8px 0 0;font-size:12px"><input type="checkbox" '+(info.multiStudentDisc?'checked':'')+' onchange="toggleCourseMSD('+idx+',this.checked)"> 多人课程折扣 Multiple Student Discount</label>'
       +'</div>'
   }).join('')
 }
@@ -2197,6 +2198,10 @@ function setCourseInfo(idx,field,val){
   const r=_courseBlockRows[idx];if(!r)return
   if(!_courseInfo[r.name])_courseInfo[r.name]={}
   _courseInfo[r.name][field]=val
+}
+function toggleCourseMSD(idx,checked){
+  setCourseInfo(idx,'multiStudentDisc',checked)
+  autoApplyMultiStudentDisc()
 }
 function addInstructorForCourse(idx){
   const name=prompt('Instructor name 教练姓名:')
@@ -2207,17 +2212,24 @@ function addInstructorForCourse(idx){
   renderCourseBlocks()
 }
 function applyCourseDateToAll(field,val){
-  (getItems()||[]).filter(i=>i.name&&isCourseItem(i.name)).forEach(i=>{
+  (getItems()||[]).filter(i=>i.name&&(isCourseItem(i.name)||isFDItem(i.name))).forEach(i=>{
     if(!_courseInfo[i.name])_courseInfo[i.name]={}
     if(!_courseInfo[i.name][field])_courseInfo[i.name][field]=val
   })
   renderCourseBlocks()
 }
+function applyInstructorToAll(name){
+  (getItems()||[]).filter(i=>i.name&&(isCourseItem(i.name)||isFDItem(i.name))).forEach(i=>{
+    if(!_courseInfo[i.name])_courseInfo[i.name]={}
+    if(!_courseInfo[i.name].instructor)_courseInfo[i.name].instructor=name
+  })
+  renderCourseBlocks()
+}
 function mergeCourseInfoIntoItems(items){
   return(items||[]).map(i=>{
-    if(i.name&&isCourseItem(i.name)&&_courseInfo[i.name]){
+    if(i.name&&(isCourseItem(i.name)||isFDItem(i.name))&&_courseInfo[i.name]){
       const info=_courseInfo[i.name]
-      return Object.assign({},i,{instructor:info.instructor||'',cStart:info.cStart||'',cEnd:info.cEnd||''})
+      return Object.assign({},i,{instructor:info.instructor||'',cStart:info.cStart||'',cEnd:info.cEnd||'',multiStudentDisc:!!info.multiStudentDisc})
     }
     return i
   })
@@ -2622,8 +2634,8 @@ function parseAndApply(){
   if(R.myopia)sv('f-myopia',R.myopia);if(R.divingExp)sv('f-divexp',R.divingExp)
   if(R.gender)sv('f-gender',R.gender)
   if(R.certSystem)sv('f-certsys',R.certSystem);if(R.certLevel)sv('f-certlevel',R.certLevel);if(R.certNumber)sv('f-certno',R.certNumber)
-  if(R.instructor)sv('f-inst',R.instructor)
-  if(R._multiStudent){const cb=document.getElementById('f-multi-student');if(cb)cb.checked=true;delete R._multiStudent}
+  if(R.instructor)applyInstructorToAll(R.instructor)
+  if(R._multiStudent){(getItems()||[]).filter(i=>i.name&&(isCourseItem(i.name)||isFDItem(i.name))).forEach(i=>{if(!_courseInfo[i.name])_courseInfo[i.name]={};_courseInfo[i.name].multiStudentDisc=true});renderCourseBlocks();autoApplyMultiStudentDisc();delete R._multiStudent}
   if(R.location)sv('f-loc',R.location)
   if(R._arrboat){sv('f-arr-boat',R._arrboat)}
   if(R._arrplate){sv('f-arr-plate',R._arrplate)}
@@ -2638,8 +2650,8 @@ function parseAndApply(){
   if(R._rdisc){const dv=/9折|10%/.test(R._rdisc)?'9折':/8[.]?5折|15%/.test(R._rdisc)?'85折':/8折|20%/.test(R._rdisc)?'8折':null;if(dv){sv('f-rdisc',dv);toggleDiscCustom();updateRoomFeePreview()}}
   if(R._checkin){const d=pDateOrCurYear(R._checkin);if(d){sv('f-ci',d);onCheckinChange()}}
   if(R._checkout){const d=pDateOrCurYear(R._checkout);if(d){sv('f-co',d);onCheckinChange()}}
-  if(R._cstart){const d=pDateOrCurYear(R._cstart);if(d){sv('f-cstart',d);applyCourseDateToAll('cStart',d)};delete R._cstart}
-  if(R._cend){const d=pDateOrCurYear(R._cend);if(d){sv('f-cend',d);applyCourseDateToAll('cEnd',d)};delete R._cend}
+  if(R._cstart){const d=pDateOrCurYear(R._cstart);if(d)applyCourseDateToAll('cStart',d);delete R._cstart}
+  if(R._cend){const d=pDateOrCurYear(R._cend);if(d)applyCourseDateToAll('cEnd',d);delete R._cend}
   if(R._arrct)sv('f-arr-ct',R._arrct)
   if(R._depct)sv('f-dep-ct',R._depct)
   if(R._arrcf)sv('f-arr-cf',R._arrcf)
@@ -3613,6 +3625,9 @@ function isCourseItem(name){
   if(/DISCOUNT|折扣|RENTAL|租赁|\/天|FD\s*住店|FUNDIVE|STAY/.test(n))return false
   return /PADI|AIDA|SSI|SDI|NAUI|\bOW\b|AOW|\bDSD\b|\bEFR\b|RESCUE|FREEDIVE|FREE\s*DIVE|自由潜|CCR|REACTIVATE|再激活|DEEP\s*DIVE|NITROX|ENRICHED|SIDEMOUNT|BUOYANCY|DRIFT|NAVIGATION|NIGHT\s*DIVE|PEAK|SEARCH|WRECK|PHOTO|ADVANCED|OPEN\s*WATER/.test(n)
 }
+// FD (Fun Dive) package items — e.g. "FD 住店单人 1-8潜" — get their own instructor/date/classmate
+// block too, same as certification courses, so DM assignment works without a global default.
+function isFDItem(name){return!!(name&&/^FD\b/i.test(name.trim()))}
 // Short display form of a course name: drop the "PADI " prefix, keep just the
 // parenthesized abbreviation if present (e.g. "PADI Advanced Open Water (AOW)" -> "AOW"),
 // otherwise drop any trailing Chinese descriptor and keep the English term only.
