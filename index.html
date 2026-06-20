@@ -2562,8 +2562,11 @@ function parseAndApply(){
     })
     applyDiveItems(found)
   })()
-  // Multi-course detection: if text mentions 2+ distinct courses, try to pull a
-  // dedicated instructor + course dates for EACH one and auto-fill its own block.
+  // Per-course detection: for every course mentioned in the pasted text (1 or more),
+  // try to pull a dedicated instructor + course start/end date for EACH one and
+  // auto-fill its own block. Supports labeled fields ("开课:"/"教练:"...) anywhere in
+  // that course's segment, and a bare unlabeled date range ("7.1-7.4", "2026年7月1日-7月4日"
+  // etc.) right on/next to the course's own mention line.
   let _mcFilled=0
   ;(()=>{
     const COURSE_LINE_PATTERNS=[
@@ -2588,21 +2591,24 @@ function parseAndApply(){
     function matchCourseInLine(line){for(const[re,name]of COURSE_LINE_PATTERNS){if(re.test(line))return name};return null}
     const mentions=[]
     ls.forEach((line,idx)=>{const nm=matchCourseInLine(line);if(nm)mentions.push({idx,name:nm})})
-    const distinctCourses=[...new Set(mentions.map(m=>m.name))]
-    // Only attempt per-course attribution when 2+ distinct courses are mentioned —
-    // a single course already relies on the global fallback fields above.
-    if(distinctCourses.length<2)return
+    if(!mentions.length)return
     for(let i=0;i<mentions.length;i++){
       const segStart=mentions[i].idx
       const segEnd=(i+1<mentions.length)?mentions[i+1].idx:ls.length
       const segText=ls.slice(segStart,segEnd).join('\n')
-      const instM=segText.match(/(?:教练|instructor|dm)\s*[:：]?\s*([^\s,，;；\n]{1,16}(?:\s[^\s,，;；\n]{1,16})?)/i)
+      // Narrow window (mention's own line + the line right after) for the unlabeled bare-date-range
+      // fallback below, so a course mention can't accidentally pick up an unrelated date range
+      // mentioned elsewhere in the text (e.g. check-in/check-out, another course's dates).
+      const nearText=ls.slice(segStart,Math.min(segStart+2,segEnd)).join('\n')
+      const instM=segText.match(/(?:教练|instructor|dm)\s*[:：]?\s*([^\s,，;；\n]{1,16}(?:[ \t][^\s,，;；\n]{1,16})?)/i)
       const startM=segText.match(/(?:开课|开始|course\s*start|start\s*date)[^:：\d]*[:：]?\s*(\S+)/i)
       const endM=segText.match(/(?:结课|结束|课程结束|course\s*end|end\s*date)[^:：\d]*[:：]?\s*(\S+)/i)
       let cStart=startM?pDateOrCurYear(startM[1]):''
       let cEnd=endM?pDateOrCurYear(endM[1]):''
       if(!cStart&&!cEnd){
-        const rangeM=segText.match(/(\d{4}[-/.年]\d{1,2}[-/.月]\d{1,2}日?)\s*[-~至到]+\s*(\d{4}[-/.年]\d{1,2}[-/.月]\d{1,2}日?|\d{1,2}[-/.月]\d{1,2}日?)/)
+        // Either side may include a year or not: "7.1-7.4", "2026.7.1-2026.7.3", "7月1日-7月4日"...
+        const DTOK='(?:\\d{4}[-/.年]\\d{1,2}[-/.月]\\d{1,2}日?|\\d{1,2}[-/.月]\\d{1,2}日?)'
+        const rangeM=nearText.match(new RegExp('('+DTOK+')\\s*[-~至到]+\\s*('+DTOK+')'))
         if(rangeM){cStart=pDateOrCurYear(rangeM[1])||'';cEnd=pDateOrCurYear(rangeM[2])||''}
       }
       const inst=instM?instM[1].replace(/[，,。.]+$/,'').trim():''
@@ -3640,6 +3646,26 @@ function shortCourseName(name){
   s=s||name
   return s.length>24?s.slice(0,23)+'…':s
 }
+// Fixed abbreviations for the eLearning page's 课程 Course column — covers the standard
+// course catalog (see COURSE_CATALOG above); anything not listed falls back to shortCourseName().
+const EL_COURSE_ABBR={
+  'PADI Open Water (OW)':'OW',
+  'PADI Advanced Open Water (AOW)':'AOW',
+  'PADI Enriched Air 高氧专长':'Nitrox',
+  'PADI Sidemount 侧挂':'Sidemount',
+  'PADI Deep Dive 深潜专长':'Deep Dive',
+  'PADI Self-Reliant Diver 独行侠':'Self-Reliant',
+  'PADI Rescue 救援潜水员':'Rescue',
+  'PADI DPV 水下推进器专长':'DPV',
+  'CCR 体验':'CCR',
+  'AIDA/PADI FreeDive L1':'Freedive 1',
+  'AIDA/PADI FreeDive L2':'Freedive 2',
+  'AIDA/PADI FreeDive L3':'Freedive 3',
+  'AIDA/PADI FreeDive L4':'Freedive 4',
+  'EFR 第一应急反应员':'EFR',
+  'PADI Tech Basics 技潜基础':'TECH',
+}
+function elCourseAbbr(name){return EL_COURSE_ABBR[name]||shortCourseName(name)}
 function toggleElStatus(cId,courseKey,field){
   const all=getAll();const idx=all.findIndex(c=>c.id===cId);if(idx<0)return
   if(!all[idx].elStatus)all[idx].elStatus={}
@@ -3710,8 +3736,8 @@ function renderElearning(){
     html+='<td style="padding:8px 12px;font-size:12px;color:#475569">'+(isNewGuest?(c.email||'—'):'')+'</td>'
     // OW Cert No. — only first row, with copy button for quick lookup on the cert org's website
     html+='<td style="padding:8px 12px;font-size:12px;color:#475569;white-space:nowrap">'+(isNewGuest?(c.certNumber?escHtml(c.certNumber)+' <button onclick="copyCertNoEl(this,\''+String(c.certNumber).replace(/'/g,"\\'")+'\')" style="background:none;border:1px solid #bae6fd;font-size:11px;cursor:pointer;color:#0284c7;padding:1px 6px;border-radius:5px;margin-left:4px;vertical-align:middle" title="复制 Copy">\ud83d\udccb</button>':'—'):'')+'</td>'
-    // Course name
-    html+='<td style="padding:8px 12px;font-size:12px;color:#374151">'+course+'</td>'
+    // Course name — shown as a short abbreviation; underlying full name (course) still used as the data key
+    html+='<td style="padding:8px 12px;font-size:12px;color:#374151;white-space:nowrap">'+escHtml(elCourseAbbr(course))+'</td>'
     // eLearning checkbox
     html+='<td style="padding:8px 12px;text-align:center">'+chkBox(c.id,course,'el',elSent)+'</td>'
     // Certificate checkbox
