@@ -4264,19 +4264,20 @@ function showGuestCard(custId){
   // label+value-or-blank row (mirrors blankField but fills in the value when known)
   const fld=(label,val)=>'<div style="display:flex;align-items:baseline;gap:14px;padding:7px 0;font-size:18px"><span style="color:#64748b;white-space:nowrap;min-width:0">'+label+'</span>'+(val?'<span style="flex:1;color:#0f172a;font-weight:600;border-bottom:1px solid #cbd5e1;padding-bottom:2px">'+val+'</span>':'<span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:26px">&nbsp;</span>')+'</div>'
   const fld2=(l1,v1,l2,v2,r1,r2)=>'<div style="display:flex;gap:32px"><div style="flex:'+(r1||1)+'">'+fld(l1,v1)+'</div><div style="flex:'+(r2||1)+'">'+fld(l2,v2)+'</div></div>'
-  // top header row: label + inline value, whole row underlined in navy (matches the edited card layout). r1/r2 let a long label/value side claim more width.
-  const topRow=(l1,v1,l2,v2,r1,r2)=>'<div style="display:flex;gap:20px;padding:7px 0;border-bottom:2px solid #0b3d5e">'
-    +'<div style="flex:'+(r1||1)+';display:flex;align-items:baseline;gap:10px;min-width:0"><span style="font-size:18px;color:#64748b;white-space:nowrap">'+l1+'</span>'+(v1?'<span style="color:#0f172a;font-weight:600;font-size:18px">'+v1+'</span>':'')+'</div>'
-    +'<div style="flex:'+(r2||1)+';display:flex;align-items:baseline;gap:10px;min-width:0"><span style="font-size:18px;color:#64748b;white-space:nowrap">'+l2+'</span>'+(v2?'<span style="color:#0f172a;font-weight:600;font-size:18px">'+v2+'</span>':'')+'</div>'
+  // top header row: fixed-width labels so all values in a column line up vertically, whole row underlined in navy
+  const topRow=(l1,v1,l2,v2)=>'<div style="display:flex;gap:20px;padding:7px 0;border-bottom:2px solid #0b3d5e">'
+    +'<div style="flex:1;display:flex;align-items:baseline;min-width:0"><span style="flex:0 0 255px;font-size:18px;color:#64748b;white-space:nowrap">'+l1+'</span><span style="flex:1;color:#0f172a;font-weight:600;font-size:18px">'+(v1||'')+'</span></div>'
+    +'<div style="flex:1;display:flex;align-items:baseline;min-width:0"><span style="flex:0 0 195px;font-size:18px;color:#64748b;white-space:nowrap">'+l2+'</span><span style="flex:1;color:#0f172a;font-weight:600;font-size:18px">'+(v2||'')+'</span></div>'
     +'</div>'
   const fdateB=s=>s?fdate(s):'' // blank-safe date: avoid rendering the '—' placeholder as a fake value
+  const fdob=s=>{if(!s)return'';const m=s.match(/(\d{4})-(\d{2})-(\d{2})/);return m?(m[3]+'/'+m[2]+'/'+m[1]):s} // DD/MM/YYYY for the Date of Birth field
   const courseSchedule=(c.items&&c.items.length)?c.items.map(i=>isCourseItem(i.name)?shortCourseName(i.name):(/^FD\b/i.test(i.name)?'FD':i.name)).join(', '):''
   document.getElementById('gc-modal-inner').innerHTML=
     '<div id="gc-card" class="bw" style="max-width:900px;width:100%">'
     +'<div>'
     +topRow('GROUP INFORMATION 团队信息','','NAME 姓名',escHtml(c.name||''))
     +topRow('CHECK-IN 到店日期',fdateB(c.checkin),'CHECK-OUT 离店时间',fdateB(c.checkout))
-    +topRow('ROOM NO. 房号',escHtml(c.roomNum||''),'SCHEDULE 行程',escHtml(courseSchedule),38,62)
+    +topRow('ROOM NO. 房号',escHtml(c.roomNum||''),'SCHEDULE 行程',escHtml(courseSchedule))
     +topRow('EQP. CRATE NO. 装备框编号','','INSTRUCTOR 教练',escHtml(c.instructor||''))
     +'</div>'
     +'<div style="text-align:center;margin:10px 0 8px">'
@@ -4285,7 +4286,7 @@ function showGuestCard(custId){
     +'<div style="font-size:11px;color:#94a3b8;letter-spacing:0;margin-top:3px">RESORT · DIVING · RESTAURANT · BAR · COFFEE · KTV</div>'
     +'</div>'
     +'<div class="bs"><div class="bst">潜水员基本信息表 Diver\'s Information Sheet</div>'
-    +fld2('Date of Birth 生日 (DD/MM/YR)',fdateB(c.dob),'Sex 性别',escHtml(sexLbl),62,38)
+    +fld2('Date of Birth 生日 (DD/MM/YR)',fdob(c.dob),'Sex 性别',escHtml(sexLbl),62,38)
     +fld('Email 邮箱',escHtml(c.email||''))
     +'</div>'
     +'<div class="bs"><div class="bst">持证信息 Certification Information</div>'
@@ -4299,7 +4300,7 @@ function showGuestCard(custId){
     +blankField2('姓名 Name','电话 Phone Number')
     +'</div>'
     +'<div class="bs"><div class="bst">未成年人信息 Juveniles</div>'
-    +'<div style="display:flex;gap:16px;padding:4px 4px 2px;font-size:18px;font-weight:700;color:#64748b"><span style="flex:1">姓名</span><span style="flex:1">签名</span><span style="flex:1">日期</span></div>'
+    +'<div style="display:flex;gap:16px;padding:4px 4px 2px;font-size:15px;font-weight:700;color:#64748b"><span style="flex:1">姓名</span><span style="flex:1">签名</span><span style="flex:1">日期</span></div>'
     +'<div style="display:flex;gap:16px;padding:2px 4px 4px"><span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:20px">&nbsp;</span><span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:20px">&nbsp;</span><span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:20px">&nbsp;</span></div>'
     +'</div>'
     +'<div style="font-size:14px;color:#94a3b8;text-align:center;margin-top:14px;padding:0 6px;line-height:1.6">以上信息仅用于签发证书及联络，无任何商业用途。<br>The above information is for issuing certificates and contact only, not for any commercial purposes.</div>'
