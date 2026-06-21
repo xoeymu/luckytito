@@ -113,6 +113,25 @@ header button:hover{background:rgba(255,255,255,.22)}
   .kitchen-print .kl-name{flex:1}
   .kitchen-print .kl-qty{flex-shrink:0}
 }
+.mobile-tabbar{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);z-index:60;padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px))}
+.mobile-tabbar button{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--slate);padding:6px 0;position:relative;font-weight:700;cursor:pointer}
+.mobile-tabbar button .mt-icon{font-size:18px}
+.mobile-tabbar button.active{color:var(--blue)}
+.mobile-tabbar .mt-badge{position:absolute;top:0;right:22%;background:var(--red);color:#fff;border-radius:10px;min-width:16px;height:16px;font-size:10px;line-height:16px;text-align:center;padding:0 3px}
+.pending-banner{display:none;position:fixed;top:56px;left:0;right:0;z-index:55;align-items:center;justify-content:space-between;gap:10px;background:var(--orange);color:#fff;padding:10px 16px;cursor:pointer;font-weight:800;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.2);animation:pb-pulse 1.6s ease-in-out infinite}
+.pending-banner .pb-action{font-weight:700;font-size:12px;opacity:.9;white-space:nowrap}
+@keyframes pb-pulse{0%,100%{background:var(--orange)}50%{background:#dc2626}}
+@media (max-width:768px){
+  .layout{flex-direction:column;padding:8px;gap:0;height:calc(100vh - 56px);padding-bottom:58px}
+  .panel{display:none;width:100%!important;flex:1 1 auto!important}
+  .panel.mobile-active{display:flex}
+  .mobile-tabbar{display:flex}
+  .order-line .ol-qty button{width:34px;height:34px;font-size:16px}
+  .order-line .ol-qty span{min-width:18px;text-align:center;font-size:14px}
+  .item-card{padding:12px 10px}
+  .order-actions{flex-wrap:wrap}
+  .order-actions .btn{font-size:12px;padding:9px 6px}
+}
 </style>
 </head>
 <body>
@@ -124,9 +143,14 @@ header button:hover{background:rgba(255,255,255,.22)}
   <span class="clock" id="clock"></span>
 </header>
 
+<div class="pending-banner" id="pending-banner" onclick="checkPhoneOrders()">
+  <span id="pending-banner-text"></span>
+  <span class="pb-action">点击立即接单 Tap to claim now ›</span>
+</div>
+
 <div class="layout">
   <div class="panel" id="tables-panel">
-    <div class="panel-header">🪑 桌台 Tables<button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openNewTableModal()">＋ 开台 New Table</button></div>
+    <div class="panel-header">🪑 桌台 Tables<button class="btn btn-ghost btn-sm" id="phone-orders-btn" style="margin-left:auto" onclick="checkPhoneOrders()">📥 手机来单 Phone Orders</button><button class="btn btn-primary btn-sm" onclick="openNewTableModal()">＋ 开台 New Table</button></div>
     <div class="panel-body" id="tables-list"></div>
   </div>
 
@@ -140,6 +164,7 @@ header button:hover{background:rgba(255,255,255,.22)}
     <div class="order-table-name" id="order-table-name"></div>
     <div class="panel-body" id="order-lines" style="padding:0 10px"></div>
     <div class="order-footer">
+      <button class="btn btn-ghost btn-block" id="upload-btn" style="margin-bottom:10px" onclick="uploadOrderToFrontDesk()">📤 上传到前台 Upload to Front Desk</button>
       <div class="order-total"><span>总计 Total</span><span id="order-total-amt">₱0</span></div>
       <div class="order-actions">
         <button class="btn btn-ghost" style="flex:1" onclick="clearOrder()">🗑 清空 Clear</button>
@@ -148,6 +173,12 @@ header button:hover{background:rgba(255,255,255,.22)}
       </div>
     </div>
   </div>
+</div>
+
+<div class="mobile-tabbar" id="mobile-tabbar">
+  <button onclick="setMobileView('tables')" data-v="tables"><span class="mt-icon">🪑</span><span>桌台</span></button>
+  <button onclick="setMobileView('menu')" data-v="menu"><span class="mt-icon">🍽️</span><span>菜单</span></button>
+  <button onclick="setMobileView('order')" data-v="order"><span class="mt-icon">🧾</span><span>订单</span><span class="mt-badge" id="mt-order-badge" style="display:none">0</span></button>
 </div>
 
 <!-- NEW TABLE MODAL -->
@@ -337,7 +368,31 @@ MENU.forEach((m,i)=>{m.id='i'+i})
 // ====================================================================
 //   STATE / STORAGE
 // ====================================================================
-let curTableId=null, curCat='ALL'
+let curTableId=null, curCat='ALL', mobileView='tables'
+let pendingOrderCount=0, audioCtx=null
+// unlock Web Audio on first user interaction (autoplay policies keep AudioContext silent
+// until a real user gesture has happened at least once this session) — cheap, safe to attach broadly
+document.addEventListener('click',()=>{
+  if(!audioCtx){try{audioCtx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}
+  else if(audioCtx.state==='suspended')audioCtx.resume()
+})
+// ---- mobile single-column view switcher (only visually active under the @media max-width:768px
+// breakpoint — on wider screens the .mobile-active class has no effect, so this is safe to call
+// unconditionally regardless of actual device width) ----
+function setMobileView(v){
+  mobileView=v
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('mobile-active'))
+  const map={tables:'tables-panel',menu:'menu-panel',order:'order-panel'}
+  const p=document.getElementById(map[v]);if(p)p.classList.add('mobile-active')
+  document.querySelectorAll('.mobile-tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.v===v))
+}
+function updateMobileOrderBadge(){
+  const badge=document.getElementById('mt-order-badge');if(!badge)return
+  const t=curTableId?loadTables().find(x=>x.id===curTableId):null
+  const n=t?t.items.reduce((s,i)=>s+i.qty,0):0
+  badge.style.display=n>0?'block':'none'
+  badge.textContent=n>99?'99+':n
+}
 function uid(){return 't'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function loadTables(){try{return JSON.parse(localStorage.getItem('rt_tables')||'[]')}catch{return[]}}
 function saveTables(t){localStorage.setItem('rt_tables',JSON.stringify(t))}
@@ -378,6 +433,115 @@ function pushChargeToCloud(record){
     return fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)})
   }).catch(()=>{/* offline or unreachable — local checkout/receipt already succeeded, just skip the push */})
 }
+// ---- Tableside ordering bridge: phone uploads an in-progress order, front desk pulls it in ----
+// __restaurant_orders__.orders is treated as a pending queue only — front desk clears an entry
+// out of it as soon as it's been pulled in, so it never grows unbounded. Re-uploading the same
+// table before the desk has checked replaces (upserts by srcId) rather than duplicating, which is
+// what lets a server keep adding dishes to one order instead of splitting it into multiple tickets.
+function uploadOrderToFrontDesk(){
+  if(!curTableId){alert('请先选择桌台 Please select a table first');return}
+  const t=loadTables().find(x=>x.id===curTableId)
+  if(!t||t.items.length===0){alert('该桌台还没有点菜 This table has no items yet');return}
+  const url=getSyncUrl()
+  if(!url){alert('请先点右上角"云同步"，填入与前台相同的地址\nPlease tap "Cloud Sync" (top right) and enter the same URL the front desk uses.');return}
+  const btn=document.getElementById('upload-btn')
+  if(btn){btn.disabled=true;btn.textContent='⏳ 上传中… Uploading…'}
+  const order={srcId:t.id,tableLabel:t.label,note:t.note||'',items:t.items.map(i=>({id:i.id,qty:i.qty})),updatedAt:new Date().toISOString()}
+  fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
+    if(!res||!res.ok||!Array.isArray(res.data))throw new Error('load failed')
+    const data=res.data
+    let oq=data.find(c=>c.id==='__restaurant_orders__')
+    if(!oq){oq={id:'__restaurant_orders__',orders:[]};data.push(oq)}
+    if(!Array.isArray(oq.orders))oq.orders=[]
+    const idx=oq.orders.findIndex(o=>o.srcId===order.srcId)
+    if(idx>=0)oq.orders[idx]=order
+    else oq.orders.push(order)
+    return fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)})
+  }).then(()=>{
+    if(btn){btn.disabled=false;btn.textContent='✅ 已上传 '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}
+    setTimeout(()=>{if(btn)btn.textContent='📤 上传到前台 Upload to Front Desk'},3000)
+  }).catch(()=>{
+    if(btn){btn.disabled=false;btn.textContent='❌ 上传失败，点击重试 Failed, tap to retry'}
+  })
+}
+// Front-desk side: pull whatever is currently queued, merge each into a matching local table
+// (matched by srcId so repeated/appended uploads land on the same table instead of duplicating),
+// then clear the cloud queue. One click does pull + merge + clear — no separate review step.
+function checkPhoneOrders(){
+  const url=getSyncUrl()
+  if(!url){alert('请先点右上角"云同步"连接云端地址\nConnect Cloud Sync (top-right) first.');return}
+  const btn=document.getElementById('phone-orders-btn')
+  if(btn){btn.disabled=true;btn.textContent='⏳ 查询中… Checking…'}
+  fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
+    if(!res||!res.ok||!Array.isArray(res.data))throw new Error('load failed')
+    const data=res.data
+    const oq=data.find(c=>c.id==='__restaurant_orders__')
+    const pending=(oq&&Array.isArray(oq.orders))?oq.orders:[]
+    if(btn){btn.disabled=false;btn.textContent='📥 手机来单 Phone Orders'}
+    pendingOrderCount=0;updatePendingBanner() // about to claim everything currently queued (or there's nothing) either way
+    if(!pending.length){alert('暂无新的手机来单 No new phone orders');return}
+    const tables=loadTables()
+    const claimedLabels=[]
+    pending.forEach(o=>{
+      let tbl=tables.find(x=>x.srcId===o.srcId)
+      if(!tbl){
+        tbl={id:uid(),label:o.tableLabel,note:o.note||'',items:[],openedAt:new Date().toISOString(),srcId:o.srcId}
+        tables.push(tbl)
+      }
+      tbl.items=(o.items||[]).filter(it=>MENU.some(m=>m.id===it.id)).map(it=>({id:it.id,qty:it.qty}))
+      if(o.note)tbl.note=o.note
+      claimedLabels.push(tbl.label)
+    })
+    saveTables(tables)
+    renderTables();renderOrderPanel()
+    oq.orders=[]
+    fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)})
+    alert('✅ 已接收 '+claimedLabels.length+' 张来单：'+claimedLabels.join('、'))
+  }).catch(()=>{
+    if(btn){btn.disabled=false;btn.textContent='📥 手机来单 Phone Orders'}
+    alert('❌ 查询失败，请检查网络/云同步设置 Failed — check network/cloud sync settings')
+  })
+}
+// ---- Auto-poll for pending phone orders ----
+// Read-only GET every 10s — never POSTs, so it can run concurrently with uploads/claims
+// without any risk of clobbering data. Purely an "is there something waiting?" check;
+// actually claiming still goes through checkPhoneOrders() (manual button or tapping the banner).
+function pollForPendingOrders(){
+  const url=getSyncUrl()
+  if(!url)return
+  fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
+    if(!res||!res.ok||!Array.isArray(res.data))return
+    const oq=res.data.find(c=>c.id==='__restaurant_orders__')
+    const n=(oq&&Array.isArray(oq.orders))?oq.orders.length:0
+    if(n>pendingOrderCount)beepAlert()
+    pendingOrderCount=n
+    updatePendingBanner()
+  }).catch(()=>{/* network hiccup — silently retry on next interval, don't nag the user */})
+}
+function updatePendingBanner(){
+  const b=document.getElementById('pending-banner')
+  if(!b)return
+  if(pendingOrderCount>0){
+    document.getElementById('pending-banner-text').textContent='📥 '+pendingOrderCount+' 张新来单待处理 New phone order(s) waiting'
+    b.style.display='flex'
+  }else{
+    b.style.display='none'
+  }
+}
+function beepAlert(){
+  if(!audioCtx)return // no user gesture yet this session — banner still shows visually
+  try{playTone(880,0,.35);playTone(1100,.22,.35)}catch(e){}
+}
+function playTone(freq,delay,dur){
+  const t0=audioCtx.currentTime+delay
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain()
+  o.type='sine';o.frequency.value=freq
+  o.connect(g);g.connect(audioCtx.destination)
+  g.gain.setValueAtTime(.0001,t0)
+  g.gain.exponentialRampToValueAtTime(.3,t0+.01)
+  g.gain.exponentialRampToValueAtTime(.0001,t0+dur)
+  o.start(t0);o.stop(t0+dur+.05)
+}
 function fmt(n){return'₱'+Number(n).toLocaleString('en-US',{maximumFractionDigits:0})}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
@@ -402,14 +566,14 @@ function renderTables(){
     const cls='table-tile'+(t.id===curTableId?' active':'')+(hasOrder?' has-order':'')
     return '<div class="'+cls+'" onclick="selectTable(\''+t.id+'\')">'
       +'<button class="t-del" onclick="event.stopPropagation();removeTable(\''+t.id+'\')" title="删除桌台 Delete Table">✕</button>'
-      +'<div class="t-name">'+esc(t.label)+'</div>'
+      +'<div class="t-name">'+(t.srcId?'📱 ':'')+esc(t.label)+'</div>'
       +(t.note?'<div class="t-note">'+esc(t.note)+'</div>':'')
       +'<div class="t-meta"><span>'+t.items.reduce((s,i)=>s+i.qty,0)+' 件 items</span><span>'+fmt(total)+'</span></div>'
       +'</div>'
   }).join('')||'<div class="order-empty">暂无桌台，点击"＋开台"新建 No tables yet — click "+ New Table" to add one</div>'
 }
 function orderTotal(t){return t.items.reduce((s,it)=>{const m=MENU.find(x=>x.id===it.id);return s+(m?getPrice(m):0)*it.qty},0)}
-function selectTable(id){curTableId=id;renderTables();renderOrderPanel()}
+function selectTable(id){curTableId=id;renderTables();renderOrderPanel();setMobileView('menu')}
 function openNewTableModal(){
   document.getElementById('nt-label').value=''
   document.getElementById('nt-note').value=''
@@ -534,6 +698,7 @@ function renderOrderPanel(){
     nameEl.innerHTML='<div class="tn-label" style="color:#94a3b8">未选择桌台 No table selected</div>'
     linesEl.innerHTML='<div class="order-empty">从左侧选择或新开一个桌台 Select or open a table from the left</div>'
     totalEl.textContent=fmt(0)
+    updateMobileOrderBadge()
     return
   }
   const t=loadTables().find(x=>x.id===curTableId)
@@ -556,6 +721,7 @@ function renderOrderPanel(){
     }).join('')
   }
   totalEl.textContent=fmt(orderTotal(t))
+  updateMobileOrderBadge()
 }
 
 // ====================================================================
@@ -690,8 +856,11 @@ function init(){
   renderMenu()
   renderOrderPanel()
   updateSyncBtn()
+  setMobileView('tables')
   tickClock()
   setInterval(tickClock,30000)
+  pollForPendingOrders()
+  setInterval(pollForPendingOrders,10000)
 }
 init()
 </script>

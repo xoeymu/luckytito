@@ -3252,6 +3252,10 @@ function coFinish(id,cur,rate){
   if(rate)all[i].phpRate=rate
   saveAll(all);cloudSave()
   renderList(document.querySelector('.sb')?.value||'')
+  // Auto-open the bill (already reflects the just-picked currency) and trigger the print
+  // dialog for archiving — small delay lets the modal paint before window.print() fires
+  showBillModal(id)
+  setTimeout(printClean,250)
 }
 function coClose(){
   document.getElementById('co-modal').style.display='none'
