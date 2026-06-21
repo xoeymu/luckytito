@@ -3920,6 +3920,15 @@ function rcalDrop(e){
     _calDragCid=null;_calDragDate=null
     return
   }
+  // Confirm before committing the move — dragging is easy to do by accident
+  const noChange=targetRoom===c.roomNum&&newDate===c.checkin
+  if(!noChange){
+    const msg='确认改动？Confirm this change?\n\n'+(c.name||'')+'\n'
+      +(targetRoom!==c.roomNum?('房间 Room: '+(c.roomNum||'—')+' → '+targetRoom+'\n'):'')
+      +'入住 Check-in: '+fdate(c.checkin)+' → '+fdate(newDate)+'\n'
+      +'退房 Check-out: '+fdate(c.checkout)+' → '+fdate(newCheckout)
+    if(!confirm(msg)){_calDragCid=null;_calDragDate=null;return}
+  }
   c.checkin=newDate
   c.checkout=newCheckout
   if(newRoom)c.roomNum=newRoom
