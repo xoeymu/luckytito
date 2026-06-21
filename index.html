@@ -1270,7 +1270,16 @@ function cloudLoad(){
         if(Array.isArray(metaEntry.divelog))localStorage.setItem('lt_divelog',JSON.stringify(metaEntry.divelog))
         if(Array.isArray(metaEntry.dms))localStorage.setItem('lt_dms',JSON.stringify(metaEntry.dms))
         if(Array.isArray(metaEntry.groups))localStorage.setItem('lt_groups',JSON.stringify(metaEntry.groups))
-        if(metaEntry.wageRates)localStorage.setItem('lt_wageRates',JSON.stringify(metaEntry.wageRates))
+        if(metaEntry.wageRates){
+          // Guard against a race where this device has a local rate edit that hasn't been
+          // confirmed synced yet (cloudSave() is fire-and-forget) — if we blindly overwrite here,
+          // a reload/refresh right after editing a rate would revert it back to the stale cloud
+          // copy (looks like "rates reset to default" to the user). Only accept the cloud copy if
+          // there's no pending unconfirmed local edit newer than the last confirmed sync.
+          const wrTs=parseInt(localStorage.getItem('lt_wageRates_ts')||'0',10)
+          const lastSync=localStorage.getItem(TK)?new Date(localStorage.getItem(TK)).getTime():0
+          if(wrTs<=lastSync)localStorage.setItem('lt_wageRates',JSON.stringify(metaEntry.wageRates))
+        }
         if(metaEntry.wageLedger)localStorage.setItem('lt_wageLedger',JSON.stringify(metaEntry.wageLedger))
         if(Array.isArray(metaEntry.wagePayments))localStorage.setItem('lt_wagePayments',JSON.stringify(metaEntry.wagePayments))
       }
@@ -4388,7 +4397,7 @@ function getWageRates(){
   if(!r.instructorDive)r.instructorDive={fd:20,ow:166,aow:150,specialty:200}
   return r
 }
-function saveWageRates(r){localStorage.setItem('lt_wageRates',JSON.stringify(r));cloudSave()}
+function saveWageRates(r){localStorage.setItem('lt_wageRates',JSON.stringify(r));localStorage.setItem('lt_wageRates_ts',Date.now().toString());cloudSave()}
 function updateCourseRate(name,val){const r=getWageRates();if(!r.courses)r.courses={};r.courses[name]=parseFloat(val)||0;saveWageRates(r);renderWageLedger()}
 function updateDmRate(field,val){const r=getWageRates();r[field]=parseFloat(val)||0;saveWageRates(r);renderWageLedger()}
 function updateInstructorDiveRate(tier,val){const r=getWageRates();if(!r.instructorDive)r.instructorDive={};r.instructorDive[tier]=parseFloat(val)||0;saveWageRates(r);renderWageLedger()}
