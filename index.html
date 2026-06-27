@@ -315,6 +315,7 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
   .bnum,.blbl,.bdate{text-align:right!important}
   .big{grid-template-columns:1fr 1fr!important}
   #gc-card{width:100%!important;max-width:190mm!important;padding:14px 18px!important}
+  body.printing-booking #page-booking{display:block!important}
   @page{size:A4;margin:10mm}
 }
 /* ====== ROOM CALENDAR ====== */
@@ -755,6 +756,7 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
       <label style="font-size:13px;font-weight:600;color:#475569">房号 Room No.:</label>
       <input type="text" id="bk-room" placeholder="e.g. 205" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;width:100px" oninput="renderBooking()">
       <button class="btn btn-primary" id="booking-img-btn" onclick="generateBookingImage(this)">📸 生成图片 Generate Image</button>
+      <button class="btn btn-secondary" onclick="printBookingSheet()">🖨️ 打印 Print</button>
     </div>
   </div>
   <div id="booking-out"><div class="empty-state"><div class="empty-icon">📄</div><p>按客人姓名、入住日期或房号搜索以生成预订单（同房号可合并多人）Search by guest name, check-in date or room number to generate the booking sheet (same room number groups multiple guests)</p></div></div>
@@ -3646,6 +3648,15 @@ function renderBooking(){
   </div>`
 }
 
+function printBookingSheet(){
+  const el=document.getElementById('booking-out')
+  if(!el||el.querySelector('.empty-state')){alert('请先选择入住/退房日期或房号 Please select check-in/check-out dates or room number first.');return}
+  // page-booking is a regular nav .page (hidden by @media print by default) — flip it visible
+  // just for this print job via the printing-booking body class, then revert
+  document.body.classList.add('printing-booking')
+  printClean()
+  setTimeout(()=>document.body.classList.remove('printing-booking'),500)
+}
 function generateBookingImage(btn){
   const el=document.getElementById('booking-out')
   if(!el||el.querySelector('.empty-state')){alert('请先选择入住/退房日期 Please select check-in / check-out dates first.');return}
