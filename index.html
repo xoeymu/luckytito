@@ -4184,7 +4184,7 @@ function dlInstructorOptions(selected){
   return '<option value="">— 选择教练 Select Instructor —</option>'+getInstructorList().map(n=>'<option value="'+escHtml(n)+'"'+(n===selected?' selected':'')+'>'+escHtml(n)+'</option>').join('')
 }
 function dlCourseOptions(selected){
-  const list=['FD','POOL','OW1','OW2','OW3','OW4','AOW1','AOW2','AOW3','AOW4','AOW5','SPECIALTY']
+  const list=['FD','POOL','OW1','OW2','OW3','OW4','AOW1','AOW2','AOW3','AOW4','AOW5','DEEP1','DEEP2','DEEP3','SIDEMOUNT1','SIDEMOUNT2','SIDEMOUNT3','SPECIALTY']
   return '<option value="">— 选择课程 Select Course —</option>'+list.map(c=>'<option value="'+c+'"'+(c===selected?' selected':'')+'>'+c+'</option>').join('')
 }
 function openDlDetail(id){
@@ -4414,7 +4414,7 @@ function saveWageRates(r){localStorage.setItem('lt_wageRates',JSON.stringify(r))
 function updateCourseRate(name,val){const r=getWageRates();if(!r.courses)r.courses={};r.courses[name]=parseFloat(val)||0;saveWageRates(r);renderWageLedger()}
 function updateDmRate(field,val){const r=getWageRates();r[field]=parseFloat(val)||0;saveWageRates(r);renderWageLedger()}
 function updateInstructorDiveRate(tier,val){const r=getWageRates();if(!r.instructorDive)r.instructorDive={};r.instructorDive[tier]=parseFloat(val)||0;saveWageRates(r);renderWageLedger()}
-const DIVE_COURSE_TIER={FD:'fd',POOL:'ow',OW1:'ow',OW2:'ow',OW3:'ow',OW4:'ow',AOW1:'aow',AOW2:'aow',AOW3:'aow',AOW4:'aow',AOW5:'aow',SPECIALTY:'specialty'}
+const DIVE_COURSE_TIER={FD:'fd',POOL:'ow',OW1:'ow',OW2:'ow',OW3:'ow',OW4:'ow',AOW1:'aow',AOW2:'aow',AOW3:'aow',AOW4:'aow',AOW5:'aow',DEEP1:'specialty',DEEP2:'specialty',DEEP3:'specialty',SIDEMOUNT1:'specialty',SIDEMOUNT2:'specialty',SIDEMOUNT3:'specialty',SPECIALTY:'specialty'}
 function instructorDiveRate(course,rates){const tier=DIVE_COURSE_TIER[course];return tier?((rates.instructorDive&&rates.instructorDive[tier])||0):0}
 function computeInstructorDiveLines(name,inRange){
   const rates=getWageRates()
@@ -4424,7 +4424,24 @@ function computeInstructorDiveLines(name,inRange){
     if(!inRange(e.date))return
     counts[e.course]=(counts[e.course]||0)+1
   })
-  return Object.entries(counts).map(([course,qty])=>{const rate=instructorDiveRate(course,rates);return{label:course+' 潜次 Dive',qty,rate,amount:qty*rate}})
+  // OW course = 5 logged stages (Pool + OW1-4). Once all 5 have been logged for this
+  // instructor in the period, fold one full set into a single "complete course" line
+  // instead of 5 separate per-dive lines — same total pay, cleaner wage statement.
+  // Any leftover/incomplete stage dives still show individually below.
+  const owStages=['POOL','OW1','OW2','OW3','OW4']
+  const completeSets=Math.min(...owStages.map(s=>counts[s]||0))
+  const lines=[]
+  if(completeSets>0){
+    owStages.forEach(s=>{counts[s]=(counts[s]||0)-completeSets;if(counts[s]<=0)delete counts[s]})
+    const owRate=instructorDiveRate('OW1',rates)
+    lines.push({label:'OW 完整课程 Complete Course (Pool+OW1-4)',qty:completeSets,rate:owRate*5,amount:completeSets*owRate*5})
+  }
+  Object.entries(counts).forEach(([course,qty])=>{
+    if(qty<=0)return
+    const rate=instructorDiveRate(course,rates)
+    lines.push({label:course+' 潜次 Dive',qty,rate,amount:qty*rate})
+  })
+  return lines
 }
 function getWageLaunchDate(){let d=localStorage.getItem('lt_wageLaunch');if(!d){d=new Date().toISOString().split('T')[0];localStorage.setItem('lt_wageLaunch',d)}return d}
 function getWageLedger(){try{return JSON.parse(localStorage.getItem('lt_wageLedger')||'{}')}catch{return{}}}
