@@ -752,10 +752,12 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
       <input type="text" id="bk-name" placeholder="🔍 搜索客人姓名… Search guest name…" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;min-width:180px" oninput="renderBooking()">
       <label style="font-size:13px;font-weight:600;color:#475569">入住日期 Check-in Date:</label>
       <input type="date" id="bk-ci" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit" onchange="renderBooking()">
+      <label style="font-size:13px;font-weight:600;color:#475569">房号 Room No.:</label>
+      <input type="text" id="bk-room" placeholder="e.g. 205" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;width:100px" oninput="renderBooking()">
       <button class="btn btn-primary" id="booking-img-btn" onclick="generateBookingImage(this)">📸 生成图片 Generate Image</button>
     </div>
   </div>
-  <div id="booking-out"><div class="empty-state"><div class="empty-icon">📄</div><p>按客人姓名或入住日期搜索以生成预订单 Search by guest name or check-in date to generate the booking sheet</p></div></div>
+  <div id="booking-out"><div class="empty-state"><div class="empty-icon">📄</div><p>按客人姓名、入住日期或房号搜索以生成预订单（同房号可合并多人）Search by guest name, check-in date or room number to generate the booking sheet (same room number groups multiple guests)</p></div></div>
 </div>
 
 <!-- PAGE: ELEARNING -->
@@ -3500,12 +3502,14 @@ function fBkBookDate(s){
 function renderBooking(){
   const ci=document.getElementById('bk-ci').value
   const nameQ=(document.getElementById('bk-name')?.value||'').trim().toLowerCase()
+  const roomQ=(document.getElementById('bk-room')?.value||'').trim().toLowerCase()
   const out=document.getElementById('booking-out')
   let guests=getAll()
   if(ci)guests=guests.filter(c=>c.checkin===ci)
   if(nameQ)guests=guests.filter(c=>(c.name||'').toLowerCase().includes(nameQ))
+  if(roomQ)guests=guests.filter(c=>(c.roomNum||'').toLowerCase().includes(roomQ))
   if(!guests.length){
-    out.innerHTML='<div class="empty-state"><div class="empty-icon">📄</div><p>未找到客人 — 请更换姓名或入住日期 No guests found — try a different name or check-in date</p></div>'
+    out.innerHTML='<div class="empty-state"><div class="empty-icon">📄</div><p>未找到客人 — 请更换姓名、入住日期或房号 No guests found — try a different name, check-in date or room number</p></div>'
     return
   }
   guests.sort((a,b)=>(a.checkin||'').localeCompare(b.checkin||'')||(a.name||'').localeCompare(b.name||''))
