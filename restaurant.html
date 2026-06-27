@@ -93,19 +93,20 @@ header button:hover{background:rgba(255,255,255,.22)}
   html,body{width:58mm;margin:0;padding:0}
   body *{visibility:hidden}
   .receipt-print, .receipt-print *{visibility:visible}
-  .receipt-print{display:block;position:absolute;left:0;top:0;width:58mm;padding:3mm 5mm;font-family:'Courier New',monospace;color:#000;font-size:11px;box-sizing:border-box}
-  .receipt-print .r-title{text-align:center;font-weight:800;font-size:14px;margin-bottom:2mm}
-  .receipt-print .r-sub{text-align:center;font-size:9px;margin-bottom:2mm}
+  .receipt-print{display:block;position:absolute;left:0;top:0;width:58mm;padding:3mm 5mm;font-family:'Courier New',monospace;color:#000;font-size:15px;box-sizing:border-box}
+  .receipt-print .r-title{text-align:center;font-weight:800;font-size:17px;margin-bottom:2mm}
+  .receipt-print .r-sub{text-align:center;font-size:12px;margin-bottom:2mm}
   .receipt-print hr{border:none;border-top:1px dashed #000;margin:2mm 0}
-  .receipt-print .r-line{margin:1.5mm 0}
+  .receipt-print .r-line{margin:2mm 0}
   .receipt-print .r-line .rl-name{font-weight:700}
-  .receipt-print .r-line .rl-qp{display:flex;justify-content:space-between;margin-top:.5mm}
-  .receipt-print .r-total{display:flex;justify-content:space-between;font-weight:800;font-size:13px;margin-top:2mm}
-  .receipt-print .r-pay{text-align:center;font-weight:800;font-size:11px;margin-top:2mm;border:1px solid #000;padding:1mm}
+  .receipt-print .r-line .rl-en{font-size:.85em;margin-top:.5mm}
+  .receipt-print .r-line .rl-qp{display:flex;justify-content:space-between;margin-top:1mm}
+  .receipt-print .r-total{display:flex;justify-content:space-between;font-weight:800;font-size:18px;margin-top:2mm}
+  .receipt-print .r-pay{text-align:center;font-weight:800;font-size:15px;margin-top:2mm;border:1px solid #000;padding:1.5mm}
   .receipt-print .r-sign{margin-top:8mm;text-align:left}
   .receipt-print .r-sign-line{border-top:1px solid #000;margin-bottom:1mm;width:55%}
-  .receipt-print .r-sign-label{text-align:left;font-size:9px}
-  .receipt-print .r-foot{text-align:center;font-size:10px;margin-top:3mm}
+  .receipt-print .r-sign-label{text-align:left;font-size:12px}
+  .receipt-print .r-foot{text-align:center;font-size:13px;margin-top:3mm}
   body.print-kitchen .receipt-print{display:none!important}
   body:not(.print-kitchen) .kitchen-print{display:none!important}
   .kitchen-print, .kitchen-print *{visibility:visible}
@@ -792,7 +793,9 @@ function buildReceipt(record,now){
     +'<div class="r-sub">'+dateStr+'</div>'
     +'<hr>'
   record.items.forEach(it=>{
-    html+='<div class="r-line"><div class="rl-name">'+esc(it.code)+' '+esc(it.name)+(it.en?' '+esc(it.en):'')+'</div><div class="rl-qp"><span>x'+it.qty+'</span><span>'+fmt(it.sub)+'</span></div></div>'
+    html+='<div class="r-line"><div class="rl-name">'+esc(it.code)+' '+esc(it.name)+'</div>'
+      +(it.en?'<div class="rl-en">'+esc(it.en)+'</div>':'')
+      +'<div class="rl-qp"><span>x'+it.qty+'</span><span>'+fmt(it.sub)+'</span></div></div>'
   })
   html+='<hr><div class="r-total"><span>Total</span><span>'+fmt(record.total)+'</span></div>'
   html+=record.roomCharge
