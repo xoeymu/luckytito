@@ -85,17 +85,22 @@ header button:hover{background:rgba(255,255,255,.22)}
 .receipt-print{display:none}
 .kitchen-print{display:none}
 @media print{
-  @page{size:80mm auto;margin:0}
-  html,body{width:80mm;margin:0;padding:0}
+  /* Printer is a 58mm-roll thermal unit with a 48mm printable area (confirmed from the
+     driver's paper-size options, which only ever list 58(48)) — NOT 80mm. The box width
+     below is set to the full 58mm roll, with 5mm side padding eating into the non-printable
+     margins so the actual content area lands on 48mm, matching the hardware. */
+  @page{size:58mm auto;margin:0}
+  html,body{width:58mm;margin:0;padding:0}
   body *{visibility:hidden}
   .receipt-print, .receipt-print *{visibility:visible}
-  .receipt-print{display:block;position:absolute;left:0;top:0;width:80mm;padding:3mm;font-family:'Courier New',monospace;color:#000;font-size:12px;box-sizing:border-box}
-  .receipt-print .r-title{text-align:center;font-weight:800;font-size:15px;margin-bottom:2mm}
-  .receipt-print .r-sub{text-align:center;font-size:10px;margin-bottom:2mm}
+  .receipt-print{display:block;position:absolute;left:0;top:0;width:58mm;padding:3mm 5mm;font-family:'Courier New',monospace;color:#000;font-size:11px;box-sizing:border-box}
+  .receipt-print .r-title{text-align:center;font-weight:800;font-size:14px;margin-bottom:2mm}
+  .receipt-print .r-sub{text-align:center;font-size:9px;margin-bottom:2mm}
   .receipt-print hr{border:none;border-top:1px dashed #000;margin:2mm 0}
-  .receipt-print .r-line{display:flex;justify-content:space-between;gap:4px;margin:1mm 0}
-  .receipt-print .r-line .rl-name{flex:1}
-  .receipt-print .r-total{display:flex;justify-content:space-between;font-weight:800;font-size:14px;margin-top:2mm}
+  .receipt-print .r-line{margin:1.5mm 0}
+  .receipt-print .r-line .rl-name{font-weight:700}
+  .receipt-print .r-line .rl-qp{display:flex;justify-content:space-between;margin-top:.5mm}
+  .receipt-print .r-total{display:flex;justify-content:space-between;font-weight:800;font-size:13px;margin-top:2mm}
   .receipt-print .r-pay{text-align:center;font-weight:800;font-size:11px;margin-top:2mm;border:1px solid #000;padding:1mm}
   .receipt-print .r-sign{margin-top:8mm;text-align:left}
   .receipt-print .r-sign-line{border-top:1px solid #000;margin-bottom:1mm;width:55%}
@@ -104,12 +109,12 @@ header button:hover{background:rgba(255,255,255,.22)}
   body.print-kitchen .receipt-print{display:none!important}
   body:not(.print-kitchen) .kitchen-print{display:none!important}
   .kitchen-print, .kitchen-print *{visibility:visible}
-  .kitchen-print{display:block;position:absolute;left:0;top:0;width:80mm;padding:3mm;font-family:'Courier New',monospace;color:#000;font-size:12px;box-sizing:border-box}
-  .kitchen-print .k-title{text-align:center;font-weight:800;font-size:16px;margin-bottom:2mm}
-  .kitchen-print .k-sub{text-align:center;font-size:11px;margin-bottom:1mm}
+  .kitchen-print{display:block;position:absolute;left:0;top:0;width:58mm;padding:3mm 5mm;font-family:'Courier New',monospace;color:#000;font-size:22px;box-sizing:border-box}
+  .kitchen-print .k-title{text-align:center;font-weight:800;font-size:32px;margin-bottom:2mm}
+  .kitchen-print .k-sub{text-align:center;font-size:22px;margin-bottom:1mm}
   .kitchen-print hr{border:none;border-top:1px dashed #000;margin:2mm 0}
-  .kitchen-print .k-line{display:flex;gap:5px;margin:1.8mm 0;font-size:14px;font-weight:700}
-  .kitchen-print .kl-code{width:26px;flex-shrink:0}
+  .kitchen-print .k-line{display:flex;gap:5px;margin:1.8mm 0;font-size:28px;font-weight:700}
+  .kitchen-print .kl-code{width:52px;flex-shrink:0}
   .kitchen-print .kl-name{flex:1}
   .kitchen-print .kl-qty{flex-shrink:0}
 }
@@ -264,7 +269,7 @@ header button:hover{background:rgba(255,255,255,.22)}
 const CATS=['主厨推荐 Chef Recommendation','饭面简餐 Rice Bowl / Noodle','自由搭配 All You Want','汤与主食 Soup / Rice','酒水饮料 Drinks & Beverages']
 const MENU=[
 // ---- 主厨推荐 Chef Recommendation ----
-{code:'A1',name:'秘制东星斑烤鱼',en:'Grilled Coral Trout (1.5kg, 3-4人)',price:4500,cat:CATS[0],hot:true},
+{code:'A1',name:'秘制东星斑烤鱼',en:'Grilled Lapulapu (1.5kg 3-4pax)',price:4500,cat:CATS[0],hot:true},
 {code:'A0',name:'麻辣香锅虾',en:'Spicy Fried Shrimp Pot',price:1980,cat:CATS[0],hot:true},
 {code:'A2',name:'肥肠豆腐煲',en:'Pork Intestine Tofu Stew',price:780,cat:CATS[0],hot:true},
 {code:'B1',name:'凉拌香辣牛腱子',en:'Pickle Steamed Beef Shank',price:820,cat:CATS[0],hot:true},
@@ -787,7 +792,7 @@ function buildReceipt(record,now){
     +'<div class="r-sub">'+dateStr+'</div>'
     +'<hr>'
   record.items.forEach(it=>{
-    html+='<div class="r-line"><span class="rl-name">'+esc(it.code)+' '+esc(it.name)+(it.en?' '+esc(it.en):'')+' x'+it.qty+'</span><span>'+fmt(it.sub)+'</span></div>'
+    html+='<div class="r-line"><div class="rl-name">'+esc(it.code)+' '+esc(it.name)+(it.en?' '+esc(it.en):'')+'</div><div class="rl-qp"><span>x'+it.qty+'</span><span>'+fmt(it.sub)+'</span></div></div>'
   })
   html+='<hr><div class="r-total"><span>Total</span><span>'+fmt(record.total)+'</span></div>'
   html+=record.roomCharge
