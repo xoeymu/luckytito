@@ -1321,13 +1321,27 @@ function cloudLoad(){
     }else setNavSync('fail','同步失败 Sync failed')
   })
 }
+// Two cloudSave() calls fired close together (e.g. "Add to Bill" then "Save") are two independent
+// fire-and-forget requests with no ordering guarantee — if the earlier one's request happens to land
+// on the server AFTER the later one, it overwrites the newer data with a stale snapshot and the
+// just-saved change (e.g. a claimed restaurant charge) silently disappears from the cloud copy.
+// Serialize sends so only one is ever in flight, and queue at most one follow-up (which will read the
+// freshest localStorage state when it actually fires) instead of letting bursts race each other.
+let _cloudSaveInFlight=false,_cloudSavePending=false
 function cloudSave(){
-  const url=getSyncUrl();if(!url)return;setNavSync('ing','保存中… Saving…')
+  if(_cloudSaveInFlight){_cloudSavePending=true;return}
+  const url=getSyncUrl();if(!url)return
+  _cloudSaveInFlight=true
+  setNavSync('ing','保存中… Saving…')
   const payload=getCloudData()
   const sentCustomers=payload.filter(c=>c.id!=='__meta__'&&c.id!=='__savelog__'&&c.id!=='__restaurant_charges__')
   fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
-    .then(()=>setTimeout(()=>verifyCloudSave(url,sentCustomers),1200))
-    .catch(()=>setNavSync('fail','保存失败 Save failed'))
+    .then(()=>setTimeout(()=>{verifyCloudSave(url,sentCustomers);_cloudSaveAdvance()},1200))
+    .catch(()=>{setNavSync('fail','保存失败 Save failed');_cloudSaveAdvance()})
+}
+function _cloudSaveAdvance(){
+  _cloudSaveInFlight=false
+  if(_cloudSavePending){_cloudSavePending=false;cloudSave()}
 }
 // no-cors POST gives no real response, so we can't tell from the request alone whether the
 // save actually landed — confirm it by reading the data back and checking it matches what we sent.
@@ -1747,9 +1761,72 @@ function renderRestaurantCharges(){
       +'<div style="color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(c.summary||'')+'</div>'
     +'</div>'
     +'<div style="font-weight:700;color:#ea580c;white-space:nowrap">₱ '+Number(c.total||0).toFixed(2)+'</div>'
+    +'<button class="btn btn-secondary btn-sm" onclick="showRcDetailModal(\''+c.id+'\')">📋 明细 Details</button>'
     +'<button class="btn btn-success btn-sm" onclick="claimRestaurantCharge(\''+c.id+'\')">➕ 加入账单 Add to Bill</button>'
     +'<button class="btn btn-danger btn-sm" onclick="deletePendingRestaurantCharge(\''+c.id+'\')">🗑️ 删除 Delete</button>'
   +'</div>').join('')
+}
+// Detail/preview modal for a pending charge — lets front desk show the guest exactly what's in the
+// order (and optionally generate a shareable image for confirmation) before committing it to the bill.
+function showRcDetailModal(id){
+  const c=getRestaurantCharges().find(x=>x.id===id);if(!c)return
+  const items=(c.summary||'').split('、').filter(Boolean)
+  const modal=document.getElementById('rc-detail-modal');if(!modal)return
+  document.getElementById('rc-detail-modal-inner').innerHTML=
+    '<div style="font-size:15px;font-weight:800;color:#0b3d5e;margin-bottom:10px">🍽 餐厅消费明细 Restaurant Charge Detail</div>'
+    +'<div style="background:#f8fafc;border-radius:10px;padding:14px;font-size:13px;color:#334155;margin-bottom:14px">'
+      +'<div style="font-weight:700;color:#0b3d5e;margin-bottom:4px">'+escHtml(c.table||'餐厅订单')+'</div>'
+      +'<div style="color:#64748b;font-size:12px;margin-bottom:8px">'+escHtml(c.date||'')+'</div>'
+      +'<div style="border-top:1px dashed #cbd5e1;padding-top:8px">'
+        +(items.length?items.map(it=>'<div style="padding:2px 0">'+escHtml(it)+'</div>').join(''):'<div style="color:#94a3b8">（无明细 No item detail）</div>')
+      +'</div>'
+      +'<div style="border-top:1px dashed #cbd5e1;margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;font-weight:800;color:#ea580c">'
+        +'<span>合计 Total</span><span>₱ '+Number(c.total||0).toFixed(2)+'</span>'
+      +'</div>'
+    +'</div>'
+    +'<div id="rc-detail-img-wrap"></div>'
+    +'<button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="generateRcChargeImage(\''+c.id+'\')">🖼️ 生成图片 Generate Image (to send guest)</button>'
+    +'<button class="btn btn-success" style="width:100%;margin-bottom:8px" onclick="claimRestaurantCharge(\''+c.id+'\');closeRcDetailModal()">➕ 客人已确认，加入账单 Confirmed — Add to Bill</button>'
+    +'<button class="btn btn-ghost btn-sm" style="width:100%" onclick="closeRcDetailModal()">取消 Cancel</button>'
+  modal.style.display='flex'
+}
+function closeRcDetailModal(){const m=document.getElementById('rc-detail-modal');if(m)m.style.display='none'}
+// Draws a simple, legible confirmation card onto a canvas (no external library / no internet needed)
+// so front desk can save or share it as a PNG to the guest's phone for confirmation before the charge
+// is added to their bill.
+function generateRcChargeImage(id){
+  const c=getRestaurantCharges().find(x=>x.id===id);if(!c)return
+  const items=(c.summary||'').split('、').filter(Boolean)
+  const FONT='"Microsoft YaHei","PingFang SC",sans-serif'
+  const W=600,lineH=30
+  const H=150+Math.max(items.length,1)*lineH+70
+  const canvas=document.createElement('canvas')
+  canvas.width=W*2;canvas.height=H*2
+  const ctx=canvas.getContext('2d');ctx.scale(2,2)
+  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H)
+  ctx.textBaseline='top'
+  ctx.fillStyle='#0b3d5e';ctx.font='bold 22px '+FONT
+  ctx.fillText('Lucky Tito Dive Resort',24,20)
+  ctx.fillStyle='#64748b';ctx.font='13px '+FONT
+  ctx.fillText('餐厅消费确认单 Restaurant Charge Confirmation',24,50)
+  ctx.strokeStyle='#cbd5e1';ctx.beginPath();ctx.moveTo(24,78);ctx.lineTo(W-24,78);ctx.stroke()
+  ctx.fillStyle='#0b3d5e';ctx.font='bold 16px '+FONT
+  ctx.fillText(c.table||'餐厅订单',24,92)
+  ctx.fillStyle='#64748b';ctx.font='13px '+FONT
+  ctx.fillText(c.date||'',24,116)
+  let y=150
+  ctx.fillStyle='#334155';ctx.font='14px '+FONT
+  if(items.length)items.forEach(it=>{ctx.fillText(it,24,y);y+=lineH})
+  else{ctx.fillText('（无明细 No item detail）',24,y);y+=lineH}
+  ctx.strokeStyle='#cbd5e1';ctx.beginPath();ctx.moveTo(24,y+8);ctx.lineTo(W-24,y+8);ctx.stroke()
+  y+=32
+  ctx.fillStyle='#ea580c';ctx.font='bold 20px '+FONT
+  ctx.fillText('合计 Total：₱ '+Number(c.total||0).toFixed(2),24,y)
+  const dataUrl=canvas.toDataURL('image/png')
+  const wrap=document.getElementById('rc-detail-img-wrap');if(!wrap)return
+  wrap.innerHTML='<img src="'+dataUrl+'" style="width:100%;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px">'
+    +'<a href="'+dataUrl+'" download="restaurant-charge-'+(c.id||'')+'.png" class="btn btn-secondary btn-sm" style="width:100%;display:block;text-align:center;text-decoration:none;box-sizing:border-box;margin-bottom:8px">📥 保存图片 Save Image</a>'
+    +'<div style="font-size:11px;color:#94a3b8;text-align:center">长按图片或点击保存后发给客人确认 Long-press the image or save it, then send to the guest to confirm</div>'
 }
 function deletePendingRestaurantCharge(id){
   if(!confirm('永久删除这笔餐厅消费？此操作不可恢复，仅用于撤销餐厅误操作生成的错误账单。\nPermanently delete this restaurant charge? This cannot be undone — use only to correct a mistaken order from the restaurant.'))return
@@ -1826,7 +1903,8 @@ function renderClaimedRestaurantCharges(){
     +_claimedRestaurantCharges.map((c,idx)=>'<div style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:12px">'
       +'<div style="flex:1;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(c.date||'')+' · '+escHtml(c.table||'餐厅订单')+'</div>'
       +'<div style="font-weight:700;color:#ea580c;white-space:nowrap">₱ '+Number(c.total).toFixed(2)+'</div>'
-      +'<button class="btn btn-danger btn-sm" onclick="unclaimRestaurantCharge('+idx+')">✕</button>'
+      +'<span style="background:#dcfce7;color:#16a34a;font-weight:700;font-size:11px;padding:3px 8px;border-radius:10px;white-space:nowrap">✓ 已加入 Added</span>'
+      +'<button class="btn btn-danger btn-sm" onclick="unclaimRestaurantCharge('+idx+')" title="客人有疑议时删除 Remove if guest disputes">🗑️ 删除 Delete</button>'
     +'</div>').join('')
     +'<div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap">'
       +'<select id="f-restaurant-disc" onchange="setRestaurantDiscount(this.value)" style="flex:1;min-width:160px;padding:6px 8px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:12px">'
@@ -4970,6 +5048,13 @@ setInterval(()=>{if(getSyncUrl())cloudSave()},5*60*1000)
 <div id="rr-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px">
   <div style="background:white;border-radius:16px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
     <div id="rr-modal-inner"></div>
+  </div>
+</div>
+
+<!-- RESTAURANT CHARGE DETAIL/CONFIRMATION MODAL -->
+<div id="rc-detail-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeRcDetailModal()">
+  <div style="background:white;border-radius:16px;padding:24px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto">
+    <div id="rc-detail-modal-inner"></div>
   </div>
 </div>
 
