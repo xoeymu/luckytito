@@ -547,6 +547,49 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
       <input type="hidden" id="f-rdisc-custom">
       <input type="hidden" id="f-upgrade-rate">
       <div id="room-disc-custom-wrap" style="display:none"></div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #e2e8f0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:12px;font-weight:700;color:#475569">🔁 换房记录 Room Changes <span style="font-weight:400;color:#94a3b8">(中途换房/不同房型分段 mid-stay room changes)</span></span>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="openAddRoomStay()">➕ 添加换房 Add Room Change</button>
+        </div>
+        <div id="room-stays-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROOM CHANGE / ADD ROOM STAY MODAL -->
+  <div id="room-stay-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeRoomStayModal()">
+    <div style="background:white;border-radius:16px;padding:24px;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto">
+      <div style="font-weight:800;color:#0b3d5e;font-size:15px;margin-bottom:14px">🔁 添加换房记录 Add Room Change</div>
+      <div class="g2">
+        <div class="fg"><label>入住日期 Check-in</label><input type="date" id="rs-ci"></div>
+        <div class="fg"><label>退房日期 Check-out</label><input type="date" id="rs-co"></div>
+      </div>
+      <div class="fg" style="margin-top:8px"><label>房型 Room Type</label>
+        <select id="rs-rtype" onchange="rsRoomTypeChange()">
+          <option value="">请选择 Select</option>
+          <option value="Single Bed Room 单大床房" data-rate="375">单大床房 Single — ¥375/晚</option>
+          <option value="Twin Bed Room 双床房" data-rate="420">双床房 Twin — ¥420/晚</option>
+          <option value="Family Room A 双床房A" data-rate="420">双床房A Family A — ¥420/晚</option>
+          <option value="Family Room B 双床房B" data-rate="450">双床房B Family B — ¥450/晚</option>
+          <option value="Student Dorm 学员宿舍" data-rate="125">学员宿舍 Student Dorm — ¥125/晚</option>
+        </select>
+      </div>
+      <div class="g2" style="margin-top:8px">
+        <div class="fg"><label>房间号 Room No.</label><input type="text" id="rs-rnum" placeholder="302"></div>
+        <div class="fg"><label>房价 Rate (¥/晚)</label><input type="number" id="rs-rrate" placeholder="420"></div>
+      </div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:12px;color:#0369a1;font-weight:600">🎁 免费升级 Free Upgrade:</span>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="rsSetFreeUpgrade(420)">¥420/晚</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="rsSetFreeUpgrade(375)">¥375/晚</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="rsClearFreeUpgrade()">✕ 取消</button>
+        <span id="rs-upgrade-label" style="font-size:12px;color:#0284c7;font-weight:600;display:none"></span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:18px">
+        <button type="button" class="btn btn-success" style="flex:1" onclick="saveRoomStay()">💾 保存 Save</button>
+        <button type="button" class="btn btn-secondary" style="flex:1" onclick="closeRoomStayModal()">取消 Cancel</button>
+      </div>
     </div>
   </div>
 
@@ -744,6 +787,12 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
         <span style="background:#e9d5ff;color:#6b21a8;font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px">Other 其他课程</span>
         <span style="background:#f1f5f9;color:#475569;font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px">Stay 住店</span>
       </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 16px;border-bottom:1px solid #f1f5f9">
+      <button class="btn btn-ghost btn-sm" onclick="shiftSemiCal(-15)">← 上一段 Prev</button>
+      <button class="btn btn-secondary btn-sm" onclick="resetSemiCal()">今天 Today</button>
+      <button class="btn btn-ghost btn-sm" onclick="shiftSemiCal(15)">下一段 Next →</button>
+      <span id="semi-cal-range" style="font-size:12px;color:#64748b;font-weight:600;margin-left:4px"></span>
     </div>
     <div id="semi-cal"></div>
   </div>
@@ -1491,6 +1540,58 @@ function cancelFreeUpgrade(){
   }
   updateRoomFeePreview()
 }
+// ====== ROOM CHANGE SEGMENTS (mid-stay room moves, incl. free upgrade) ======
+let _rsUpgradeRate=''
+function openAddRoomStay(){
+  sv('rs-ci',v('f-co')||v('f-ci')||'');sv('rs-co','');sv('rs-rtype','');sv('rs-rnum','');sv('rs-rrate','')
+  _rsUpgradeRate=''
+  document.getElementById('rs-upgrade-label').style.display='none'
+  document.getElementById('room-stay-modal').style.display='flex'
+}
+function closeRoomStayModal(){document.getElementById('room-stay-modal').style.display='none'}
+function rsRoomTypeChange(){
+  if(_rsUpgradeRate)return
+  const sel=document.getElementById('rs-rtype');const opt=sel.options[sel.selectedIndex]
+  if(opt&&opt.dataset.rate)sv('rs-rrate',opt.dataset.rate)
+}
+function rsSetFreeUpgrade(rate){
+  _rsUpgradeRate=rate
+  sv('rs-rrate',rate)
+  const lbl=document.getElementById('rs-upgrade-label')
+  lbl.textContent='✓ ¥'+rate+'/晚 已应用 Applied'
+  lbl.style.display='inline'
+}
+function rsClearFreeUpgrade(){
+  _rsUpgradeRate=''
+  document.getElementById('rs-upgrade-label').style.display='none'
+}
+function saveRoomStay(){
+  const ci=v('rs-ci'),co=v('rs-co'),rtype=v('rs-rtype'),rnum=v('rs-rnum').trim(),rrate=v('rs-rrate')
+  if(!ci||!co){alert('请填写入住/退房日期 Please fill in check-in/check-out dates');return}
+  if(new Date(co)<=new Date(ci)){alert('退房日期需晚于入住日期 Check-out must be after check-in');return}
+  if(!rrate){alert('请填写房价 Please fill in room rate');return}
+  _roomStays.push({
+    checkin:ci,checkout:co,roomType:rtype,roomNum:rnum,roomRate:rrate,
+    freeUpgrade:_rsUpgradeRate?('免费升级 Free Upgrade ¥'+_rsUpgradeRate+'/晚'):''
+  })
+  _roomStays.sort((a,b)=>(a.checkin||'').localeCompare(b.checkin||''))
+  renderRoomStays()
+  closeRoomStayModal()
+}
+function removeRoomStay(idx){
+  if(!confirm('删除此换房记录？Delete this room change record?'))return
+  _roomStays.splice(idx,1)
+  renderRoomStays()
+}
+function renderRoomStays(){
+  const el=document.getElementById('room-stays-list');if(!el)return
+  if(!_roomStays.length){el.innerHTML='<div style="font-size:12px;color:#cbd5e1;padding:2px 0">暂无换房记录 No room changes</div>';return}
+  el.innerHTML=_roomStays.map((rs,idx)=>'<div style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:12px;border-bottom:1px solid #f1f5f9">'
+    +'<div style="flex:1;color:#334155">'+fdate(rs.checkin)+' → '+fdate(rs.checkout)+' · '+escHtml(rs.roomType||'—')+' · 房号 '+escHtml(rs.roomNum||'—')+' · ¥'+rs.roomRate+'/晚'
+    +(rs.freeUpgrade?' <span style="color:#0284c7;font-weight:600">🎁 Free Upgrade</span>':'')+'</div>'
+    +'<button type="button" class="btn btn-danger btn-sm" onclick="removeRoomStay('+idx+')">🗑️ 删除 Delete</button>'
+  +'</div>').join('')
+}
 function onCheckinChange(){
   updateCustNo()
   const ci=v('f-ci'),co=v('f-co');if(!ci||!co){updateRoomFeePreview();updateSub();return}
@@ -1715,6 +1816,11 @@ function updateRoomFeePreview(){
 
 // ====== ITEMS ======
 let rowIds=[],_formRoomFee=0,_holFdQty=0,_claimedRestaurantCharges=[],_restaurantDiscount='',_restaurantRmb=false,_restaurantRate=null,_courseInfo={}
+// Additional room-change segments for the currently-open guest (e.g. moved rooms mid-stay, free
+// upgrade applied partway through). The ORIGINAL stay stays in the flat f-ci/f-co/f-rtype/f-rnum/f-rrate
+// fields (so the Rooms-tab drag/drop grid, occupancy checks and search-by-room keep working unchanged);
+// these are purely additive extra segments, each: {checkin,checkout,roomType,roomNum,roomRate,freeUpgrade}.
+let _roomStays=[]
 function updateFormTotal(){
   let iT=0
   document.querySelectorAll('#items-body tr').forEach(tr=>{
@@ -1935,6 +2041,15 @@ function fdRoomStatus(){
   const tempC={id:v('f-id')||'__preview__',roomNum:rnum,checkin:ci,checkout:co}
   return getSharedNights(tempC).size>0?'shared':'solo'
 }
+// Same as fdRoomStatus() but operates on a stored guest record instead of the live form — used when
+// pricing dive items added programmatically (e.g. dive-log sync) for a guest who may not be the one
+// currently open in the edit form. A room number present (and not "WI"/walk-in) means in-house guest.
+function fdRoomStatusForRecord(c){
+  const rnum=(c.roomNum||'').trim()
+  if(!rnum||/^wi$/i.test(rnum))return'walkin'
+  if(!c.checkin||!c.checkout)return'solo'
+  return getSharedNights(c).size>0?'shared':'solo'
+}
 function autoFdTier(tr){
   const nameIn=tr.querySelector('input[type=text]')
   const priceIn=tr.querySelectorAll('input[type=number]')[0]
@@ -2000,6 +2115,7 @@ function collect(){
     ...courseSummary(mergeCourseInfoIntoItems(getItems())),classmates:getClassmates(),
     items:mergeCourseInfoIntoItems(getItems()),deposit:v('f-deposit'),actualReceived:v('f-actual-received').trim(),actualCurrency:v('f-actual-currency')||'CNY',holFdQty:(document.getElementById('f-hol-fd-qty')?parseInt(v('f-hol-fd-qty'))||0:_holFdQty)||0,notes:v('f-note').trim(),
     restaurantCharges:_claimedRestaurantCharges,restaurantDiscount:_restaurantDiscount,restaurantRmb:_restaurantRmb,restaurantRate:_restaurantRate,
+    roomStays:_roomStays,
     savedAt:new Date().toISOString(),lastMod:Date.now()}
 }
 // Derives the legacy top-level instructor/courseStart/courseEnd/multiStudentDisc fields from the
@@ -2055,7 +2171,8 @@ function fillForm(c){
   sv('f-deposit',c.deposit);sv('f-actual-received',c.actualReceived||'');sv('f-actual-currency',c.actualCurrency||'CNY');sv('f-note',c.notes)
   _holFdQty=c.holFdQty||0
   _claimedRestaurantCharges=c.restaurantCharges||[];_restaurantDiscount=c.restaurantDiscount||'';_restaurantRmb=!!c.restaurantRmb;_restaurantRate=c.restaurantRate||null
-  updateSub();updateCustNo();onCheckinChange();updateFormMode();renderClaimedRestaurantCharges()
+  _roomStays=c.roomStays||[]
+  updateSub();updateCustNo();onCheckinChange();updateFormMode();renderClaimedRestaurantCharges();renderRoomStays()
 }
 function updateFormMode(){
   const icon=document.getElementById('form-mode-icon')
@@ -2100,6 +2217,7 @@ function _clearForm(){
   setOwnGear([]);_courseInfo={};loadItems([])
   setClassmates([])
   _claimedRestaurantCharges=[];_restaurantDiscount='';_restaurantRmb=false;_restaurantRate=null;renderClaimedRestaurantCharges()
+  _roomStays=[];renderRoomStays()
   document.getElementById('custno-display').textContent='————'
   updateFormMode()
 }
@@ -2828,8 +2946,19 @@ function singleCourseType(name){
   if(n.includes('PADI')||n.includes('AIDA')||n.includes('SSI')||n.includes('EFR'))return'COURSE'
   return'STAY'
 }
+// Independent base date for the 15-Day In-House Overview, separate from the Schedule page's
+// sch-date control (which also drives the daily Schedule and Instructor Timetable views).
+// null = follow sch-date/today by default; set once the user clicks the Prev/Next nav buttons.
+let _semiCalBase=null
+function shiftSemiCal(days){
+  const cur=_semiCalBase||(document.getElementById('sch-date')?.value)||new Date().toISOString().split('T')[0]
+  const b=new Date(cur+'T12:00:00');b.setDate(b.getDate()+days)
+  _semiCalBase=b.toISOString().split('T')[0]
+  renderSemiCal()
+}
+function resetSemiCal(){_semiCalBase=null;renderSemiCal()}
 function renderSemiCal(){
-  const base=(document.getElementById('sch-date')?.value)||new Date().toISOString().split('T')[0]
+  const base=_semiCalBase||(document.getElementById('sch-date')?.value)||new Date().toISOString().split('T')[0]
   const el=document.getElementById('semi-cal');if(!el)return
   const all=getAll()
   const today=new Date().toISOString().split('T')[0]
@@ -2841,6 +2970,8 @@ function renderSemiCal(){
     const hol=isHolidayDate(ds),isT=ds===today
     days.push({ds,dow,hol,isT})
   }
+  const rangeEl=document.getElementById('semi-cal-range')
+  if(rangeEl)rangeEl.textContent=fdate(days[0].ds)+' – '+fdate(days[days.length-1].ds)
   // Collect unique guests visible in this 15-day window (Gantt rows)
   const guestMap={}
   all.forEach(c=>{
@@ -3256,6 +3387,18 @@ function showBillModal(custId){
 function closeBillModal(){document.getElementById('bill-modal').style.display='none';const p=document.getElementById('dive-sync-panel');if(p)p.innerHTML=''}
 // Cross-checks the dive log (separate module, tracked by participant id) against this guest's
 // billed dive items, and offers to append any missing dives as a new line item on the bill.
+// Surcharge/add-on line items (Night Dive Surcharge, DM Surcharge, etc.) contain "潜"/"dive" in
+// their names too, but each row doesn't represent a standalone dive — it's a fee on top of a dive
+// that's already counted elsewhere. Excluding them keeps the dive-count gap check from being thrown
+// off by them (previously a 夜潜附加费 row inflated billedQty as if it were an extra logged dive).
+function isDiveCountItem(name){return /dive|潜/i.test(name||'')&&!/附加费|surcharge/i.test(name||'')}
+// Night dives are billed either via the dedicated "Regular Night Dive 平日夜潜" item (price already
+// includes the night premium) or via the base dive item + a separate "夜潜附加费 Night Dive Surcharge"
+// line. Either way counts as "this night dive's surcharge has been billed".
+function getBilledNightSurchargeQty(c){
+  return(c.items||[]).filter(i=>{const n=(i.name||'').trim();return n==='夜潜附加费 Night Dive Surcharge'||n==='Regular Night Dive 平日夜潜'})
+    .reduce((s,i)=>s+(parseFloat(i.qty)||0),0)
+}
 function showDiveSync(){
   const panel=document.getElementById('dive-sync-panel');if(!panel)return
   if(panel.innerHTML.trim()){panel.innerHTML='';return}
@@ -3263,26 +3406,69 @@ function showDiveSync(){
   if(!id){panel.innerHTML='<div style="margin:0 18px 14px;padding:10px 14px;background:#fef3c7;border-radius:10px;font-size:13px;color:#92400e">请先选择客户 Select a guest first</div>';return}
   const c=getAll().find(x=>x.id===id);if(!c)return
   const total=getDiveCount(id),night=getNightDiveCount(id),day=total-night
-  const billedQty=(c.items||[]).filter(i=>/dive|潜/i.test(i.name||'')).reduce((s,i)=>s+(parseFloat(i.qty)||0),0)+(parseInt(c.holFdQty)||0)
+  const billedQty=(c.items||[]).filter(i=>isDiveCountItem(i.name)).reduce((s,i)=>s+(parseFloat(i.qty)||0),0)+(parseInt(c.holFdQty)||0)
   const gap=total-billedQty
   let statusHtml
   if(gap>0)statusHtml='<div style="margin-top:8px;color:#b45309;font-weight:700">⚠️ 还差 '+gap+' 次未计入账单 Missing from bill</div>'
     +'<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="applyDiveSyncGap(\''+id+'\','+gap+')">+ 补充 '+gap+' 次 Fun Dive 到账单</button>'
   else if(gap<0)statusHtml='<div style="margin-top:8px;color:#dc2626;font-weight:700">⚠️ 账单内潜水次数比日志多 '+(-gap)+' 次，请人工核对 Bill has more dives than the log — please check manually</div>'
   else statusHtml='<div style="margin-top:8px;color:#16a34a;font-weight:700">✅ 与日志记录一致 Matches the dive log</div>'
+  // Separate check: the night-dive premium itself. A guest's dive *count* can already match the log
+  // (gap===0 above) while still missing the ¥60/dive night surcharge entirely, since the in-house FD
+  // tiers have no night-priced variant — staff have to add the surcharge as its own line.
+  const billedNightQty=getBilledNightSurchargeQty(c)
+  const nightGap=night-billedNightQty
+  let nightHtml=''
+  if(night>0){
+    if(nightGap>0)nightHtml='<div style="margin-top:8px;color:#b45309;font-weight:700">🌙 还差 '+nightGap+' 次夜潜附加费未计入账单 Night dive surcharge missing for '+nightGap+' dive(s)</div>'
+      +'<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="applyNightSurchargeGap(\''+id+'\','+nightGap+')">+ 补充 '+nightGap+' 次夜潜附加费 Add Night Surcharge</button>'
+    else nightHtml='<div style="margin-top:8px;color:#16a34a;font-weight:700">✅ 夜潜附加费已计入 Night dive surcharge included</div>'
+  }
   panel.innerHTML='<div style="margin:0 18px 14px;padding:12px 14px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;font-size:13px;color:#0b3d5e">'
     +'<div style="font-weight:700;margin-bottom:4px">🤿 潜水日志 Dive Log</div>'
     +'<div>日志记录潜水 '+total+' 次（日潜 '+day+' · 夜潜 '+night+'）</div>'
     +'<div>账单已含潜水类项目共 '+billedQty+' 次</div>'
     +statusHtml
+    +nightHtml
     +'</div>'
 }
 function applyDiveSyncGap(id,gap){
   if(gap<=0)return
   const all=getAll();const i=all.findIndex(c=>c.id===id);if(i<0)return
-  const items=all[i].items||[]
-  items.push({name:'Regular Fun Dive 平日欢乐潜',price:175,qty:gap})
-  all[i].items=items;all[i].lastMod=Date.now()
+  const c=all[i]
+  const items=c.items||[]
+  // In-house guests (have a room number, not walk-in) get the discounted "FD 住店" rate instead of
+  // the walk-in rate, same tiering rule used for manually-added FD rows (autoFdTier): >=8 total logged
+  // dives moves to the lower "8潜以上" tier, and a shared room gets the lower "双人+" tier.
+  const status=fdRoomStatusForRecord(c)
+  let name,price
+  if(status==='walkin'){
+    name=FD_WALKIN_NAME;price=FD_WALKIN_PRICE
+  }else{
+    const t=status==='shared'?FD_TIERS[1]:FD_TIERS[0]
+    const totalDives=getDiveCount(id)+(parseInt(c.holFdQty)||0)
+    const useHigh=totalDives>=8
+    name=useHigh?t.high:t.low;price=useHigh?t.highP:t.lowP
+  }
+  items.push({name,price,qty:gap})
+  c.items=items;c.lastMod=Date.now()
+  saveAll(all);cloudSave()
+  renderBill(id)
+  document.getElementById('dive-sync-panel').innerHTML=''
+  showDiveSync()
+}
+// Adds (or tops up) the ¥60/dive night surcharge line. Kept separate from applyDiveSyncGap because
+// a guest's FD count can already match the dive log while the night premium is still missing —
+// no in-house FD tier bakes in the night price, so this charge always has to be added as its own row.
+function applyNightSurchargeGap(id,gap){
+  if(gap<=0)return
+  const all=getAll();const i=all.findIndex(c=>c.id===id);if(i<0)return
+  const c=all[i]
+  const items=c.items||[]
+  const ex=items.find(it=>(it.name||'').trim()==='夜潜附加费 Night Dive Surcharge')
+  if(ex)ex.qty=(parseFloat(ex.qty)||0)+gap
+  else items.push({name:'夜潜附加费 Night Dive Surcharge',price:60,qty:gap})
+  c.items=items;c.lastMod=Date.now()
   saveAll(all);cloudSave()
   renderBill(id)
   document.getElementById('dive-sync-panel').innerHTML=''
@@ -3365,14 +3551,23 @@ function calcTotal(c){
   const holFd=(parseInt(c.holFdQty)||0)*195
   return items+holFd+(parseFloat(c.arrCarFee)||0)+(parseFloat(c.depCarFee)||0)+calcRoomSubtotal(c)-(parseFloat(c.discount)||0)+calcRestaurantCNY(c)
 }
+// Sums the primary stay plus any additional room-change segments (c.roomStays). Each segment is
+// priced with the same per-night holiday/shared-room rules as the primary stay, reusing the guest's
+// roomDiscount/roomDiscountCustom (room-change segments don't carry their own discount — the
+// discount is a guest-level attribute, e.g. tied to having a student course).
 function calcRoomSubtotal(c){
-  if(!c.checkin||!c.checkout||!c.roomRate)return 0
-  const rate=parseFloat(c.roomRate)
   const hols=new Set(getHolidays())
-  const isDormRoom=(c.roomType||'').includes('学员宿舍')
-  const shared=isDormRoom?new Set():getSharedNights(c)
-  const f=isDormRoom?1:roomDiscountFactor(c.roomDiscount,c.roomDiscountCustom)
-  return computeRoomNights(c.checkin,c.checkout,rate,shared,hols,f).total
+  const segs=[]
+  if(c.checkin&&c.checkout&&c.roomRate)segs.push({checkin:c.checkin,checkout:c.checkout,roomType:c.roomType,roomRate:c.roomRate,roomNum:c.roomNum})
+  ;(c.roomStays||[]).forEach(rs=>{if(rs.checkin&&rs.checkout&&rs.roomRate)segs.push(rs)})
+  return segs.reduce((sum,seg)=>{
+    const rate=parseFloat(seg.roomRate)
+    const isDormRoom=(seg.roomType||'').includes('学员宿舍')
+    const tempC={id:c.id,roomNum:seg.roomNum,checkin:seg.checkin,checkout:seg.checkout}
+    const shared=isDormRoom?new Set():getSharedNights(tempC)
+    const f=isDormRoom?1:roomDiscountFactor(c.roomDiscount,c.roomDiscountCustom)
+    return sum+computeRoomNights(seg.checkin,seg.checkout,rate,shared,hols,f).total
+  },0)
 }
 function fillBillSel(){
   const s=document.getElementById('bill-sel')
@@ -3403,7 +3598,7 @@ function renderBill(overrideCustId){
   const balance=tot-dep
   const bc2={已付全款:'bp',已付定金:'bd',未付:'bu'}
   const payLblMap={'已付全款':'已付全款 Paid','已付定金':'已付定金 Deposit Paid','未付':'未付 Unpaid'}
-  const hasR=c.checkin||c.checkout||c.roomType||c.roomNum
+  const hasR=c.checkin||c.checkout||c.roomType||c.roomNum||(c.roomStays&&c.roomStays.length)
   const nights=c.checkin&&c.checkout?Math.round((new Date(c.checkout)-new Date(c.checkin))/(1000*3600*24)):0
   const{holNights:rHol,normNights:rNorm}=(c.checkin&&c.checkout?getRoomNightBreakdown(c.checkin,c.checkout):{holNights:0,normNights:0})
   let discNote=''
@@ -3416,31 +3611,45 @@ function renderBill(overrideCustId){
     else if(rHol>0&&rNorm===0)discNote='<div style="font-size:12px;color:#92400e;margin-top:5px;font-weight:600">All nights are public holidays · 全部节假日 — no discount applied 不享折扣</div>'
     else if(f<1&&saved>0){const lb={'9折':'10% off 九折','85折':'15% off 八五折','8折':'20% off 八折','custom':'custom disc 自定义折扣'}[d]||d;discNote='<div style="font-size:12px;color:#059669;margin-top:5px;font-weight:600">'+lb+' — saved 省 ¥'+saved.toFixed(2)+'</div>'}
   }
-  // Build room fee rows (split by holiday/non-holiday and solo/shared)
-  let roomRows=''
-  if(c.roomRate&&c.checkin&&c.checkout){
-    const rt=((c.roomType||'客房').match(/^[A-Za-z0-9 ]+/)||[''])[0].trim()||(c.roomType||'客房')
-    const rate=parseFloat(c.roomRate)
-    const isDormBill=(c.roomType||'').includes('学员宿舍')
-    const rd=isDormBill?'':c.roomDiscount
-    const rf=isDormBill?1:roomDiscountFactor(rd,c.roomDiscountCustom)
+  // Build room fee rows (split by holiday/non-holiday and solo/shared). Factored into a helper so
+  // it can be reused both for the primary stay and for any additional room-change segments below —
+  // each segment is billed with the same per-night rules, just against its own dates/rate/room.
+  const buildRoomFeeRows=(labelPrefix,ci,co,rate,roomType,discCode,discCustom,sharedSet)=>{
+    const rt=labelPrefix||((roomType||'客房').match(/^[A-Za-z0-9 ]+/)||[''])[0].trim()||(roomType||'客房')
+    const isDormBill=(roomType||'').includes('学员宿舍')
+    const rd=isDormBill?'':discCode
+    const rf=isDormBill?1:roomDiscountFactor(rd,discCustom)
     const discLbl=rd==='9折'?'10% disc':rd==='85折'?'15% disc':rd==='8折'?'20% disc':rd==='custom'?'custom disc':''
     const hols=new Set(getHolidays())
-    const sharedSet=isDormBill?new Set():getSharedNights(c)
-    const{holSolo,holShare,normSolo,normShare}=computeRoomNights(c.checkin,c.checkout,rate,sharedSet,hols,rf)
+    const shared=isDormBill?new Set():sharedSet
+    const{holSolo,holShare,normSolo,normShare}=computeRoomNights(ci,co,rate,shared,hols,rf)
     const mkRow=(lbl,up,qty,sub)=>{const nm=rt+(lbl?' ('+lbl+')':'');return'<tr><td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+nm+'">'+nm+'</td><td>'+up+'</td><td>'+qty+'</td><td>¥ '+sub+'</td></tr>'}
     const nts=n=>n+' nt'+(n>1?'s':'')
-    if(holSolo>0)roomRows+=mkRow('Holiday · 节假日 (full rate 原价)',('¥'+rate+'/nt'),nts(holSolo),(holSolo*rate).toFixed(2))
-    if(holShare>0)roomRows+=mkRow('Holiday · 节假日 (shared 拼房 50%)','¥'+rate+'/nt × 50%',nts(holShare),(holShare*rate*0.5).toFixed(2))
+    let rows=''
+    if(holSolo>0)rows+=mkRow('Holiday · 节假日 (full rate 原价)',('¥'+rate+'/nt'),nts(holSolo),(holSolo*rate).toFixed(2))
+    if(holShare>0)rows+=mkRow('Holiday · 节假日 (shared 拼房 50%)','¥'+rate+'/nt × 50%',nts(holShare),(holShare*rate*0.5).toFixed(2))
     if(normSolo>0){
       const pl=rf<1?'¥'+rate+'/nt × '+discLbl:'¥'+rate+'/nt'
-      roomRows+=mkRow((discLbl?discLbl+' · 折扣':''),pl,nts(normSolo),(normSolo*rate*rf).toFixed(2))
+      rows+=mkRow((discLbl?discLbl+' · 折扣':''),pl,nts(normSolo),(normSolo*rate*rf).toFixed(2))
     }
     if(normShare>0){
       const pl=rf<1?'¥'+rate+'/nt × '+discLbl+' × 50%':'¥'+rate+'/nt × 50%'
-      roomRows+=mkRow((discLbl?discLbl+' · ':'')+'shared 拼房 50%',pl,nts(normShare),(normShare*rate*rf*0.5).toFixed(2))
+      rows+=mkRow((discLbl?discLbl+' · ':'')+'shared 拼房 50%',pl,nts(normShare),(normShare*rate*rf*0.5).toFixed(2))
     }
+    return rows
   }
+  let roomRows=''
+  if(c.roomRate&&c.checkin&&c.checkout){
+    roomRows+=buildRoomFeeRows(null,c.checkin,c.checkout,parseFloat(c.roomRate),c.roomType,c.roomDiscount,c.roomDiscountCustom,getSharedNights(c))
+  }
+  // Additional room-change segments (mid-stay room moves) — each billed the same way, itemized
+  // under its own "换房 Room Change N" label so the bill shows exactly which room each charge is for.
+  const roomStaySegs=(c.roomStays||[]).filter(rs=>rs.checkin&&rs.checkout&&rs.roomRate)
+  roomStaySegs.forEach((rs,idx)=>{
+    const lbl=((rs.roomType||'客房').match(/^[A-Za-z0-9 ]+/)||[''])[0].trim()||(rs.roomType||'客房')
+    const tempC={id:c.id,roomNum:rs.roomNum,checkin:rs.checkin,checkout:rs.checkout}
+    roomRows+=buildRoomFeeRows('换房'+(idx+2)+' Room Change · '+lbl,rs.checkin,rs.checkout,parseFloat(rs.roomRate),rs.roomType,c.roomDiscount,c.roomDiscountCustom,getSharedNights(tempC))
+  })
   const nightDisp=nights>0?' ('+nights+' night'+(nights>1?'s':'')+')':''
   let restSection=''
   if(rCharges.length){
@@ -3461,7 +3670,6 @@ function renderBill(overrideCustId){
         }).join('')
         +'</tbody></table>'
         +(rDiscLbl?'<div style="font-size:12px;color:#059669;margin-top:6px;font-weight:600">'+rDiscLbl+'</div>':'')
-        +'<div style="font-size:11px;color:#64748b;margin-top:4px">汇率 Exchange Rate: 1 CNY = ₱'+rRate+' PHP · 已计入下方总额 Included in total below</div>'
         +'</div>'
     }else{
       restSection='<div class="bs"><div class="bst">餐厅消费 Restaurant Charges · 另计 PHP (Settled Separately)</div>'
@@ -3475,6 +3683,15 @@ function renderBill(overrideCustId){
     }
   }
   const restSectionOut=(rIsRmb&&restSection)?restSection.replace(/\u00a5/g,'\u00a7YEN\u00a7'):restSection
+  // Itemized summary blocks for each room-change segment, shown under the main Accommodation block
+  const roomStayBlocks=roomStaySegs.map((rs,idx)=>{
+    const segNights=Math.round((new Date(rs.checkout)-new Date(rs.checkin))/(1000*3600*24))
+    const segDisp=segNights>0?' ('+segNights+' night'+(segNights>1?'s':'')+')':''
+    return'<div class="big" style="margin-top:6px;padding-top:6px;border-top:1px dashed #e2e8f0">'
+      +'<div style="font-size:11px;font-weight:700;color:#0284c7;margin-bottom:2px">\ud83d\udd01 \u6362\u623f Room Change '+(idx+1)+(rs.freeUpgrade?' \u00b7 \ud83c\udf81 Free Upgrade':'')+'</div>'
+      +brow('\u5165\u4f4f Check-in',fdate(rs.checkin))+brow('\u9000\u623f Check-out',fdate(rs.checkout)+segDisp)+brow('\u623f\u578b Room Type',rs.roomType)+brow('\u623f\u95f4\u53f7 Room No.',rs.roomNum)
+      +'</div>'
+  }).join('')
   document.getElementById('bill-out').innerHTML=
 '<div class="bw"><div class="bh">'+
 '<div style="display:flex;align-items:center;flex:1;gap:14px"><img src="'+LOGO_B64+'" style="height:81px;width:auto;flex-shrink:0"><div style="flex:1;text-align:center;min-width:0"><div class="bsn" style="color:#1a6bb5;font-size:21px;font-weight:900;letter-spacing:.2px;white-space:nowrap">Lucky Tito Dive Resort</div><div class="bss">PG Training Center · 账单 Invoice</div></div></div>'+
@@ -3486,7 +3703,7 @@ function renderBill(overrideCustId){
 '<div style="display:flex;align-items:center;gap:7px;min-width:0"><span class="brl" style="flex-shrink:0">姓名 Name</span><span class="brv" style="overflow:hidden;text-overflow:ellipsis">'+escHtml(c.name)+'</span></div>'+
 (c.email?'<div style="display:flex;align-items:center;gap:7px;min-width:0;margin-left:20px"><span class="brl" style="flex-shrink:0">邮箱 Email</span><span class="brv" style="overflow:hidden;text-overflow:ellipsis">'+escHtml(c.email)+'</span></div>':'')+
 '</div></div>'+
-(hasR?'<div class="bs"><div class="bst">住宿 Accommodation</div><div class="big">'+brow('入住 Check-in',fdate(c.checkin))+brow('退房 Check-out',fdate(c.checkout)+nightDisp)+brow('房型 Room Type',c.roomType)+brow('房间号 Room No.',c.roomNum)+'</div>'+discNote+'</div>':'')+
+(hasR?'<div class="bs"><div class="bst">住宿 Accommodation</div><div class="big">'+brow('入住 Check-in',fdate(c.checkin))+brow('退房 Check-out',fdate(c.checkout)+nightDisp)+brow('房型 Room Type',c.roomType)+brow('房间号 Room No.',c.roomNum)+'</div>'+discNote+roomStayBlocks+'</div>':'')+
 '<div class="bs"><div class="bst">费用明细 Charges</div>'+
 '<table class="bit" style="table-layout:fixed"><colgroup><col style="width:50%"><col style="width:16%"><col style="width:10%"><col style="width:24%"></colgroup><thead><tr><th>项目 Item</th><th>单价 Unit Price</th><th>数量 Qty</th><th>小计 Subtotal</th></tr></thead><tbody>'+
 (c.items||[]).map(i=>'<tr><td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+escHtml(i.name)+'">'+escHtml(i.name)+'</td><td>¥ '+(+i.price).toFixed(2)+'</td><td>'+i.qty+'</td><td>¥ '+(i.price*i.qty).toFixed(2)+'</td></tr>').join('')+
@@ -4984,7 +5201,7 @@ function renderGroups(){
 
 // ====== INIT ======
 document.getElementById('sch-date').value=new Date().toISOString().split('T')[0]
-addItem();initDiveCats();initTimeSelects();renderSemiCal();renderSaveLog();renderRestaurantCharges()
+addItem();initDiveCats();initTimeSelects();renderSemiCal();renderSaveLog();renderRestaurantCharges();renderRoomStays()
 if(getSyncUrl()){setNavSync('ok','在线 Online');cloudLoad()}else setNavSync('none','离线 Offline')
 // Auto-sync every 5 minutes
 setInterval(()=>{if(getSyncUrl())cloudSave()},5*60*1000)
