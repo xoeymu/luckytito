@@ -3441,17 +3441,25 @@ function applyDiveSyncGap(id,gap){
   // the walk-in rate, same tiering rule used for manually-added FD rows (autoFdTier): >=8 total logged
   // dives moves to the lower "8潜以上" tier, and a shared room gets the lower "双人+" tier.
   const status=fdRoomStatusForRecord(c)
-  let name,price
+  let matchNames,name,price
   if(status==='walkin'){
+    matchNames=[FD_WALKIN_NAME]
     name=FD_WALKIN_NAME;price=FD_WALKIN_PRICE
   }else{
     const t=status==='shared'?FD_TIERS[1]:FD_TIERS[0]
+    matchNames=[t.low,t.high]
     const totalDives=getDiveCount(id)+(parseInt(c.holFdQty)||0)
     const useHigh=totalDives>=8
     name=useHigh?t.high:t.low;price=useHigh?t.highP:t.lowP
   }
-  items.push({name,price,qty:gap})
-  c.items=items;c.lastMod=Date.now()
+  // Merge with any existing FD-tier row(s) for this guest's status (e.g. the default 1-dive row
+  // added at booking time) into a single combined row, instead of stacking a second row at a
+  // different per-dive price for the same tier of dive — the whole quantity should be priced as
+  // one tier on one line.
+  const existingQty=items.filter(it=>matchNames.includes((it.name||'').trim())).reduce((s,it)=>s+(parseFloat(it.qty)||0),0)
+  const kept=items.filter(it=>!matchNames.includes((it.name||'').trim()))
+  kept.push({name,price,qty:existingQty+gap})
+  c.items=kept;c.lastMod=Date.now()
   saveAll(all);cloudSave()
   renderBill(id)
   document.getElementById('dive-sync-panel').innerHTML=''
