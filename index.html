@@ -2041,6 +2041,31 @@ function fdRoomStatus(){
   const tempC={id:v('f-id')||'__preview__',roomNum:rnum,checkin:ci,checkout:co}
   return getSharedNights(tempC).size>0?'shared':'solo'
 }
+// Collapses duplicate/split FD-tier line items for the same guest (e.g. the default "FD 住店单人
+// 1-8潜" qty-1 row added at booking time, plus an "FD 住店单人 8潜以上" row added later by Dive
+// Sync) into a single row priced once at the tier matching the combined quantity. Runs on every
+// bill render so bills already split before this normalization existed self-heal automatically.
+// Returns true if c.items was changed (caller is responsible for persisting if so).
+function mergeFdTierItems(c){
+  const items=c.items||[]
+  const status=fdRoomStatusForRecord(c)
+  let matchNames,tierName,tierPrice
+  if(status==='walkin'){
+    matchNames=[FD_WALKIN_NAME];tierName=FD_WALKIN_NAME;tierPrice=FD_WALKIN_PRICE
+  }else{
+    const t=status==='shared'?FD_TIERS[1]:FD_TIERS[0]
+    matchNames=[t.low,t.high]
+    const totalDives=getDiveCount(c.id)+(parseInt(c.holFdQty)||0)
+    const useHigh=totalDives>=8
+    tierName=useHigh?t.high:t.low;tierPrice=useHigh?t.highP:t.lowP
+  }
+  const matched=items.filter(it=>matchNames.includes((it.name||'').trim()))
+  if(matched.length<=1)return false
+  const qty=matched.reduce((s,it)=>s+(parseFloat(it.qty)||0),0)
+  c.items=items.filter(it=>!matchNames.includes((it.name||'').trim()))
+  c.items.push({name:tierName,price:tierPrice,qty})
+  return true
+}
 // Same as fdRoomStatus() but operates on a stored guest record instead of the live form — used when
 // pricing dive items added programmatically (e.g. dive-log sync) for a guest who may not be the one
 // currently open in the edit form. A room number present (and not "WI"/walk-in) means in-house guest.
@@ -3591,6 +3616,10 @@ function renderBill(overrideCustId){
   const id=overrideCustId||document.getElementById('bill-sel')?.value||''
   if(!id){document.getElementById('bill-out').innerHTML='<div class="empty-state"><p>请选择客户 Select a guest</p></div>';return}
   const c=getAll().find(x=>x.id===id);if(!c)return
+  if(mergeFdTierItems(c)){
+    const all=getAll();const ix=all.findIndex(x=>x.id===id)
+    if(ix>=0){all[ix].items=c.items;all[ix].lastMod=Date.now();saveAll(all);cloudSave()}
+  }
   const iT=(c.items||[]).reduce((s,i)=>s+i.price*i.qty,0)
   const holFdQty=parseInt(c.holFdQty)||0
   const holFdSub=holFdQty*195
