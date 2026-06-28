@@ -223,8 +223,14 @@ header button:hover{background:rgba(255,255,255,.22)}
     <h3>结账确认 Confirm Checkout</h3>
     <div style="background:var(--bg);border-radius:8px;padding:10px 12px">
       <div style="font-weight:800;color:var(--navy)" id="co-table-label"></div>
-      <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;color:var(--navy);margin-top:4px"><span>总计 Total</span><span id="co-total"></span></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--navy);margin-top:6px"><span>小计 Subtotal</span><span id="co-subtotal"></span></div>
+      <div id="co-disc-row" style="display:none;justify-content:space-between;font-size:14px;color:#059669;font-weight:700;margin-top:2px"><span>教练折扣 Inst. Discount (-10%)</span><span id="co-disc-amt"></span></div>
+      <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;color:var(--navy);margin-top:6px;padding-top:6px;border-top:1px dashed #cbd5e1"><span>总计 Total</span><span id="co-total"></span></div>
     </div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:10px;font-size:14px;font-weight:700;color:var(--navy)">
+      <input type="checkbox" id="co-inst-disc" onchange="toggleInstDiscount(this.checked)" style="width:18px;height:18px;cursor:pointer">
+      🎓 教练折扣 Inst. Discount (-10%)
+    </label>
     <label>付款方式 Payment Method</label>
     <div class="order-actions">
       <button class="btn btn-primary" style="flex:1" id="co-btn-cash" onclick="setCheckoutRoomCharge(false)">💰 现金/卡 Cash/Card</button>
@@ -428,7 +434,7 @@ function updateSyncBtn(){
 function pushChargeToCloud(record){
   const url=getSyncUrl();if(!url)return
   const summary=record.items.map(it=>it.name+'×'+it.qty).join('、')
-  const charge={id:record.id,table:record.tableLabel,note:record.note,summary,total:record.total,date:record.paidAt.slice(0,16).replace('T',' '),claimed:false,roomCharge:!!record.roomCharge,roomNo:record.roomNo||''}
+  const charge={id:record.id,table:record.tableLabel,note:record.note,summary,total:record.total,date:record.paidAt.slice(0,16).replace('T',' '),claimed:false,roomCharge:!!record.roomCharge,roomNo:record.roomNo||'',instDiscount:!!record.instDiscount}
   fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
     if(!res||!res.ok||!Array.isArray(res.data))throw new Error('load failed')
     const data=res.data
@@ -733,17 +739,33 @@ function renderOrderPanel(){
 // ====================================================================
 //   CHECKOUT + RECEIPT PRINT
 // ====================================================================
-let coTableId=null,coRoomCharge=false
+let coTableId=null,coRoomCharge=false,coInstDiscount=false
 function checkoutTable(){
   if(!curTableId)return
   const t=loadTables().find(x=>x.id===curTableId)
   if(!t||t.items.length===0){alert('该桌台没有订单 This table has no order');return}
   coTableId=curTableId
   document.getElementById('co-table-label').textContent=t.label+(t.note?' · '+t.note:'')
-  document.getElementById('co-total').textContent=fmt(orderTotal(t))
   document.getElementById('co-room-no').value=''
+  coInstDiscount=false
+  document.getElementById('co-inst-disc').checked=false
+  refreshCheckoutTotals()
   setCheckoutRoomCharge(false)
   document.getElementById('checkout-modal').classList.add('show')
+}
+// Instructor discount toggle (-10% off the subtotal, applied at checkout for staff/instructors
+// paying for their own meal directly — separate from the existing claim-to-guest-bill discount
+// in index.html, which applies when a guest's restaurant charges are later added to their folio).
+function toggleInstDiscount(checked){coInstDiscount=checked;refreshCheckoutTotals()}
+function refreshCheckoutTotals(){
+  const t=loadTables().find(x=>x.id===coTableId);if(!t)return
+  const sub=orderTotal(t)
+  const disc=coInstDiscount?sub*0.1:0
+  document.getElementById('co-subtotal').textContent=fmt(sub)
+  const row=document.getElementById('co-disc-row')
+  if(disc>0){row.style.display='flex';document.getElementById('co-disc-amt').textContent='－'+fmt(disc)}
+  else row.style.display='none'
+  document.getElementById('co-total').textContent=fmt(sub-disc)
 }
 function setCheckoutRoomCharge(isRoom){
   coRoomCharge=isRoom
@@ -760,7 +782,9 @@ function confirmCheckout(){
     roomNo=document.getElementById('co-room-no').value.trim()
     if(!roomNo){alert('请输入房号 Please enter the room number');return}
   }
-  const total=orderTotal(t)
+  const subtotal=orderTotal(t)
+  const discountAmt=coInstDiscount?subtotal*0.1:0
+  const total=subtotal-discountAmt
 
   const now=new Date()
   const lines=t.items.map(line=>{
@@ -768,7 +792,7 @@ function confirmCheckout(){
     const price=m?getPrice(m):0
     return{code:m?m.code:'',name:m?m.name:'',en:m?m.en:'',qty:line.qty,price,sub:price*line.qty}
   })
-  const record={id:uid(),tableLabel:t.label,note:t.note,items:lines,total,paidAt:now.toISOString(),roomCharge:coRoomCharge,roomNo}
+  const record={id:uid(),tableLabel:t.label,note:t.note,items:lines,subtotal,instDiscount:coInstDiscount,discountAmt,total,paidAt:now.toISOString(),roomCharge:coRoomCharge,roomNo}
   const hist=loadHistory()
   hist.push(record)
   saveHistory(hist)
@@ -797,7 +821,12 @@ function buildReceipt(record,now){
       +(it.en?'<div class="rl-en">'+esc(it.en)+'</div>':'')
       +'<div class="rl-qp"><span>x'+it.qty+'</span><span>'+fmt(it.sub)+'</span></div></div>'
   })
-  html+='<hr><div class="r-total"><span>Total</span><span>'+fmt(record.total)+'</span></div>'
+  html+='<hr>'
+  if(record.discountAmt>0){
+    html+='<div class="r-line"><div class="rl-qp"><span>Subtotal</span><span>'+fmt(record.subtotal)+'</span></div></div>'
+    html+='<div class="r-line"><div class="rl-qp"><span>Inst. Discount -10%</span><span>－'+fmt(record.discountAmt)+'</span></div></div>'
+  }
+  html+='<div class="r-total"><span>Total</span><span>'+fmt(record.total)+'</span></div>'
   html+=record.roomCharge
     ?'<div class="r-pay">ROOM CHARGE 房间挂账 · Room '+esc(record.roomNo)+'</div>'
     :'<div class="r-pay">CASH / CARD 现金/卡</div>'
@@ -845,7 +874,7 @@ function showHistory(){
   document.getElementById('hist-total').textContent=fmt(total)
   document.getElementById('hist-list').innerHTML=todays.map(h=>{
     const time=h.paidAt.slice(11,16)
-    return '<div class="hist-row"><div><div>'+esc(h.tableLabel)+(h.note?' · '+esc(h.note):'')+(h.roomCharge?' · 🛏️ Room '+esc(h.roomNo):'')+'</div><div class="h-meta">'+time+' · '+h.items.length+' 项 items</div></div><div>'+fmt(h.total)+'</div></div>'
+    return '<div class="hist-row"><div><div>'+esc(h.tableLabel)+(h.note?' · '+esc(h.note):'')+(h.roomCharge?' · 🛏️ Room '+esc(h.roomNo):'')+(h.instDiscount?' · 🎓 -10%':'')+'</div><div class="h-meta">'+time+' · '+h.items.length+' 项 items</div></div><div>'+fmt(h.total)+'</div></div>'
   }).join('')||'<div class="order-empty">今天还没有结账记录 No checkouts yet today</div>'
   document.getElementById('history-modal').classList.add('show')
 }
