@@ -1440,9 +1440,9 @@ function initTimeSelects(){
   })
 }
 function genCustNo(name,arriveTime,checkin,roomNum){
-  let dp='XXXX';const dt=arriveTime||checkin
+  let dp='XXXX';const dt=checkin||arriveTime
   if(dt){const m=dt.match(/(\d{4})-(\d{2})-(\d{2})/);if(m)dp=m[2]+m[3]}
-  const rm=(roomNum||'').trim()||'XX'
+  const rm=(roomNum||'').trim()||'WI'
   let ini='X';if((name||'').trim()){const ch=name.trim().charAt(0);ini=/[a-zA-Z]/.test(ch)?ch.toUpperCase():ch}
   return dp+'-'+rm+'-'+ini
 }
