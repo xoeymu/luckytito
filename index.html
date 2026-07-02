@@ -2587,6 +2587,10 @@ function pDateOrCurYear(s){
   // MM.DD (dot separator, e.g. 6.19)
   m=s.match(/^(\d{1,2})\.(\d{1,2})$/)
   if(m)return yr+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0')
+  // MMDD (4 digits, no separator, e.g. 0710)
+  m=s.match(/^(\d{2})(\d{2})$/)
+  if(m&&parseInt(m[1])>=1&&parseInt(m[1])<=12&&parseInt(m[2])>=1&&parseInt(m[2])<=31)
+    return yr+'-'+m[1]+'-'+m[2]
   // English month abbreviation/name + day, no year (e.g. JUN.21, Jun 21, 21 Jun)
   const MO={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12,
     january:1,february:2,march:3,april:4,june:6,july:7,august:8,september:9,october:10,november:11,december:12}
@@ -2843,7 +2847,7 @@ function parseAndApply(){
       // fallback below, so a course mention can't accidentally pick up an unrelated date range
       // mentioned elsewhere in the text (e.g. check-in/check-out, another course's dates).
       const nearText=ls.slice(segStart,Math.min(segStart+2,segEnd)).join('\n')
-      const instM=segText.match(/(?:教练|instructor|dm)\s*[:：]?\s*([^\s,，;；\n]{1,16}(?:[ \t][^\s,，;；\n]{1,16})?)/i)
+      const instM=segText.match(/(?:教练|instructor|dm)[^:：\n]*[:：]\s*([^\s,，;；\n]{1,16}(?:[ \t][^\s,，;；\n]{1,16})?)/i)
       const startM=segText.match(/(?:开课|开始|course\s*start|start\s*date)[^:：\d]*[:：]?\s*(\S+)/i)
       const endM=segText.match(/(?:结课|结束|课程结束|course\s*end|end\s*date)[^:：\d]*[:：]?\s*(\S+)/i)
       let cStart=startM?pDateOrCurYear(startM[1]):''
