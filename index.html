@@ -1722,6 +1722,9 @@ function autoUpdateDiscount(){
   if(isDorm()){sel.value='';toggleDiscCustom();updateRoomFeePreview();return}
   if(hasStudentCourse()){
     if(!sel.value){sel.value='9折';toggleDiscCustom()}
+  } else {
+    // No qualifying course — clear the auto-set student discount (9折) if still present
+    if(sel.value==='9折'){sel.value='';toggleDiscCustom()}
   }
   autoApplyMultiCourseDisc()
   updateRoomFeePreview()
