@@ -1658,6 +1658,19 @@ function hasStudentCourse(){
   return false
 }
 function isDorm(){return(v('f-rtype')||'').includes('学员宿舍')}
+// Record-level equivalent of hasStudentCourse() — checks saved items, not the live form
+function hasStudentCourseForRecord(c){
+  const valid=getStudentCourseNames()
+  return(c.items||[]).some(i=>valid.has((i.name||'').trim()))
+}
+// Returns the discount code that should actually be applied when billing a record.
+// 9折 (student discount) is silently dropped if the record has no qualifying courses.
+function effectiveRoomDiscount(c){
+  const d=c.roomDiscount
+  if((c.roomType||'').includes('学员宿舍'))return''
+  if(d==='9折'&&!hasStudentCourseForRecord(c))return''
+  return d||''
+}
 const MULTI_COURSE_DISC_NAME='课程连学折扣 Multiple Courses Discount'
 const MULTI_COURSE_DISC_AMT=-100
 const MULTI_STU_DISC_NAME='多学员折扣 Multiple Student Discount'
@@ -3605,7 +3618,7 @@ function calcRoomSubtotal(c){
     const isDormRoom=(seg.roomType||'').includes('学员宿舍')
     const tempC={id:c.id,roomNum:seg.roomNum,checkin:seg.checkin,checkout:seg.checkout}
     const shared=isDormRoom?new Set():getSharedNights(tempC)
-    const f=isDormRoom?1:roomDiscountFactor(c.roomDiscount,c.roomDiscountCustom)
+    const f=isDormRoom?1:roomDiscountFactor(effectiveRoomDiscount(c),c.roomDiscountCustom)
     return sum+computeRoomNights(seg.checkin,seg.checkout,rate,shared,hols,f).total
   },0)
 }
@@ -3648,7 +3661,7 @@ function renderBill(overrideCustId){
   let discNote=''
   if(hasR&&c.roomRate&&nights>0){
     const rate=parseFloat(c.roomRate)
-    const d=(c.roomType||'').includes('学员宿舍')?'':c.roomDiscount
+    const d=effectiveRoomDiscount(c)
     const f=roomDiscountFactor(d,c.roomDiscountCustom)
     const saved=rNorm*rate*(1-f)
     if(rHol>0&&rNorm>0&&f<1)discNote='<div style="font-size:12px;color:#0284c7;margin-top:5px;font-weight:600">'+rHol+' holiday night(s) at full rate 节假日原价 · '+rNorm+' discounted night(s) 折扣晚, saved 省 ¥'+saved.toFixed(2)+'</div>'
@@ -3684,7 +3697,7 @@ function renderBill(overrideCustId){
   }
   let roomRows=''
   if(c.roomRate&&c.checkin&&c.checkout){
-    roomRows+=buildRoomFeeRows(null,c.checkin,c.checkout,parseFloat(c.roomRate),c.roomType,c.roomDiscount,c.roomDiscountCustom,getSharedNights(c))
+    roomRows+=buildRoomFeeRows(null,c.checkin,c.checkout,parseFloat(c.roomRate),c.roomType,effectiveRoomDiscount(c),c.roomDiscountCustom,getSharedNights(c))
   }
   // Additional room-change segments (mid-stay room moves) — each billed the same way, itemized
   // under its own "换房 Room Change N" label so the bill shows exactly which room each charge is for.
@@ -3692,7 +3705,7 @@ function renderBill(overrideCustId){
   roomStaySegs.forEach((rs,idx)=>{
     const lbl=((rs.roomType||'客房').match(/^[A-Za-z0-9 ]+/)||[''])[0].trim()||(rs.roomType||'客房')
     const tempC={id:c.id,roomNum:rs.roomNum,checkin:rs.checkin,checkout:rs.checkout}
-    roomRows+=buildRoomFeeRows('换房'+(idx+2)+' Room Change · '+lbl,rs.checkin,rs.checkout,parseFloat(rs.roomRate),rs.roomType,c.roomDiscount,c.roomDiscountCustom,getSharedNights(tempC))
+    roomRows+=buildRoomFeeRows('换房'+(idx+2)+' Room Change · '+lbl,rs.checkin,rs.checkout,parseFloat(rs.roomRate),rs.roomType,effectiveRoomDiscount(c),c.roomDiscountCustom,getSharedNights(tempC))
   })
   const nightDisp=nights>0?' ('+nights+' night'+(nights>1?'s':'')+')':''
   let restSection=''
