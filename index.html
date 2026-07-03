@@ -1763,18 +1763,29 @@ function getRoomNightBreakdown(ci,co){
 }
 
 // Returns Set of date strings where another customer shares the same room
+// Returns Map<date, N> where N = total occupants (including self) in room rn on that night.
+// Checks both primary stay and room-change segments (roomStays) of all other guests.
 function getSharedNights(c){
-  if(!c.roomNum||!c.checkin||!c.checkout)return new Set()
+  if(!c.roomNum||!c.checkin||!c.checkout)return new Map()
   const rn=c.roomNum.trim()
-  const others=getAll().filter(x=>x.id!==c.id&&(x.roomNum||'').trim()===rn&&x.checkin&&x.checkout)
-  if(!others.length)return new Set()
   const nights=Math.round((new Date(c.checkout)-new Date(c.checkin))/(1000*3600*24))
-  const shared=new Set()
+  if(nights<=0)return new Map()
+  const otherSegs=[]
+  getAll().filter(x=>x.id!==c.id).forEach(x=>{
+    if((x.roomNum||'').trim()===rn&&x.checkin&&x.checkout)
+      otherSegs.push({checkin:x.checkin,checkout:x.checkout})
+    ;(x.roomStays||[]).forEach(rs=>{
+      if((rs.roomNum||'').trim()===rn&&rs.checkin&&rs.checkout)
+        otherSegs.push({checkin:rs.checkin,checkout:rs.checkout})
+    })
+  })
+  const map=new Map()
   for(let i=0;i<nights;i++){
     const ds=new Date(new Date(c.checkin).getTime()+i*86400000).toISOString().slice(0,10)
-    if(others.some(o=>ds>=o.checkin&&ds<o.checkout))shared.add(ds)
+    const coCount=otherSegs.filter(seg=>ds>=seg.checkin&&ds<seg.checkout).length
+    if(coCount>0)map.set(ds,coCount+1)  // coCount others + self
   }
-  return shared
+  return map
 }
 
 // Maps a room-discount selection to its multiplier (1 = no discount). Single source of truth so
@@ -1786,19 +1797,29 @@ function roomDiscountFactor(discCode,customVal){
   if(discCode==='custom')return parseFloat(customVal)||1
   return 1
 }
-// Walks every night of a stay, bucketing each into holiday/normal × solo/shared and applying the
-// per-night rate. Previously this loop was duplicated in updateRoomFeePreview(), calcRoomSubtotal()
-// and renderBill() — any future pricing-rule change only needs to happen here now.
-function computeRoomNights(checkin,checkout,rate,sharedSet,hols,factor){
-  let holSolo=0,holShare=0,normSolo=0,normShare=0,total=0
+// Walks every night of a stay, bucketing into holiday/normal × solo/shared.
+// occupancyMap: Map<date,N> returned by getSharedNights() (N=total occupants incl. self).
+// For N≥3: room split 1/N + ¥100/night extra-person surcharge per person.
+const EXTRA_PERSON_SURCHARGE=100
+function computeRoomNights(checkin,checkout,rate,occupancyMap,hols,factor){
+  let holSolo=0,holShare=0,normSolo=0,normShare=0
+  let holSoloAmt=0,holShareAmt=0,normSoloAmt=0,normShareAmt=0
+  let extraPersonNights=0,extraPersonCharge=0
   const nights=Math.round((new Date(checkout)-new Date(checkin))/(1000*3600*24))
   for(let i=0;i<nights;i++){
     const ds=new Date(new Date(checkin).getTime()+i*86400000).toISOString().slice(0,10)
-    const isH=hols.has(ds),isS=sharedSet.has(ds)
-    total+=rate*(isH?1:factor)*(isS?0.5:1)
-    if(isH&&isS)holShare++;else if(isH)holSolo++;else if(isS)normShare++;else normSolo++
+    const N=occupancyMap.get(ds)||1
+    const splitF=N>1?1/N:1
+    const isH=hols.has(ds),isShared=N>1
+    const amt=rate*(isH?1:factor)*splitF
+    if(N>2){extraPersonNights++;extraPersonCharge+=EXTRA_PERSON_SURCHARGE*(N-2)/N}
+    if(isH&&isShared){holShare++;holShareAmt+=amt}
+    else if(isH){holSolo++;holSoloAmt+=amt}
+    else if(isShared){normShare++;normShareAmt+=amt}
+    else{normSolo++;normSoloAmt+=amt}
   }
-  return{nights,total,holSolo,holShare,normSolo,normShare}
+  const total=holSoloAmt+holShareAmt+normSoloAmt+normShareAmt
+  return{nights,total,holSolo,holShare,normSolo,normShare,holSoloAmt,holShareAmt,normSoloAmt,normShareAmt,extraPersonNights,extraPersonCharge}
 }
 function updateRoomFeePreview(){
   const ci=v('f-ci'),co=v('f-co'),rate=v('f-rrate'),rnum=v('f-rnum').trim()
@@ -1809,22 +1830,25 @@ function updateRoomFeePreview(){
   const rateN=parseFloat(rate)
   const hols=new Set(getHolidays())
   const tempC={id:v('f-id')||'__preview__',roomNum:rnum,checkin:ci,checkout:co}
-  const sharedSet=(rnum&&!isDorm())?getSharedNights(tempC):new Set()
+  const occupancyMap=(rnum&&!isDorm())?getSharedNights(tempC):new Map()
   const disc=v('f-rdisc')
   const discLabelMap={'9折':'学员9折 (Student 10% off)','85折':'8.5折 (15% off)','8折':'8折 (20% off)',custom:'自定义折扣 (Custom)'}
   const f=isDorm()?1:roomDiscountFactor(disc,v('f-rdisc-custom'))
   const discLabel=isDorm()?'':(discLabelMap[disc]||'')
-  const{holSolo,holShare,normSolo,normShare,total}=computeRoomNights(ci,co,rateN,sharedSet,hols,f)
-  _formRoomFee=total
+  const{holSolo,holShare,normSolo,normShare,total,extraPersonNights,extraPersonCharge}=computeRoomNights(ci,co,rateN,occupancyMap,hols,f)
+  _formRoomFee=total+extraPersonCharge
   el.style.display='block'
-  document.getElementById('room-fee-preview-amt').textContent='¥ '+total.toFixed(2)
+  document.getElementById('room-fee-preview-amt').textContent='¥ '+(total+extraPersonCharge).toFixed(2)
+  const maxN=occupancyMap.size>0?Math.max(...occupancyMap.values()):1
+  const splitLbl=maxN>1?'÷'+maxN:''
   const parts=[]
   if(holSolo>0)parts.push(holSolo+'晚节假日原价 ('+holSolo+' nights holiday full rate)')
-  if(holShare>0)parts.push(holShare+'晚节假日均摊50% ('+holShare+' nights holiday split 50%)')
+  if(holShare>0)parts.push(holShare+'晚节假日均摊'+splitLbl+' ('+holShare+' nights holiday split '+splitLbl+')')
   if(normSolo>0)parts.push(normSolo+'晚'+(f<1?' '+discLabel:'普通 (Regular)'))
-  if(normShare>0)parts.push(normShare+'晚'+(f<1?' '+discLabel:'普通 (Regular)')+'均摊50% (split 50%)')
+  if(normShare>0)parts.push(normShare+'晚'+(f<1?' '+discLabel:'普通 (Regular)')+'均摊'+splitLbl+' (split '+splitLbl+')')
+  if(extraPersonCharge>0){const epN=maxN>2?maxN-2:1;parts.push('多人附加费 +¥'+extraPersonCharge.toFixed(0)+' (¥100×'+epN+'人÷'+maxN+'×'+extraPersonNights+'晚)')}
   let noteText=parts.join(' + ')
-  if(sharedSet.size>0)noteText+=' · 🏠 与同房客户均摊 Split with roommate'
+  if(occupancyMap.size>0)noteText+=' · 🏠 与同房客户均摊 Split with roommates'
   if(v('f-upgrade-rate'))noteText+=' · 🎁 免费升级 Free Upgrade'
   document.getElementById('room-fee-preview-note').textContent=noteText
   updateFormTotal()
@@ -3617,9 +3641,10 @@ function calcRoomSubtotal(c){
     const rate=parseFloat(seg.roomRate)
     const isDormRoom=(seg.roomType||'').includes('学员宿舍')
     const tempC={id:c.id,roomNum:seg.roomNum,checkin:seg.checkin,checkout:seg.checkout}
-    const shared=isDormRoom?new Set():getSharedNights(tempC)
+    const shared=isDormRoom?new Map():getSharedNights(tempC)
     const f=isDormRoom?1:roomDiscountFactor(effectiveRoomDiscount(c),c.roomDiscountCustom)
-    return sum+computeRoomNights(seg.checkin,seg.checkout,rate,shared,hols,f).total
+    const{total:segAmt,extraPersonCharge}=computeRoomNights(seg.checkin,seg.checkout,rate,shared,hols,f)
+    return sum+segAmt+extraPersonCharge
   },0)
 }
 function fillBillSel(){
@@ -3671,28 +3696,31 @@ function renderBill(overrideCustId){
   // Build room fee rows (split by holiday/non-holiday and solo/shared). Factored into a helper so
   // it can be reused both for the primary stay and for any additional room-change segments below —
   // each segment is billed with the same per-night rules, just against its own dates/rate/room.
-  const buildRoomFeeRows=(labelPrefix,ci,co,rate,roomType,discCode,discCustom,sharedSet)=>{
+  const buildRoomFeeRows=(labelPrefix,ci,co,rate,roomType,discCode,discCustom,occupancyMap)=>{
     const rt=labelPrefix||((roomType||'客房').match(/^[A-Za-z0-9 ]+/)||[''])[0].trim()||(roomType||'客房')
     const isDormBill=(roomType||'').includes('学员宿舍')
     const rd=isDormBill?'':discCode
     const rf=isDormBill?1:roomDiscountFactor(rd,discCustom)
     const discLbl=rd==='9折'?'10% disc':rd==='85折'?'15% disc':rd==='8折'?'20% disc':rd==='custom'?'custom disc':''
     const hols=new Set(getHolidays())
-    const shared=isDormBill?new Set():sharedSet
-    const{holSolo,holShare,normSolo,normShare}=computeRoomNights(ci,co,rate,shared,hols,rf)
+    const shared=isDormBill?new Map():occupancyMap
+    const maxN=shared.size>0?Math.max(...shared.values()):1
+    const splitLbl='÷'+maxN
+    const{holSolo,holShare,normSolo,normShare,holSoloAmt,holShareAmt,normSoloAmt,normShareAmt,extraPersonNights,extraPersonCharge}=computeRoomNights(ci,co,rate,shared,hols,rf)
     const mkRow=(lbl,up,qty,sub)=>{const nm=rt+(lbl?' ('+lbl+')':'');return'<tr><td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+nm+'">'+nm+'</td><td>'+up+'</td><td>'+qty+'</td><td>¥ '+sub+'</td></tr>'}
     const nts=n=>n+' nt'+(n>1?'s':'')
     let rows=''
-    if(holSolo>0)rows+=mkRow('Holiday · 节假日 (full rate 原价)',('¥'+rate+'/nt'),nts(holSolo),(holSolo*rate).toFixed(2))
-    if(holShare>0)rows+=mkRow('Holiday · 节假日 (shared 拼房 50%)','¥'+rate+'/nt × 50%',nts(holShare),(holShare*rate*0.5).toFixed(2))
+    if(holSolo>0)rows+=mkRow('Holiday · 节假日 (full rate 原价)',('¥'+rate+'/nt'),nts(holSolo),holSoloAmt.toFixed(2))
+    if(holShare>0)rows+=mkRow('Holiday · 节假日 (shared 拼房 '+splitLbl+')','¥'+rate+'/nt × '+splitLbl,nts(holShare),holShareAmt.toFixed(2))
     if(normSolo>0){
       const pl=rf<1?'¥'+rate+'/nt × '+discLbl:'¥'+rate+'/nt'
-      rows+=mkRow((discLbl?discLbl+' · 折扣':''),pl,nts(normSolo),(normSolo*rate*rf).toFixed(2))
+      rows+=mkRow((discLbl?discLbl+' · 折扣':''),pl,nts(normSolo),normSoloAmt.toFixed(2))
     }
     if(normShare>0){
-      const pl=rf<1?'¥'+rate+'/nt × '+discLbl+' × 50%':'¥'+rate+'/nt × 50%'
-      rows+=mkRow((discLbl?discLbl+' · ':'')+'shared 拼房 50%',pl,nts(normShare),(normShare*rate*rf*0.5).toFixed(2))
+      const pl=rf<1?'¥'+rate+'/nt × '+discLbl+' × '+splitLbl:'¥'+rate+'/nt × '+splitLbl
+      rows+=mkRow((discLbl?discLbl+' · ':'')+'shared 拼房 '+splitLbl,pl,nts(normShare),normShareAmt.toFixed(2))
     }
+    if(extraPersonCharge>0){const epUp=maxN>2?'¥'+EXTRA_PERSON_SURCHARGE+'/nt×'+(maxN-2)+'人÷'+maxN:'¥'+EXTRA_PERSON_SURCHARGE+'/nt';rows+=mkRow('多人附加费 Extra Person Surcharge',epUp,nts(extraPersonNights),extraPersonCharge.toFixed(2))}
     return rows
   }
   let roomRows=''
