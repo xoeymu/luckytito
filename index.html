@@ -3482,7 +3482,8 @@ function showDiveSync(){
   let statusHtml
   if(gap>0)statusHtml='<div style="margin-top:8px;color:#b45309;font-weight:700">⚠️ 还差 '+gap+' 次 FD 未计入账单 Missing from bill</div>'
     +'<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="applyDiveSyncGap(\''+id+'\','+gap+')">+ 补充 '+gap+' 次 Fun Dive 到账单</button>'
-  else if(gap<0)statusHtml='<div style="margin-top:8px;color:#dc2626;font-weight:700">⚠️ 账单内潜水次数比日志多 '+(-gap)+' 次，请人工核对 Bill has more dives than the log — please check manually</div>'
+  else if(gap<0)statusHtml='<div style="margin-top:8px;color:#dc2626;font-weight:700">⚠️ 账单内潜水次数比日志多 '+(-gap)+' 次（课程潜不应单独计费）</div>'
+    +'<button class="btn btn-warning btn-sm" style="margin-top:8px" onclick="applyDiveSyncFix(\''+id+'\')">🔧 按日志纠正至 '+fdTotal+' 次 FD</button>'
   else statusHtml='<div style="margin-top:8px;color:#16a34a;font-weight:700">✅ 与日志记录一致 Matches the dive log</div>'
   // Night surcharge only applies to FD night dives; course night dives are included in course price
   const billedNightQty=getBilledNightSurchargeQty(c)
@@ -3492,6 +3493,9 @@ function showDiveSync(){
     if(nightGap>0)nightHtml='<div style="margin-top:8px;color:#b45309;font-weight:700">🌙 还差 '+nightGap+' 次夜潜附加费未计入账单 Night dive surcharge missing for '+nightGap+' dive(s)</div>'
       +'<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="applyNightSurchargeGap(\''+id+'\','+nightGap+')">+ 补充 '+nightGap+' 次夜潜附加费 Add Night Surcharge</button>'
     else nightHtml='<div style="margin-top:8px;color:#16a34a;font-weight:700">✅ 夜潜附加费已计入 Night dive surcharge included</div>'
+  }else if(billedNightQty>0){
+    nightHtml='<div style="margin-top:8px;color:#dc2626;font-weight:700">🌙 账单有 '+billedNightQty+' 次夜潜附加费，但日志中无 FD 夜潜（课程夜潜不收附加费）</div>'
+      +'<button class="btn btn-warning btn-sm" style="margin-top:8px" onclick="removeNightSurcharge(\''+id+'\')">🔧 删除夜潜附加费 Remove Surcharge</button>'
   }
   panel.innerHTML='<div style="margin:0 18px 14px;padding:12px 14px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;font-size:13px;color:#0b3d5e">'
     +'<div style="font-weight:700;margin-bottom:4px">🤿 潜水日志 Dive Log</div>'
@@ -3530,6 +3534,42 @@ function applyDiveSyncGap(id,gap){
   const kept=items.filter(it=>!matchNames.includes((it.name||'').trim()))
   kept.push({name,price,qty:existingQty+gap})
   c.items=kept;c.lastMod=Date.now()
+  saveAll(all);cloudSave()
+  renderBill(id)
+  document.getElementById('dive-sync-panel').innerHTML=''
+  showDiveSync()
+}
+// Reduces bill FD qty to match FD dive log count (called when bill has more FD than log)
+function applyDiveSyncFix(id){
+  const all=getAll();const i=all.findIndex(c=>c.id===id);if(i<0)return
+  const c=all[i]
+  const targetQty=getFdDiveCount(id)
+  const items=c.items||[]
+  const kept=items.filter(it=>!isDiveCountItem(it.name))
+  if(targetQty>0){
+    const status=fdRoomStatusForRecord(c)
+    let name,price
+    if(status==='walkin'){name=FD_WALKIN_NAME;price=FD_WALKIN_PRICE}
+    else{
+      const t=status==='shared'?FD_TIERS[1]:FD_TIERS[0]
+      const totalDives=targetQty+(parseInt(c.holFdQty)||0)
+      const useHigh=totalDives>=8
+      name=useHigh?t.high:t.low;price=useHigh?t.highP:t.lowP
+    }
+    kept.push({name,price,qty:targetQty})
+  }
+  c.items=kept;c.lastMod=Date.now()
+  saveAll(all);cloudSave()
+  renderBill(id)
+  document.getElementById('dive-sync-panel').innerHTML=''
+  showDiveSync()
+}
+// Removes night surcharge lines from bill (called when no FD night dives in log)
+function removeNightSurcharge(id){
+  const all=getAll();const i=all.findIndex(c=>c.id===id);if(i<0)return
+  const c=all[i]
+  c.items=(c.items||[]).filter(it=>{const n=(it.name||'').trim();return n!=='夜潜附加费 Night Dive Surcharge'&&n!=='Regular Night Dive 平日夜潜'})
+  c.lastMod=Date.now()
   saveAll(all);cloudSave()
   renderBill(id)
   document.getElementById('dive-sync-panel').innerHTML=''
