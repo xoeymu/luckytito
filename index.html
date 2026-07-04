@@ -2096,7 +2096,7 @@ function mergeFdTierItems(c){
   }else{
     const t=status==='shared'?FD_TIERS[1]:FD_TIERS[0]
     matchNames=[t.low,t.high]
-    const totalDives=getDiveCount(c.id)+(parseInt(c.holFdQty)||0)
+    const totalDives=getFdDiveCount(c.id)+(parseInt(c.holFdQty)||0)
     const useHigh=totalDives>=8
     tierName=useHigh?t.high:t.low;tierPrice=useHigh?t.highP:t.lowP
   }
@@ -3475,28 +3475,28 @@ function showDiveSync(){
   const id=document.getElementById('bill-sel')?.value||''
   if(!id){panel.innerHTML='<div style="margin:0 18px 14px;padding:10px 14px;background:#fef3c7;border-radius:10px;font-size:13px;color:#92400e">请先选择客户 Select a guest first</div>';return}
   const c=getAll().find(x=>x.id===id);if(!c)return
-  const total=getDiveCount(id),night=getNightDiveCount(id),day=total-night
+  const fdTotal=getFdDiveCount(id),fdNight=getFdNightDiveCount(id),fdDay=fdTotal-fdNight
+  const courseTotal=getCourseDiveCount(id)
   const billedQty=(c.items||[]).filter(i=>isDiveCountItem(i.name)).reduce((s,i)=>s+(parseFloat(i.qty)||0),0)+(parseInt(c.holFdQty)||0)
-  const gap=total-billedQty
+  const gap=fdTotal-billedQty
   let statusHtml
-  if(gap>0)statusHtml='<div style="margin-top:8px;color:#b45309;font-weight:700">⚠️ 还差 '+gap+' 次未计入账单 Missing from bill</div>'
+  if(gap>0)statusHtml='<div style="margin-top:8px;color:#b45309;font-weight:700">⚠️ 还差 '+gap+' 次 FD 未计入账单 Missing from bill</div>'
     +'<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="applyDiveSyncGap(\''+id+'\','+gap+')">+ 补充 '+gap+' 次 Fun Dive 到账单</button>'
   else if(gap<0)statusHtml='<div style="margin-top:8px;color:#dc2626;font-weight:700">⚠️ 账单内潜水次数比日志多 '+(-gap)+' 次，请人工核对 Bill has more dives than the log — please check manually</div>'
   else statusHtml='<div style="margin-top:8px;color:#16a34a;font-weight:700">✅ 与日志记录一致 Matches the dive log</div>'
-  // Separate check: the night-dive premium itself. A guest's dive *count* can already match the log
-  // (gap===0 above) while still missing the ¥60/dive night surcharge entirely, since the in-house FD
-  // tiers have no night-priced variant — staff have to add the surcharge as its own line.
+  // Night surcharge only applies to FD night dives; course night dives are included in course price
   const billedNightQty=getBilledNightSurchargeQty(c)
-  const nightGap=night-billedNightQty
+  const nightGap=fdNight-billedNightQty
   let nightHtml=''
-  if(night>0){
+  if(fdNight>0){
     if(nightGap>0)nightHtml='<div style="margin-top:8px;color:#b45309;font-weight:700">🌙 还差 '+nightGap+' 次夜潜附加费未计入账单 Night dive surcharge missing for '+nightGap+' dive(s)</div>'
       +'<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="applyNightSurchargeGap(\''+id+'\','+nightGap+')">+ 补充 '+nightGap+' 次夜潜附加费 Add Night Surcharge</button>'
     else nightHtml='<div style="margin-top:8px;color:#16a34a;font-weight:700">✅ 夜潜附加费已计入 Night dive surcharge included</div>'
   }
   panel.innerHTML='<div style="margin:0 18px 14px;padding:12px 14px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;font-size:13px;color:#0b3d5e">'
     +'<div style="font-weight:700;margin-bottom:4px">🤿 潜水日志 Dive Log</div>'
-    +'<div>日志记录潜水 '+total+' 次（日潜 '+day+' · 夜潜 '+night+'）</div>'
+    +'<div>FD：'+fdTotal+' 次（日潜 '+fdDay+' · 夜潜 '+fdNight+'）</div>'
+    +(courseTotal>0?'<div style="color:#64748b">课程潜 Course dives：'+courseTotal+' 次（含于课程费，不单独计费）</div>':'')
     +'<div>账单已含潜水类项目共 '+billedQty+' 次</div>'
     +statusHtml
     +nightHtml
@@ -3518,7 +3518,7 @@ function applyDiveSyncGap(id,gap){
   }else{
     const t=status==='shared'?FD_TIERS[1]:FD_TIERS[0]
     matchNames=[t.low,t.high]
-    const totalDives=getDiveCount(id)+(parseInt(c.holFdQty)||0)
+    const totalDives=getFdDiveCount(id)+(parseInt(c.holFdQty)||0)
     const useHigh=totalDives>=8
     name=useHigh?t.high:t.low;price=useHigh?t.highP:t.lowP
   }
@@ -4440,6 +4440,12 @@ function toggleDlCourseSelect(){
 function getDiveCount(cid){return getDivelog().filter(e=>e.participants.includes(cid)).length}
 function getNightDiveCount(cid){return getDivelog().filter(e=>e.participants.includes(cid)&&e.isNight).length}
 function getGuestDives(cid){return getDivelog().filter(e=>e.participants.includes(cid)).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time))}
+// FD-only counts: exclude dives logged under a course tag (OW1-4, AOW1-5, etc.)
+// A dive is billable as FD only if course is blank or explicitly 'FD'
+function isFdLogEntry(e){return !e.course||e.course==='FD'}
+function getFdDiveCount(cid){return getDivelog().filter(e=>e.participants.includes(cid)&&isFdLogEntry(e)).length}
+function getFdNightDiveCount(cid){return getDivelog().filter(e=>e.participants.includes(cid)&&e.isNight&&isFdLogEntry(e)).length}
+function getCourseDiveCount(cid){return getDivelog().filter(e=>e.participants.includes(cid)&&!isFdLogEntry(e)).length}
 
 function initDiveLog(){
   const sel=document.getElementById('dl-site')
