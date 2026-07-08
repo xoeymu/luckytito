@@ -4127,8 +4127,8 @@ function generateBookingImage(btn){
 function isCourseItem(name){
   if(!name)return false
   const n=name.toUpperCase()
-  if(/DISCOUNT|折扣|RENTAL|租赁|\/天|FD\s*住店|FUNDIVE|STAY/.test(n))return false
-  return /PADI|AIDA|SSI|SDI|NAUI|\bOW\b|AOW|\bDSD\b|\bEFR\b|RESCUE|FREEDIVE|FREE\s*DIVE|自由潜|CCR|REACTIVATE|再激活|DEEP\s*DIVE|NITROX|ENRICHED|SIDEMOUNT|BUOYANCY|DRIFT|NAVIGATION|NIGHT\s*DIVE|PEAK|SEARCH|WRECK|PHOTO|ADVANCED|OPEN\s*WATER/.test(n)
+  if(/DISCOUNT|折扣|RENTAL|租赁|\/天|FD\s*住店|FUNDIVE|STAY|附加费|SURCHARGE|REGULAR\s+NIGHT|平日夜潜|REGULAR\s+FUN|平日欢乐|节日欢乐|HOLIDAY\s+FUN/.test(n))return false
+  return /PADI|AIDA|SSI|SDI|NAUI|\bOW\b|AOW|\bDSD\b|\bEFR\b|RESCUE|FREEDIVE|FREE\s*DIVE|自由潜|CCR|REACTIVATE|再激活|DEEP\s*DIVE|NITROX|ENRICHED|SIDEMOUNT|BUOYANCY|DRIFT|NAVIGATION|PEAK|SEARCH|WRECK|PHOTO|ADVANCED|OPEN\s*WATER/.test(n)
 }
 // FD (Fun Dive) package items — e.g. "FD 住店单人 1-8潜" — get their own instructor/date/classmate
 // block too, same as certification courses, so DM assignment works without a global default.
