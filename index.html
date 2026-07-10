@@ -1323,7 +1323,7 @@ function cloudLoad(){
       const metaEntry=res.data.find(c=>c.id==='__meta__')
       if(metaEntry){
         if(Array.isArray(metaEntry.holidays))localStorage.setItem('dv_holidays',JSON.stringify(metaEntry.holidays))
-        if(Array.isArray(metaEntry.divelog)&&metaEntry.divelog.length>0)localStorage.setItem('lt_divelog',JSON.stringify(metaEntry.divelog))
+        if(Array.isArray(metaEntry.divelog)&&metaEntry.divelog.length>0){localStorage.setItem('lt_divelog',JSON.stringify(metaEntry.divelog));localStorage.setItem('lt_divelog_bak',JSON.stringify(metaEntry.divelog))}
         if(Array.isArray(metaEntry.dms))localStorage.setItem('lt_dms',JSON.stringify(metaEntry.dms))
         if(Array.isArray(metaEntry.groups))localStorage.setItem('lt_groups',JSON.stringify(metaEntry.groups))
         if(metaEntry.wageRates){
@@ -4437,7 +4437,23 @@ const DEFAULT_DMS=['Mer','Bonnie','Xoey']
 const DEFAULT_INSTRUCTORS=[]
 
 function getDivelog(){try{return JSON.parse(localStorage.getItem('lt_divelog')||'[]')}catch{return[]}}
-function saveDivelog(d){localStorage.setItem('lt_divelog',JSON.stringify(d));cloudSave()}
+function saveDivelog(d){
+  localStorage.setItem('lt_divelog',JSON.stringify(d))
+  // Rolling local backup — updated any time we save a non-empty log so we can recover if lt_divelog is ever wiped
+  if(d.length>0)localStorage.setItem('lt_divelog_bak',JSON.stringify(d))
+  cloudSave()
+}
+function restoreDivelogFromBackup(){
+  try{
+    const bak=JSON.parse(localStorage.getItem('lt_divelog_bak')||'[]')
+    if(!bak.length){alert('备份为空 Backup is empty');return}
+    if(!confirm('从本地备份恢复 '+bak.length+' 条潜水记录？\nRestore '+bak.length+' dive entries from local backup?'))return
+    localStorage.setItem('lt_divelog',JSON.stringify(bak))
+    cloudSave()
+    renderDiveLog()
+    alert('✅ 已恢复 '+bak.length+' 条记录，并已同步至云端。\nRestored '+bak.length+' entries and synced to cloud.')
+  }catch(e){alert('恢复失败 Restore failed: '+e.message)}
+}
 function getDmList(){try{return JSON.parse(localStorage.getItem('lt_dms')||'null')||[...DEFAULT_DMS]}catch{return[...DEFAULT_DMS]}}
 function saveDmList(d){localStorage.setItem('lt_dms',JSON.stringify(d));cloudSave()}
 function populateDmSelect(){
@@ -4636,7 +4652,13 @@ function renderDiveLog(){
   })
   const el=document.getElementById('dl-table')
   if(!el)return
-  if(!log.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🤿</div><p>暂无潜水记录 No dives logged yet</p></div>';return}
+  if(!log.length){
+    const bak=localStorage.getItem('lt_divelog_bak')
+    const bakCount=bak?JSON.parse(bak).length:0
+    const recoverBtn=bakCount>0?`<button onclick="restoreDivelogFromBackup()" class="btn btn-secondary btn-sm" style="margin-top:10px">🔄 从本地备份恢复 (${bakCount}条) Restore from local backup</button>`:''
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">🤿</div><p>暂无潜水记录 No dives logged yet</p>'+recoverBtn+'</div>'
+    return
+  }
   el.innerHTML='<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="width:100%;min-width:480px;border-collapse:collapse;font-size:13px">'
     +'<thead><tr style="background:#f8fafc">'
     +'<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">日期·时间·潜点 Date·Time·Site</th>'
