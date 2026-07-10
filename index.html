@@ -822,6 +822,8 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
           <div style="font-size:11px;font-weight:600;color:#94a3b8">eLearning &amp; Certification Tracker</div>
         </div>
       </div>
+      <input type="text" id="el-search" class="form-control" placeholder="🔍 搜索姓名 Search name" style="width:160px;font-size:12px;padding:5px 8px" oninput="renderElearning()">
+      <button id="el-save-btn" class="btn btn-primary btn-sm" onclick="saveElCodes()">💾 保存 Save</button>
       <button class="btn btn-secondary btn-sm" onclick="renderElearning()">🔄 刷新 Refresh</button>
     </div>
     <div class="card-body" style="padding:0">
@@ -930,7 +932,7 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
         <div style="display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px">
           <div>
             <label class="form-label">日期 Date</label>
-            <input type="date" id="dl-date" class="form-control">
+            <input type="date" id="dl-date" class="form-control" onchange="renderDlParticipants()">
           </div>
           <div>
             <label class="form-label">时间 Time</label>
@@ -4185,70 +4187,68 @@ function renderElearning(){
   const all=getAll()
   const today=new Date().toISOString().split('T')[0]
   const limit=new Date();limit.setDate(limit.getDate()+15);const limitStr=limit.toISOString().split('T')[0]
-  // Build rows: one per (guest, course)
+  const q=(document.getElementById('el-search')?.value||'').trim().toLowerCase()
   const rows=[]
   all.forEach(c=>{
     const courses=(c.items||[]).filter(i=>isCourseItem(i.name))
     if(!courses.length)return
-    // Include guest if arriving within next 15 days OR has any course without cert
+    if(q&&!(c.name||'').toLowerCase().includes(q))return
     const arriving=(c.checkin||'')>=today&&(c.checkin||'')<=limitStr
     courses.forEach(item=>{
       const ck=item.name
       const st=(c.elStatus||{})[ck]||{el:false,cert:false,code:''}
-      // Show if: arriving in next 15 days, OR cert not yet issued
       if(!arriving&&st.cert)return
       rows.push({c,course:ck,el:st.el,cert:st.cert,code:st.code||''})
     })
   })
-  if(!rows.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📚</div><p>No pending students in next 15 days · 近15天无待处理学员</p></div>';return}
-  // Sort by check-in date
-  rows.sort((a,b)=>(a.c.checkin||'').localeCompare(b.c.checkin||'')||(a.c.name||'').localeCompare(b.c.name||''))
+  if(!rows.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">\U0001F4DA</div><p>暂无待处理学员 No pending students</p></div>';return}
+  // Completed (both sent & issued) sink to bottom
+  rows.sort((a,b)=>{
+    const ac=(a.el&&a.cert)?1:0,bc=(b.el&&b.cert)?1:0
+    if(ac!==bc)return ac-bc
+    return(a.c.checkin||'').localeCompare(b.c.checkin||'')||(a.c.name||'').localeCompare(b.c.name||'')
+  })
   const chkBox=(cId,ck,field,checked)=>{
     const esc=ck.replace(/'/g,"\\'")
     return'<span onclick="toggleElStatus(\''+cId+'\',\''+esc+'\',\''+field+'\')" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;border:2px solid '+(checked?'#0ea5e9':'#d1d5db')+';background:'+(checked?'#0ea5e9':'white')+';cursor:pointer;flex-shrink:0">'+(checked?'<svg width="13" height="13" viewBox="0 0 12 12"><polyline points="1,6 5,10 11,2" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</span>'
   }
-  let html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">'
-  html+='<thead><tr style="background:#f8fafc">'
-  html+='<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;white-space:nowrap">入住<br>Check-in</th>'
-  html+='<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;white-space:nowrap">姓名<br>Name</th>'
-  html+='<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;white-space:nowrap">出生日期<br>Date of Birth</th>'
-  html+='<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;white-space:nowrap">邮箱<br>Email</th>'
-  html+='<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;white-space:nowrap">OW证书编号<br>OW Cert No.</th>'
-  html+='<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0">课程 Course</th>'
+  const th=s=>'<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;white-space:nowrap">'+s+'</th>'
+  let html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#f8fafc">'
+  html+=th('入住<br>Check-in')+th('姓名<br>Name')+th('出生日期<br>DOB')+th('邮筱<br>Email')+th('OW证书编号<br>OW Cert No.')+th('课程<br>Course')
   html+='<th style="padding:9px 12px;text-align:center;font-size:11px;font-weight:800;color:#0ea5e9;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;white-space:nowrap">已发<br>Sent</th>'
   html+='<th style="padding:9px 12px;text-align:center;font-size:11px;font-weight:800;color:#059669;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;white-space:nowrap">已签<br>Issued</th>'
-  html+='<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;white-space:nowrap">Cert Code<br>证书编号</th>'
+  html+=th('证书编号<br>Cert Code')
   html+='</tr></thead><tbody>'
   let lastId=''
   rows.forEach(({c,course,el:elSent,cert,code},i)=>{
-    const bg=i%2===0?'white':'#fafbfc'
+    const done=elSent&&cert
+    const bg=done?'#f0fdf4':i%2===0?'white':'#fafbfc'
+    const dim=done?'color:#9ca3af;':''
     const isNewGuest=c.id!==lastId
     lastId=c.id
-    html+='<tr style="background:'+bg+';border-bottom:1px solid #f1f5f9">'
-    // Check-in date — only show on first course row for this guest
-    html+='<td style="padding:8px 12px;color:#0284c7;font-weight:700;font-size:12px;white-space:nowrap">'+(isNewGuest?fdate(c.checkin):'')+'</td>'
-    // Name (pinyin) — only first row
-    html+='<td style="padding:8px 12px;font-weight:'+(isNewGuest?'700':'500')+';color:'+(isNewGuest?'#0f172a':'#64748b')+'">'+escHtml(c.name)+'</td>'
-    // DOB — only first row
-    html+='<td style="padding:8px 12px;font-size:12px;color:#475569;white-space:nowrap">'+(isNewGuest?(c.dob||'—'):'')+'</td>'
-    // Email — only first row
-    html+='<td style="padding:8px 12px;font-size:12px;color:#475569">'+(isNewGuest?(c.email||'—'):'')+'</td>'
-    // OW Cert No. — only first row, with copy button for quick lookup on the cert org's website
-    html+='<td style="padding:8px 12px;font-size:12px;color:#475569;white-space:nowrap">'+(isNewGuest?(c.certNumber?escHtml(c.certNumber)+' <button onclick="copyCertNoEl(this,\''+String(c.certNumber).replace(/'/g,"\\'")+'\')" style="background:none;border:1px solid #bae6fd;font-size:11px;cursor:pointer;color:#0284c7;padding:1px 6px;border-radius:5px;margin-left:4px;vertical-align:middle" title="复制 Copy">\ud83d\udccb</button>':'—'):'')+'</td>'
-    // Course name — shown as a short abbreviation; underlying full name (course) still used as the data key
-    html+='<td style="padding:8px 12px;font-size:12px;color:#374151;white-space:nowrap">'+escHtml(elCourseAbbr(course))+'</td>'
-    // eLearning checkbox
+    const td=(content,extra='')=>'<td style="padding:8px 12px;font-size:12px;'+dim+extra+'">'+content+'</td>'
+    html+='<tr style="background:'+bg+';border-bottom:1px solid #f1f5f9'+(done?';opacity:0.8':'')+'\">'
+    html+=td(isNewGuest?fdate(c.checkin):'',(done?'':'color:#0284c7;')+'font-weight:700;white-space:nowrap;')
+    html+=td(escHtml(c.name||''),'font-weight:'+(isNewGuest?'700':'400')+';'+(done?'':'color:'+(isNewGuest?'#0f172a':'#64748b')+';'))
+    html+=td(isNewGuest?(c.dob||'—'):'','white-space:nowrap;')
+    html+=td(isNewGuest?(c.email||'—'):'')
+    html+=td(isNewGuest?(c.certNumber?escHtml(c.certNumber)+' <button onclick="copyCertNoEl(this,\''+String(c.certNumber).replace(/'/g,"\\'")+'\''+')" style="background:none;border:1px solid #bae6fd;font-size:11px;cursor:pointer;color:#0284c7;padding:1px 6px;border-radius:5px;margin-left:4px;vertical-align:middle" title="复制 Copy">\U0001F4CB</button>':'—'):'','white-space:nowrap;')
+    html+=td(escHtml(elCourseAbbr(course))+(done?' ✅':''),'white-space:nowrap;')
     html+='<td style="padding:8px 12px;text-align:center">'+chkBox(c.id,course,'el',elSent)+'</td>'
-    // Certificate checkbox
     html+='<td style="padding:8px 12px;text-align:center">'+chkBox(c.id,course,'cert',cert)+'</td>'
-    // Cert code text input — filled in once the certificate/code has been issued
-    html+='<td style="padding:6px 12px"><input type="text" value="'+(code||'').replace(/"/g,'&quot;')+'" placeholder="—" onchange="updateElCode(\''+c.id+'\',\''+course.replace(/'/g,"\\'")+'\',this.value)" style="width:120px;padding:5px 8px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:12px;font-family:inherit"></td>'
+    html+='<td style="padding:6px 12px"><input type="text" class="el-code-input" data-cid="'+c.id+'" data-course="'+course.replace(/"/g,'&quot;')+'" value="'+(code||'').replace(/"/g,'&quot;')+'" placeholder="—" style="width:120px;padding:5px 8px;border:1.5px solid '+(done?'#bbf7d0':'#e2e8f0')+';border-radius:6px;font-size:12px;font-family:inherit"></td>'
     html+='</tr>'
   })
   html+='</tbody></table></div>'
   el.innerHTML=html
 }
-
+function saveElCodes(){
+  document.querySelectorAll('.el-code-input').forEach(inp=>{
+    updateElCode(inp.dataset.cid,inp.dataset.course,inp.value)
+  })
+  const btn=document.getElementById('el-save-btn')
+  if(btn){btn.textContent='✅ 已保存 Saved!';setTimeout(()=>{btn.textContent='\U0001F4BE 保存 Save'},1800)}
+}
 // ====== ROOM CALENDAR ======
 const ROOM_DEFS=[
   // Family A 双床房A ¥420
@@ -4510,7 +4510,8 @@ function initDiveLog(){
 function renderDlParticipants(){
   const el=document.getElementById('dl-participants')
   if(!el)return
-  const all=getAll().filter(c=>!c.checkedOut)
+  const diveDate=document.getElementById('dl-date')?.value||new Date().toISOString().split('T')[0]
+  const all=getAll().filter(c=>!c.checkedOut&&(c.checkin||'')<=diveDate&&(c.checkout||'')>diveDate)
   if(!all.length){el.innerHTML='<div style="font-size:12px;color:#94a3b8;padding:4px">暂无在店客人 No guests currently in-house</div>';return}
   el.innerHTML='<input type="text" id="dl-pfilter" class="form-control" placeholder="🔍 搜索姓名或房号… Search name/room" style="font-size:12px;padding:6px 8px;margin-bottom:6px" oninput="renderDlParticipantGroups()">'
     +'<div id="dl-pcount" style="font-size:11px;color:#0284c7;font-weight:700;margin-bottom:4px;min-height:14px"></div>'
@@ -4525,7 +4526,8 @@ function renderDlParticipantGroups(){
   if(!wrap)return
   const checkedBefore=new Set([...document.querySelectorAll('.dl-cb:checked')].map(cb=>cb.value))
   const q=(document.getElementById('dl-pfilter')?.value||'').trim().toLowerCase()
-  let all=getAll().filter(c=>!c.checkedOut)
+  const diveDate=document.getElementById('dl-date')?.value||new Date().toISOString().split('T')[0]
+  let all=getAll().filter(c=>!c.checkedOut&&(c.checkin||'')<=diveDate&&(c.checkout||'')>diveDate)
   if(q)all=all.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.roomNum||'').toLowerCase().includes(q))
   const groups={}
   all.forEach(c=>{
