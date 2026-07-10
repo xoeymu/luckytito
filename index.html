@@ -1220,12 +1220,13 @@ function checkStayHasHoliday(ci,co){
 }
 
 // ====== DATA ======
-function getAll(){try{return JSON.parse(localStorage.getItem('dv_c')||'[]').filter(c=>c.id!=='__savelog__')}catch{return[]}}
+function getAll(){try{return JSON.parse(localStorage.getItem('dv_c')||'[]').filter(c=>c.id!=='__savelog__'&&c.id!=='__restaurant_orders__'&&c.id!=='__restaurant_charges__')}catch{return[]}}
 function saveAll(a){localStorage.setItem('dv_c',JSON.stringify(a))}
 function getCloudData(){
   const customers=getAll()
   const log=JSON.parse(localStorage.getItem(SAVE_LOG_KEY)||'[]')
-  const extras=[{id:'__meta__',holidays:getCustomHolidays(),divelog:getDivelog(),dms:getDmList(),groups:getGroups(),wageRates:getWageRates(),wageLedger:getWageLedger(),wagePayments:getWagePayments()}]
+  const localDl=getDivelog()
+  const extras=[{id:'__meta__',holidays:getCustomHolidays(),...(localDl.length>0?{divelog:localDl}:{}),dms:getDmList(),groups:getGroups(),wageRates:getWageRates(),wageLedger:getWageLedger(),wagePayments:getWagePayments()}]
   if(log.length)extras.push({id:'__savelog__',log})
   extras.push({id:'__restaurant_charges__',charges:getRestaurantCharges()})
   return[...customers,...extras]
@@ -1322,7 +1323,7 @@ function cloudLoad(){
       const metaEntry=res.data.find(c=>c.id==='__meta__')
       if(metaEntry){
         if(Array.isArray(metaEntry.holidays))localStorage.setItem('dv_holidays',JSON.stringify(metaEntry.holidays))
-        if(Array.isArray(metaEntry.divelog))localStorage.setItem('lt_divelog',JSON.stringify(metaEntry.divelog))
+        if(Array.isArray(metaEntry.divelog)&&metaEntry.divelog.length>0)localStorage.setItem('lt_divelog',JSON.stringify(metaEntry.divelog))
         if(Array.isArray(metaEntry.dms))localStorage.setItem('lt_dms',JSON.stringify(metaEntry.dms))
         if(Array.isArray(metaEntry.groups))localStorage.setItem('lt_groups',JSON.stringify(metaEntry.groups))
         if(metaEntry.wageRates){
@@ -1341,7 +1342,7 @@ function cloudLoad(){
       const rcEntry=res.data.find(c=>c.id==='__restaurant_charges__')
       if(rcEntry&&Array.isArray(rcEntry.charges))localStorage.setItem('lt_restaurantCharges',JSON.stringify(rcEntry.charges))
       renderRestaurantCharges()
-      const cloud=res.data.filter(c=>c.id!=='__savelog__'&&c.id!=='__meta__'&&c.id!=='__restaurant_charges__'),local=getAll()
+      const cloud=res.data.filter(c=>c.id!=='__savelog__'&&c.id!=='__meta__'&&c.id!=='__restaurant_charges__'&&c.id!=='__restaurant_orders__'),local=getAll()
       // conflict-aware merge: if a record was edited locally after the last successful sync AND differs
       // from the cloud copy, keep the local edit (instead of silently overwriting it) and flag it.
       const lastSyncTs=localStorage.getItem(TK)?new Date(localStorage.getItem(TK)).getTime():0
@@ -1385,7 +1386,7 @@ function cloudSave(){
   _cloudSaveInFlight=true
   setNavSync('ing','保存中… Saving…')
   const payload=getCloudData()
-  const sentCustomers=payload.filter(c=>c.id!=='__meta__'&&c.id!=='__savelog__'&&c.id!=='__restaurant_charges__')
+  const sentCustomers=payload.filter(c=>c.id!=='__meta__'&&c.id!=='__savelog__'&&c.id!=='__restaurant_charges__'&&c.id!=='__restaurant_orders__')
   fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
     .then(()=>setTimeout(()=>{verifyCloudSave(url,sentCustomers);_cloudSaveAdvance()},1200))
     .catch(()=>{setNavSync('fail','保存失败 Save failed');_cloudSaveAdvance()})
@@ -1401,7 +1402,7 @@ function verifyCloudSave(url,sentCustomers){
   cloudFetchJSON(url,'load').then(res=>{
     let ok=false
     if(res&&res.ok&&Array.isArray(res.data)){
-      const cloudCustomers=res.data.filter(c=>c.id!=='__meta__'&&c.id!=='__savelog__'&&c.id!=='__restaurant_charges__')
+      const cloudCustomers=res.data.filter(c=>c.id!=='__meta__'&&c.id!=='__savelog__'&&c.id!=='__restaurant_charges__'&&c.id!=='__restaurant_orders__')
       ok=cloudCustomers.length===sentCustomers.length&&(!fingerprint||cloudCustomers.some(c=>c.id===fingerprint.id&&c.lastMod===fingerprint.lastMod))
     }
     if(ok){
