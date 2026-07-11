@@ -5444,4 +5444,93 @@ function renderGroups(){
 // ====== INIT ======
 document.getElementById('sch-date').value=new Date().toISOString().split('T')[0]
 addItem();initDiveCats();initTimeSelects();renderSemiCal();renderSaveLog();renderRestaurantCharges();renderRoomStays()
-if(get
+if(getSyncUrl()){setNavSync('ok','在线 Online');cloudLoad()}else setNavSync('none','离线 Offline')
+// Auto bidirectional sync every 5 minutes: pull from cloud first (picks up other devices' changes),
+// then cloudSave only if local has records not in cloud (covers failed-save retry too).
+// This replaces the old auto-cloudSave which would push stale local state over other devices' updates.
+setInterval(()=>{if(getSyncUrl())cloudLoad()},5*60*1000)
+// Restore username display after page refresh
+;(function(){const u=sessionStorage.getItem('lt_user');const el=document.getElementById('nav-username');if(u&&el)el.textContent='👤 '+u})()
+</script>
+
+<!-- BILL MODAL -->
+<div id="bill-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1500;overflow-y:auto;padding:20px" onclick="if(event.target===this)closeBillModal()">
+  <div style="background:white;border-radius:16px;width:100%;max-width:840px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div class="no-print" style="display:flex;gap:8px;padding:14px 18px;border-bottom:1px solid #f1f5f9;align-items:center;position:sticky;top:0;background:white;border-radius:16px 16px 0 0;z-index:10">
+      <span style="font-size:14px;font-weight:700;color:#0b3d5e" id="bm-guest-name">账单 Invoice</span>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm" onclick="showDiveSync()" title="从潜水日志同步 Sync dives from dive log">📋 同步潜水 Sync Dives</button>
+        <button class="btn btn-primary" onclick="generateBillImage(this)">📸 保存/复制 Save / Copy</button>
+        <button class="btn btn-secondary" onclick="printClean()">🖨️ 打印 Print</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeBillModal()">✕</button>
+      </div>
+    </div>
+    <div id="dive-sync-panel" class="no-print"></div>
+    <select id="bill-sel" style="display:none"><option value="">—</option></select>
+    <div id="bill-out"></div>
+  </div>
+</div>
+
+<!-- DIVE HISTORY MODAL -->
+<div id="dh-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:white;border-radius:16px;padding:24px;max-width:760px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div id="dh-modal-inner"></div>
+  </div>
+</div>
+
+<!-- GUEST INFO CARD MODAL -->
+<div id="gc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;overflow-y:auto;padding:20px" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:white;border-radius:16px;width:100%;max-width:960px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div class="no-print" id="gc-toolbar" style="display:flex;gap:8px;padding:14px 18px;border-bottom:1px solid #f1f5f9;align-items:center;position:sticky;top:0;background:white;border-radius:16px 16px 0 0;z-index:10"></div>
+    <div id="gc-modal-inner"></div>
+  </div>
+</div>
+
+<div id="wage-card-wrap" style="position:fixed;left:-9999px;top:0">
+  <div id="wage-card"></div>
+</div>
+
+<!-- WAGE SHEET MODAL -->
+<div id="ws-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1500;overflow-y:auto;padding:20px" onclick="if(event.target===this)closeWsModal()">
+  <div style="background:white;border-radius:16px;width:100%;max-width:760px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div class="no-print" style="display:flex;gap:8px;padding:14px 18px;border-bottom:1px solid #f1f5f9;align-items:center;position:sticky;top:0;background:white;border-radius:16px 16px 0 0;z-index:10">
+      <span style="font-size:14px;font-weight:700;color:#0b3d5e">结算单 Settlement Report</span>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn btn-secondary" onclick="window.print()">🖨️ 打印 Print</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeWsModal()">✕</button>
+      </div>
+    </div>
+    <div id="ws-modal-inner" style="padding:20px"></div>
+  </div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div id="co-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:16px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div id="co-modal-inner"></div>
+  </div>
+</div>
+
+<!-- RESTAURANT RMB RATE MODAL -->
+<div id="rr-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:16px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div id="rr-modal-inner"></div>
+  </div>
+</div>
+
+<!-- RESTAURANT CHARGE DETAIL/CONFIRMATION MODAL -->
+<div id="rc-detail-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeRcDetailModal()">
+  <div style="background:white;border-radius:16px;padding:24px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto">
+    <div id="rc-detail-modal-inner"></div>
+  </div>
+</div>
+
+<!-- DIVE LOG ENTRY DETAIL/EDIT MODAL -->
+<div id="dle-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;overflow-y:auto;padding:20px" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:white;border-radius:16px;width:100%;max-width:520px;margin:0 auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div id="dle-modal-inner"></div>
+  </div>
+</div>
+
+</body>
+</html>
