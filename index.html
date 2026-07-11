@@ -397,6 +397,7 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
     <div id="conn-info" style="font-size:12px;color:#94a3b8"></div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-secondary btn-sm" onclick="manualSyncLoad()" id="btn-manual" style="display:none">🔄 立即同步 Sync Now</button>
+      <button class="btn btn-sm" id="btn-restore-backup" onclick="showRestoreModal()" style="display:none;background:#dc2626;color:#fff;border-color:#dc2626">📦 恢复历史备份 Restore Backup</button>
     </div>
   </div>
 </div>
@@ -1257,12 +1258,70 @@ function getSyncUrl(){return localStorage.getItem(SK)||''}
 function setNavSync(s,t){document.getElementById('sync-dot').className='sync-dot dot-'+s;document.getElementById('sync-text').textContent=t}
 function openSyncModal(){document.getElementById('sync-url-input').value=getSyncUrl();document.getElementById('test-result').textContent='';refreshModalUI();document.getElementById('sync-modal').style.display='block'}
 function closeSyncModal(){document.getElementById('sync-modal').style.display='none'}
+function isAdmin(){return sessionStorage.getItem('lt_user')==='Admin'}
 function refreshModalUI(){
   const url=getSyncUrl(),ts=localStorage.getItem(TK)
   const bar=document.getElementById('modal-status-bar'),ci=document.getElementById('conn-info')
-  const bm=document.getElementById('btn-manual')
+  const bm=document.getElementById('btn-manual'),brb=document.getElementById('btn-restore-backup')
   if(url){bar.style.background='#d1fae5';bar.style.color='#065f46';bar.textContent='✅ 已连接云端 Connected to Google Drive';ci.textContent=ts?'上次同步 Last sync: '+new Date(ts).toLocaleString():'';bm.style.display='inline-flex';setNavSync('ok','在线 Online')}
   else{bar.style.background='#f1f5f9';bar.style.color='#64748b';bar.textContent='未连接 — 数据仅保存在本机 Not connected — data stored locally only';ci.textContent='';bm.style.display='none';setNavSync('none','离线 Offline')}
+  if(brb)brb.style.display=(isAdmin()&&url)?'inline-flex':'none'
+}
+function showRestoreModal(){
+  if(!isAdmin())return
+  const url=getSyncUrl()
+  if(!url){alert('请先连接云同步 Connect cloud sync first');return}
+  cloudFetchJSON(url,'listBackups',15000).then(res=>{
+    if(!res||!res.ok||!Array.isArray(res.dates)||!res.dates.length){
+      alert('未找到备份文件。请确认 Apps Script 已更新并已运行过备份。\nNo backup files found. Make sure Apps Script is updated and has run at least once.');return
+    }
+    const opts=res.dates.map(d=>`<option value="${d}">${d}</option>`).join('')
+    const ov=document.createElement('div')
+    ov.id='restore-overlay'
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center'
+    ov.innerHTML=`<div style="background:#fff;border-radius:14px;padding:28px;max-width:440px;width:92%;box-shadow:0 8px 32px rgba(0,0,0,.18)">
+      <h3 style="font-size:16px;font-weight:800;color:#dc2626;margin:0 0 10px">⚠️ 恢复历史备份 Restore Backup</h3>
+      <p style="font-size:13px;color:#374151;margin:0 0 14px">选择备份日期。<b>当前全部数据将被该备份覆盖</b>，此操作不可撤销。<br><span style="color:#6b7280">Select a date. ALL current data will be replaced — this cannot be undone.</span></p>
+      <select id="restore-date-sel" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-bottom:16px">${opts}</select>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button onclick="document.getElementById('restore-overlay').remove()" style="padding:8px 16px;border-radius:8px;border:1px solid #d1d5db;background:#f9fafb;cursor:pointer;font-size:13px">取消 Cancel</button>
+        <button onclick="doRestoreBackup()" style="padding:8px 16px;border-radius:8px;border:none;background:#dc2626;color:#fff;cursor:pointer;font-size:13px;font-weight:700">确认恢复 Confirm Restore</button>
+      </div>
+    </div>`
+    document.body.appendChild(ov)
+  })
+}
+function doRestoreBackup(){
+  const sel=document.getElementById('restore-date-sel')
+  if(!sel)return
+  const date=sel.value
+  if(!confirm('确定恢复 '+date+' 的备份？\n当前所有客户及潜水数据将被替换！\n\nRestore backup from '+date+'?\nALL current data will be replaced!'))return
+  const url=getSyncUrl()
+  const ov=document.getElementById('restore-overlay')
+  if(ov)ov.querySelector('button[onclick^="doRestore"]').textContent='加载中… Loading…'
+  cloudFetchJSON(url,'loadBackup&date='+date,20000).then(res=>{
+    if(!res||!res.ok||!Array.isArray(res.data)){
+      alert('备份加载失败 Failed to load backup: '+(res&&res.error||'unknown error'));
+      if(ov)ov.querySelector('button[onclick^="doRestore"]').textContent='确认恢复 Confirm Restore';return
+    }
+    const data=res.data
+    const meta=data.find(c=>c.id==='__meta__')
+    if(meta){
+      if(Array.isArray(meta.holidays))localStorage.setItem('dv_holidays',JSON.stringify(meta.holidays))
+      if(Array.isArray(meta.divelog)&&meta.divelog.length>0){localStorage.setItem('lt_divelog',JSON.stringify(meta.divelog));localStorage.setItem('lt_divelog_bak',JSON.stringify(meta.divelog))}
+      if(Array.isArray(meta.dms))localStorage.setItem('lt_dms',JSON.stringify(meta.dms))
+      if(Array.isArray(meta.groups))localStorage.setItem('lt_groups',JSON.stringify(meta.groups))
+      if(meta.wageRates)localStorage.setItem('lt_wageRates',JSON.stringify(meta.wageRates))
+      if(meta.wageLedger)localStorage.setItem('lt_wageLedger',JSON.stringify(meta.wageLedger))
+      if(meta.wagePayments)localStorage.setItem('lt_wagePayments',JSON.stringify(meta.wagePayments))
+    }
+    const customers=data.filter(c=>!['__meta__','__savelog__','__restaurant_charges__','__restaurant_orders__'].includes(c.id))
+    saveAll(customers)
+    cloudSave()
+    document.getElementById('restore-overlay')?.remove()
+    alert('✅ 已恢复 '+customers.length+' 条客户记录（'+date+'），正在同步至云端。\nRestored '+customers.length+' guest records from '+date+' and syncing to cloud.')
+    renderList()
+  })
 }
 function copyGsCode(){const ta=document.getElementById('gs-code');ta.select();document.execCommand('copy');const tip=document.getElementById('copy-tip');tip.style.display='inline';setTimeout(()=>tip.style.display='none',2200)}
 // ---- Shared cloud-fetch helper ----
