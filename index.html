@@ -4311,7 +4311,7 @@ function renderElearning(){
     html+=td(escHtml(c.name||''),'font-weight:'+(isNewGuest?'700':'400')+';'+(done?'':'color:'+(isNewGuest?'#0f172a':'#64748b')+';'))
     html+=td(isNewGuest?(c.dob||'—'):'','white-space:nowrap;')
     html+=td(isNewGuest?(c.email||'—'):'')
-    html+=td(isNewGuest?(c.certNumber?escHtml(c.certNumber)+' <button onclick="copyCertNoEl(this,\''+String(c.certNumber).replace(/'/g,"\\'")+'\''+')" style="background:none;border:1px solid #bae6fd;font-size:11px;cursor:pointer;color:#0284c7;padding:1px 6px;border-radius:5px;margin-left:4px;vertical-align:middle" title="复制 Copy">\U0001F4CB</button>':'—'):'','white-space:nowrap;')
+    html+=td(isNewGuest?(c.certNumber?escHtml(c.certNumber)+' <button onclick="copyCertNoEl(this,\''+String(c.certNumber).replace(/'/g,"\\'")+'\''+')" style="background:none;border:1px solid #bae6fd;font-size:11px;cursor:pointer;color:#0284c7;padding:1px 6px;border-radius:5px;margin-left:4px;vertical-align:middle" title="复制 Copy">📋</button>':'—'):'','white-space:nowrap;')
     html+=td(escHtml(elCourseAbbr(course))+(done?' ✅':''),'white-space:nowrap;')
     html+='<td style="padding:8px 12px;text-align:center">'+chkBox(c.id,course,'el',elSent)+'</td>'
     html+='<td style="padding:8px 12px;text-align:center">'+chkBox(c.id,course,'cert',cert)+'</td>'
