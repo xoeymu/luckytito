@@ -438,12 +438,32 @@ function pushChargeToCloud(record){
   fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
     if(!res||!res.ok||!Array.isArray(res.data))throw new Error('load failed')
     const data=res.data
+    // 1. push simplified charge summary (used by index.html for billing)
     let rc=data.find(c=>c.id==='__restaurant_charges__')
     if(!rc){rc={id:'__restaurant_charges__',charges:[]};data.push(rc)}
     if(!Array.isArray(rc.charges))rc.charges=[]
     rc.charges.push(charge)
+    // 2. sync full history to cloud (keep last 90 days) for backup/recovery
+    const cutoff=new Date(Date.now()-90*24*60*60*1000).toISOString()
+    const fullHist=loadHistory().filter(r=>r.paidAt>=cutoff)
+    let rh=data.find(c=>c.id==='__restaurant_history__')
+    if(!rh){rh={id:'__restaurant_history__',history:[]};data.push(rh)}
+    rh.history=fullHist
     return fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)})
   }).catch(()=>{/* offline or unreachable — local checkout/receipt already succeeded, just skip the push */})
+}
+// Restore full history from cloud if local is empty (device switch / localStorage cleared)
+function restoreHistoryFromCloud(){
+  const url=getSyncUrl();if(!url)return
+  if(loadHistory().length>0)return // local has data, no need to restore
+  fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
+    if(!res||!res.ok||!Array.isArray(res.data))return
+    const rh=res.data.find(c=>c.id==='__restaurant_history__')
+    if(rh&&Array.isArray(rh.history)&&rh.history.length>0){
+      saveHistory(rh.history)
+      console.log('✅ 已从云端恢复流水记录 '+rh.history.length+' 条')
+    }
+  }).catch(()=>{})
 }
 // ---- Tableside ordering bridge: phone uploads an in-progress order, front desk pulls it in ----
 // __restaurant_orders__.orders is treated as a pending queue only — front desk clears an entry
@@ -898,6 +918,7 @@ function init(){
   setInterval(tickClock,30000)
   pollForPendingOrders()
   setInterval(pollForPendingOrders,10000)
+  restoreHistoryFromCloud()
 }
 init()
 </script>

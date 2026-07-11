@@ -1381,6 +1381,7 @@ function cloudLoad(){
       // apply synced holidays/divelog/instructor-list/groups directly (bypass save*() wrappers to avoid re-triggering cloudSave in a loop)
       const metaEntry=res.data.find(c=>c.id==='__meta__')
       if(metaEntry){
+        const metaSyncTs=localStorage.getItem(TK)?new Date(localStorage.getItem(TK)).getTime():0
         if(Array.isArray(metaEntry.holidays))localStorage.setItem('dv_holidays',JSON.stringify(metaEntry.holidays))
         if(Array.isArray(metaEntry.divelog)&&metaEntry.divelog.length>0){localStorage.setItem('lt_divelog',JSON.stringify(metaEntry.divelog));localStorage.setItem('lt_divelog_bak',JSON.stringify(metaEntry.divelog))}
         if(Array.isArray(metaEntry.dms))localStorage.setItem('lt_dms',JSON.stringify(metaEntry.dms))
@@ -1392,13 +1393,14 @@ function cloudLoad(){
           // copy (looks like "rates reset to default" to the user). Only accept the cloud copy if
           // there's no pending unconfirmed local edit newer than the last confirmed sync.
           const wrTs=parseInt(localStorage.getItem('lt_wageRates_ts')||'0',10)
-          const lastSync=localStorage.getItem(TK)?new Date(localStorage.getItem(TK)).getTime():0
-          if(wrTs<=lastSync)localStorage.setItem('lt_wageRates',JSON.stringify(metaEntry.wageRates))
+          if(wrTs<=metaSyncTs)localStorage.setItem('lt_wageRates',JSON.stringify(metaEntry.wageRates))
         }
-        if(metaEntry.wageLedger)localStorage.setItem('lt_wageLedger',JSON.stringify(metaEntry.wageLedger))
-        if(Array.isArray(metaEntry.wagePayments))localStorage.setItem('lt_wagePayments',JSON.stringify(metaEntry.wagePayments))
+        if(metaEntry.wageLedger){const wlTs=parseInt(localStorage.getItem('lt_wageLedger_ts')||'0',10);if(wlTs<=metaSyncTs)localStorage.setItem('lt_wageLedger',JSON.stringify(metaEntry.wageLedger))}
+        if(Array.isArray(metaEntry.wagePayments)){const wpTs=parseInt(localStorage.getItem('lt_wagePayments_ts')||'0',10);if(wpTs<=metaSyncTs)localStorage.setItem('lt_wagePayments',JSON.stringify(metaEntry.wagePayments))}
       }
+      const localRcLen=getRestaurantCharges().length
       const rcEntry=res.data.find(c=>c.id==='__restaurant_charges__')
+      const cloudRcLen=rcEntry&&Array.isArray(rcEntry.charges)?rcEntry.charges.length:0
       if(rcEntry&&Array.isArray(rcEntry.charges))localStorage.setItem('lt_restaurantCharges',JSON.stringify(rcEntry.charges))
       renderRestaurantCharges()
       const cloud=res.data.filter(c=>c.id!=='__savelog__'&&c.id!=='__meta__'&&c.id!=='__restaurant_charges__'&&c.id!=='__restaurant_orders__'),local=getAll()
@@ -1425,7 +1427,7 @@ function cloudLoad(){
       const localOnlyCount=merged.filter(r=>!cloudMap.has(r.id)).length
       const cloudDlLen=(metaEntry&&Array.isArray(metaEntry.divelog))?metaEntry.divelog.length:0
       const localDlLen=getDivelog().length
-      const needsPush=conflicts.length>0||localOnlyCount>0||(localDlLen>0&&localDlLen>cloudDlLen)
+      const needsPush=conflicts.length>0||localOnlyCount>0||(localDlLen>0&&localDlLen>cloudDlLen)||(localRcLen>cloudRcLen)
       if(needsPush){
         if(conflicts.length)alert('⚠️ 以下客户资料在本机有尚未同步的修改，云端可能有其他设备的更新——已保留本机版本并重新上传，请核对：\n'+conflicts.join('、'))
         cloudSave()
@@ -1451,6 +1453,8 @@ function cloudSave(){
   _cloudSaveInFlight=true
   setNavSync('ing','保存中… Saving…')
   const payload=getCloudData()
+  const metaInPayload=payload.find(c=>c.id==='__meta__')
+  if(metaInPayload){metaInPayload.metaTs=Date.now();_pendingMetaTs=metaInPayload.metaTs}
   const sentCustomers=payload.filter(c=>c.id!=='__meta__'&&c.id!=='__savelog__'&&c.id!=='__restaurant_charges__'&&c.id!=='__restaurant_orders__')
   fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
     .then(()=>setTimeout(()=>{verifyCloudSave(url,sentCustomers);_cloudSaveAdvance()},1200))
@@ -1465,17 +1469,19 @@ function _cloudSaveAdvance(){
 // On mismatch, retry cloudSave up to 3 times with increasing delay so transient server lag
 // (Apps Script cold-start, race with restaurant.html) doesn't silently lose data.
 // _csvRetries is module-level so the counter survives across the new cloudSave() call each retry triggers.
-let _csvRetries=0
+let _csvRetries=0,_pendingMetaTs=0
 function verifyCloudSave(url,sentCustomers){
   const fingerprint=sentCustomers.reduce((a,c)=>(c.lastMod||0)>(a?.lastMod||0)?c:a,null)
   cloudFetchJSON(url,'load').then(res=>{
     let ok=false
     if(res&&res.ok&&Array.isArray(res.data)){
       const cloudCustomers=res.data.filter(c=>c.id!=='__meta__'&&c.id!=='__savelog__'&&c.id!=='__restaurant_charges__'&&c.id!=='__restaurant_orders__')
-      ok=cloudCustomers.length===sentCustomers.length&&(!fingerprint||cloudCustomers.some(c=>c.id===fingerprint.id&&c.lastMod===fingerprint.lastMod))
+      const cloudMeta=res.data.find(c=>c.id==='__meta__')
+      const metaOk=!_pendingMetaTs||(cloudMeta&&cloudMeta.metaTs===_pendingMetaTs)
+      ok=cloudCustomers.length===sentCustomers.length&&(!fingerprint||cloudCustomers.some(c=>c.id===fingerprint.id&&c.lastMod===fingerprint.lastMod))&&metaOk
     }
     if(ok){
-      _csvRetries=0
+      _csvRetries=0;_pendingMetaTs=0
       localStorage.setItem(TK,new Date().toISOString())
       setNavSync('ok','已同步 Synced '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));refreshModalUI()
     }else if(_csvRetries<3){
@@ -4326,7 +4332,7 @@ function saveElCodes(){
     updateElCode(inp.dataset.cid,inp.dataset.course,inp.value)
   })
   const btn=document.getElementById('el-save-btn')
-  if(btn){btn.textContent='✅ 已保存 Saved!';setTimeout(()=>{btn.textContent='\U0001F4BE 保存 Save'},1800)}
+  if(btn){btn.textContent='✅ 已保存 Saved!';setTimeout(()=>{btn.textContent='💾 保存 Save'},1800)}
 }
 // ====== ROOM CALENDAR ======
 const ROOM_DEFS=[
@@ -5038,10 +5044,10 @@ function computeInstructorDiveLines(name,inRange){
 }
 function getWageLaunchDate(){let d=localStorage.getItem('lt_wageLaunch');if(!d){d=new Date().toISOString().split('T')[0];localStorage.setItem('lt_wageLaunch',d)}return d}
 function getWageLedger(){try{return JSON.parse(localStorage.getItem('lt_wageLedger')||'{}')}catch{return{}}}
-function saveWageLedger(l){localStorage.setItem('lt_wageLedger',JSON.stringify(l));cloudSave()}
+function saveWageLedger(l){localStorage.setItem('lt_wageLedger',JSON.stringify(l));localStorage.setItem('lt_wageLedger_ts',Date.now().toString());cloudSave()}
 function getWageCutoff(name){const l=getWageLedger();return(l[name]&&l[name].paidThrough)||getWageLaunchDate()}
 function getWagePayments(){try{return JSON.parse(localStorage.getItem('lt_wagePayments')||'[]')}catch{return[]}}
-function saveWagePayments(p){localStorage.setItem('lt_wagePayments',JSON.stringify(p));cloudSave()}
+function saveWagePayments(p){localStorage.setItem('lt_wagePayments',JSON.stringify(p));localStorage.setItem('lt_wagePayments_ts',Date.now().toString());cloudSave()}
 function toggleWageRates(){const el=document.getElementById('wage-rates');if(!el)return;el.style.display=el.style.display==='none'?'block':'none'}
 function wageCurrency(role){return role==='dm'?'₱':'¥'}
 function computeInstructorPending(name){
