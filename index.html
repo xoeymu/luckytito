@@ -1361,8 +1361,14 @@ function cloudLoad(){
       saveAll(merged)
       localStorage.setItem(TK,new Date().toISOString())
       setNavSync('ok','已同步 Synced '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));refreshModalUI()
-      if(conflicts.length){
-        alert('⚠️ 以下客户资料在本机有尚未同步的修改，云端可能有其他设备的更新——已保留本机版本并重新上传，请核对：\n'+conflicts.join('、'))
+      // Push back to cloud if: (a) conflicts (local wins) OR (b) local has records not in cloud
+      // (covers the case where a previous cloudSave silently failed and data is stuck in local only)
+      const localOnlyCount=merged.filter(r=>!cloudMap.has(r.id)).length
+      const cloudDlLen=(metaEntry&&Array.isArray(metaEntry.divelog))?metaEntry.divelog.length:0
+      const localDlLen=getDivelog().length
+      const needsPush=conflicts.length>0||localOnlyCount>0||(localDlLen>0&&localDlLen>cloudDlLen)
+      if(needsPush){
+        if(conflicts.length)alert('⚠️ 以下客户资料在本机有尚未同步的修改，云端可能有其他设备的更新——已保留本机版本并重新上传，请核对：\n'+conflicts.join('、'))
         cloudSave()
       }
       const activeEl=document.querySelector('.page.active')
@@ -1397,6 +1403,10 @@ function _cloudSaveAdvance(){
 }
 // no-cors POST gives no real response, so we can't tell from the request alone whether the
 // save actually landed — confirm it by reading the data back and checking it matches what we sent.
+// On mismatch, retry cloudSave up to 3 times with increasing delay so transient server lag
+// (Apps Script cold-start, race with restaurant.html) doesn't silently lose data.
+// _csvRetries is module-level so the counter survives across the new cloudSave() call each retry triggers.
+let _csvRetries=0
 function verifyCloudSave(url,sentCustomers){
   const fingerprint=sentCustomers.reduce((a,c)=>(c.lastMod||0)>(a?.lastMod||0)?c:a,null)
   cloudFetchJSON(url,'load').then(res=>{
@@ -1406,9 +1416,18 @@ function verifyCloudSave(url,sentCustomers){
       ok=cloudCustomers.length===sentCustomers.length&&(!fingerprint||cloudCustomers.some(c=>c.id===fingerprint.id&&c.lastMod===fingerprint.lastMod))
     }
     if(ok){
+      _csvRetries=0
       localStorage.setItem(TK,new Date().toISOString())
       setNavSync('ok','已同步 Synced '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));refreshModalUI()
-    }else setNavSync('fail','⚠️ 保存未确认 Save unconfirmed')
+    }else if(_csvRetries<3){
+      _csvRetries++
+      const delay=_csvRetries*3000
+      setNavSync('ing','重试保存 ('+_csvRetries+'/3)… Retrying…')
+      setTimeout(()=>cloudSave(),delay)
+    }else{
+      _csvRetries=0
+      setNavSync('fail','⚠️ 保存未确认 Save unconfirmed — 请刷新页面 Please refresh')
+    }
   })
 }
 
@@ -4130,7 +4149,7 @@ function generateBookingImage(btn){
 function isCourseItem(name){
   if(!name)return false
   const n=name.toUpperCase()
-  if(/DISCOUNT|折扣|RENTAL|租赁|\/天|FD\s*住店|FUNDIVE|STAY|附加费|SURCHARGE|REGULAR\s+NIGHT|平日夜潜|REGULAR\s+FUN|平日欢乐|节日欢乐|HOLIDAY\s+FUN/.test(n))return false
+  if(/DISCOUNT|折扣|RENTAL|租赁|\/天|FD\s*住店|FUNDIVE|STAY|附加费|SURCHARGE|NIGHT\s*DIVE|夜潜|REGULAR\s+NIGHT|平日夜潜|REGULAR\s+FUN|平日欢乐|节日欢乐|HOLIDAY\s+FUN/.test(n))return false
   return /PADI|AIDA|SSI|SDI|NAUI|\bOW\b|AOW|\bDSD\b|\bEFR\b|RESCUE|FREEDIVE|FREE\s*DIVE|自由潜|CCR|REACTIVATE|再激活|DEEP\s*DIVE|NITROX|ENRICHED|SIDEMOUNT|BUOYANCY|DRIFT|NAVIGATION|PEAK|SEARCH|WRECK|PHOTO|ADVANCED|OPEN\s*WATER/.test(n)
 }
 // FD (Fun Dive) package items — e.g. "FD 住店单人 1-8潜" — get their own instructor/date/classmate
@@ -5360,8 +5379,10 @@ function renderGroups(){
 document.getElementById('sch-date').value=new Date().toISOString().split('T')[0]
 addItem();initDiveCats();initTimeSelects();renderSemiCal();renderSaveLog();renderRestaurantCharges();renderRoomStays()
 if(getSyncUrl()){setNavSync('ok','在线 Online');cloudLoad()}else setNavSync('none','离线 Offline')
-// Auto-sync every 5 minutes
-setInterval(()=>{if(getSyncUrl())cloudSave()},5*60*1000)
+// Auto bidirectional sync every 5 minutes: pull from cloud first (picks up other devices' changes),
+// then cloudSave only if local has records not in cloud (covers failed-save retry too).
+// This replaces the old auto-cloudSave which would push stale local state over other devices' updates.
+setInterval(()=>{if(getSyncUrl())cloudLoad()},5*60*1000)
 // Restore username display after page refresh
 ;(function(){const u=sessionStorage.getItem('lt_user');const el=document.getElementById('nav-username');if(u&&el)el.textContent='👤 '+u})()
 </script>
