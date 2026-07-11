@@ -165,7 +165,7 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
 .cm{font-size:12px;color:#94a3b8;display:flex;gap:8px;flex-wrap:wrap}
 .ca{display:flex;gap:6px;flex-shrink:0}
 .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700}
-.bp{background:#d1fae5;color:#065f46}.bd{background:#fef3c7;color:#92400e}.bu{background:#fee2e2;color:#991b1b}
+.bp{background:#d1fae5;color:#065f46}.bd{background:#fef3c7;color:#92400e}.bu{background:#fee2e2;color:#991b1b}.bo{background:#e2e8f0;color:#475569}
 .badge-no{background:#f1f5f9;color:#64748b}
 .sb{background:white;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 14px;width:100%;font-size:14px;font-family:inherit;outline:none;margin-bottom:14px;transition:border-color .15s}
 .sb:focus{border-color:#0ea5e9;box-shadow:0 0 0 3px rgba(14,165,233,.12)}
@@ -3520,14 +3520,15 @@ function renderList(q){
   const bc={已付全款:'bp',已付定金:'bd',未付:'bu'}
   const payLbl={'已付全款':'已付全款 Paid','已付定金':'已付定金 Deposit Paid','未付':'未付 Unpaid'}
   el.innerHTML=f.map(c=>{
-    const tot=calcTotal(c);const b=bc[c.payStatus]||'bu'
+    const tot=calcTotal(c)
     const isOut=!!c.checkedOut
+    const b=isOut?'bo':(bc[c.payStatus]||'bu')
     const isSel=_batchSelected.has(c.id)
     const dc=getDiveCount(c.id)
     const meta=[c.custNo?'🔢 '+escHtml(c.custNo):'',c.date?'📅 '+escHtml(c.date):'',c.location?'📍 '+escHtml(c.location):'',c.instructor?'👨‍🏫 '+escHtml(c.instructor):'',c.roomNum?'🏨 '+escHtml(c.roomNum)+(c.roomType?' ('+escHtml(c.roomType.split(' ')[0])+')':''):'',tot>0?'💰 ¥'+tot.toFixed(0):'',dc>0?'🤿 '+dc+(dc===1?' dive':' dives'):''].filter(Boolean)
     const coBtn='<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;font-weight:600;color:'+(isOut?'#16a34a':'#64748b')+';white-space:nowrap"><input type="checkbox" '+(isOut?'checked':'')+' onchange="toggleCheckedOut(\''+c.id+'\',this)" style="width:14px;height:14px;cursor:pointer;accent-color:#16a34a"> 已退房 Checked Out</label>'
     const batchCb=_batchMode?'<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;cursor:pointer;margin-right:4px"><input type="checkbox" '+(isSel?'checked':'')+' onchange="batchToggle(\''+c.id+'\')" style="width:16px;height:16px;cursor:pointer;accent-color:#0284c7"></label>':''
-    return'<div class="cc" onclick="'+(_batchMode?'':'editC(\''+c.id+'\')')+'\" style="'+(isOut?'opacity:0.5;':'')+(isSel?'background:#e0f2fe;border-color:#0284c7;':'')+'"><div style="display:flex;align-items:center">'+batchCb+'<div class="ava" style="'+(isOut?'background:#94a3b8':'')+'flex-shrink:0">'+escHtml((c.name||'?').charAt(0))+'</div></div><div class="ci"><div class="cn">'+escHtml(c.name)+' <span class="badge '+b+'">'+(payLbl[c.payStatus]||'未付 Unpaid')+'</span>'+(isOut?'<span class="tag" style="font-size:10px;background:#dcfce7;color:#16a34a">✓ 已退房 Checked Out</span>':'')+(c.isHoliday==='是'?'<span class="tag th" style="font-size:10px">节假日 Holiday</span>':'')+'</div><div class="cm">'+meta.map(m=>'<span>'+m+'</span>').join('')+'</div></div><div class="ca" onclick="event.stopPropagation()">'+(!_batchMode?coBtn:'')+'<button class="btn btn-secondary btn-sm" onclick="goBill(\''+c.id+'\')">账单 Bill</button>'+'<button class="btn btn-secondary btn-sm" onclick="showDiveHistory(\''+c.id+'\')" title="潜水记录 Dive History">🤿 潜水 Dives</button>'+'<button class="btn btn-secondary btn-sm" onclick="showGuestCard(\''+c.id+'\')" title="客人登记卡 Guest Registration Card">📋 卡片 Card</button>'+(!_batchMode?'<button class="btn btn-danger btn-sm" onclick="delC(\''+c.id+'\')">删除 Delete</button>':'')+'</div></div>'
+    return'<div class="cc" onclick="'+(_batchMode?'':'editC(\''+c.id+'\')')+'\" style="'+(isOut?'opacity:0.5;':'')+(isSel?'background:#e0f2fe;border-color:#0284c7;':'')+'"><div style="display:flex;align-items:center">'+batchCb+'<div class="ava" style="'+(isOut?'background:#94a3b8':'')+'flex-shrink:0">'+escHtml((c.name||'?').charAt(0))+'</div></div><div class="ci"><div class="cn">'+escHtml(c.name)+' <span class="badge '+b+'">'+(isOut?'已结账 Settled':(payLbl[c.payStatus]||'未付 Unpaid'))+'</span>'+(isOut?'<span class="tag" style="font-size:10px;background:#dcfce7;color:#16a34a">✓ 已退房 Checked Out</span>':'')+(c.isHoliday==='是'?'<span class="tag th" style="font-size:10px">节假日 Holiday</span>':'')+'</div><div class="cm">'+meta.map(m=>'<span>'+m+'</span>').join('')+'</div></div><div class="ca" onclick="event.stopPropagation()">'+(!_batchMode?coBtn:'')+'<button class="btn btn-secondary btn-sm" onclick="goBill(\''+c.id+'\')">账单 Bill</button>'+'<button class="btn btn-secondary btn-sm" onclick="showDiveHistory(\''+c.id+'\')" title="潜水记录 Dive History">🤿 潜水 Dives</button>'+'<button class="btn btn-secondary btn-sm" onclick="showGuestCard(\''+c.id+'\')" title="客人登记卡 Guest Registration Card">📋 卡片 Card</button>'+(!_batchMode?'<button class="btn btn-danger btn-sm" onclick="delC(\''+c.id+'\')">删除 Delete</button>':'')+'</div></div>'
   }).join('')
 }
 function editC(id){const c=getAll().find(x=>x.id===id);if(!c)return;fillForm(c);switchTab('form');window.scrollTo(0,0)}
@@ -5443,86 +5444,4 @@ function renderGroups(){
 // ====== INIT ======
 document.getElementById('sch-date').value=new Date().toISOString().split('T')[0]
 addItem();initDiveCats();initTimeSelects();renderSemiCal();renderSaveLog();renderRestaurantCharges();renderRoomStays()
-if(getSyncUrl()){setNavSync('ok','在线 Online');cloudLoad()}else setNavSync('none','离线 Offline')
-// Auto bidirectional sync every 5 minutes: pull from cloud first (picks up other devices' changes),
-// then cloudSave only if local has records not in cloud (covers failed-save retry too).
-// This replaces the old auto-cloudSave which would push stale local state over other devices' updates.
-setInterval(()=>{if(getSyncUrl())cloudLoad()},5*60*1000)
-// Restore username display after page refresh
-;(function(){const u=sessionStorage.getItem('lt_user');const el=document.getElementById('nav-username');if(u&&el)el.textContent='👤 '+u})()
-</script>
-
-<!-- BILL MODAL -->
-<div id="bill-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1500;overflow-y:auto;padding:20px" onclick="if(event.target===this)closeBillModal()">
-  <div style="background:white;border-radius:16px;width:100%;max-width:840px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-    <div class="no-print" style="display:flex;gap:8px;padding:14px 18px;border-bottom:1px solid #f1f5f9;align-items:center;position:sticky;top:0;background:white;border-radius:16px 16px 0 0;z-index:10">
-      <span style="font-size:14px;font-weight:700;color:#0b3d5e" id="bm-guest-name">账单 Invoice</span>
-      <div style="margin-left:auto;display:flex;gap:8px">
-        <button class="btn btn-secondary btn-sm" onclick="showDiveSync()" title="从潜水日志同步 Sync dives from dive log">📋 同步潜水 Sync Dives</button>
-        <button class="btn btn-primary" onclick="generateBillImage(this)">📸 保存/复制 Save / Copy</button>
-        <button class="btn btn-secondary" onclick="printClean()">🖨️ 打印 Print</button>
-        <button class="btn btn-ghost btn-sm" onclick="closeBillModal()">✕</button>
-      </div>
-    </div>
-    <div id="dive-sync-panel" class="no-print"></div>
-    <select id="bill-sel" style="display:none"><option value="">—</option></select>
-    <div id="bill-out"></div>
-  </div>
-</div>
-
-<!-- DIVE HISTORY MODAL -->
-<div id="dh-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:white;border-radius:16px;padding:24px;max-width:760px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-    <div id="dh-modal-inner"></div>
-  </div>
-</div>
-
-<!-- GUEST INFO CARD MODAL -->
-<div id="gc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;overflow-y:auto;padding:20px" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:white;border-radius:16px;width:100%;max-width:960px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-    <div class="no-print" id="gc-toolbar" style="display:flex;gap:8px;padding:14px 18px;border-bottom:1px solid #f1f5f9;align-items:center;position:sticky;top:0;background:white;border-radius:16px 16px 0 0;z-index:10"></div>
-    <div id="gc-modal-inner"></div>
-  </div>
-</div>
-
-<!-- WAGE SETTLEMENT CAPTURE (hidden, used only for html2canvas) -->
-<div id="wage-card-wrap" style="position:fixed;left:-9999px;top:0">
-  <div id="wage-card"></div>
-</div>
-
-<!-- WAGE SETTLEMENT REPORT MODAL -->
-<div id="ws-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;overflow-y:auto;padding:20px" onclick="if(event.target===this)closeWsModal()">
-  <div style="background:white;border-radius:16px;width:100%;max-width:640px;margin:0 auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-    <div id="ws-modal-inner"></div>
-  </div>
-</div>
-
-<!-- CHECKOUT MODAL -->
-<div id="co-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px">
-  <div style="background:white;border-radius:16px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-    <div id="co-modal-inner"></div>
-  </div>
-</div>
-
-<!-- RESTAURANT RMB RATE MODAL -->
-<div id="rr-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px">
-  <div style="background:white;border-radius:16px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-    <div id="rr-modal-inner"></div>
-  </div>
-</div>
-
-<!-- RESTAURANT CHARGE DETAIL/CONFIRMATION MODAL -->
-<div id="rc-detail-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeRcDetailModal()">
-  <div style="background:white;border-radius:16px;padding:24px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto">
-    <div id="rc-detail-modal-inner"></div>
-  </div>
-</div>
-
-<!-- DIVE LOG ENTRY DETAIL/EDIT MODAL -->
-<div id="dle-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;overflow-y:auto;padding:20px" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:white;border-radius:16px;width:100%;max-width:520px;margin:0 auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-    <div id="dle-modal-inner"></div>
-  </div>
-</div>
-</body>
-</html>
+if(get
