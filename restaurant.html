@@ -62,7 +62,6 @@ header button:hover{background:rgba(255,255,255,.22)}
 .order-line .ol-info{flex:1;min-width:0}
 .order-line .ol-name{font-size:12.5px;font-weight:700;color:#1e293b}
 .order-line .ol-price{font-size:11px;color:var(--slate-lt)}
-.order-line .ol-en{font-size:10px;color:var(--slate-lt)}
 .order-line .ol-qty{display:flex;align-items:center;gap:4px}
 .order-line .ol-qty button{width:22px;height:22px;border-radius:6px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:13px;line-height:1}
 .order-line .ol-sub{font-size:13px;font-weight:800;color:var(--navy);width:62px;text-align:right}
@@ -83,60 +82,23 @@ header button:hover{background:rgba(255,255,255,.22)}
 .hist-row .h-meta{color:var(--slate-lt);font-size:11px}
 .hist-total-bar{background:var(--bg);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;font-weight:800;color:var(--navy);margin-bottom:10px}
 .receipt-print{display:none}
-.kitchen-print{display:none}
 @media print{
-  /* Printer is a 58mm-roll thermal unit with a 48mm printable area (confirmed from the
-     driver's paper-size options, which only ever list 58(48)) — NOT 80mm. The box width
-     below is set to the full 58mm roll, with 5mm side padding eating into the non-printable
-     margins so the actual content area lands on 48mm, matching the hardware. */
-  @page{size:58mm auto;margin:0}
-  html,body{width:58mm;margin:0;padding:0}
+  @page{size:80mm auto;margin:0}
+  html,body{width:80mm;margin:0;padding:0}
   body *{visibility:hidden}
   .receipt-print, .receipt-print *{visibility:visible}
-  .receipt-print{display:block;position:absolute;left:0;top:0;width:58mm;padding:3mm 5mm;font-family:'Courier New',monospace;color:#000;font-size:15px;box-sizing:border-box}
-  .receipt-print .r-title{text-align:center;font-weight:800;font-size:17px;margin-bottom:2mm}
-  .receipt-print .r-sub{text-align:center;font-size:12px;margin-bottom:2mm}
+  .receipt-print{display:block;position:absolute;left:0;top:0;width:80mm;padding:3mm;font-family:'Courier New',monospace;color:#000;font-size:12px;box-sizing:border-box}
+  .receipt-print .r-title{text-align:center;font-weight:800;font-size:15px;margin-bottom:2mm}
+  .receipt-print .r-sub{text-align:center;font-size:10px;margin-bottom:2mm}
   .receipt-print hr{border:none;border-top:1px dashed #000;margin:2mm 0}
-  .receipt-print .r-line{margin:2mm 0}
-  .receipt-print .r-line .rl-name{font-weight:700}
-  .receipt-print .r-line .rl-en{font-size:.85em;margin-top:.5mm}
-  .receipt-print .r-line .rl-qp{display:flex;justify-content:space-between;margin-top:1mm}
-  .receipt-print .r-total{display:flex;justify-content:space-between;font-weight:800;font-size:18px;margin-top:2mm}
-  .receipt-print .r-pay{text-align:center;font-weight:800;font-size:15px;margin-top:2mm;border:1px solid #000;padding:1.5mm}
-  .receipt-print .r-sign{margin-top:8mm;text-align:left}
-  .receipt-print .r-sign-line{border-top:1px solid #000;margin-bottom:1mm;width:55%}
-  .receipt-print .r-sign-label{text-align:left;font-size:12px}
-  .receipt-print .r-foot{text-align:center;font-size:13px;margin-top:3mm}
-  body.print-kitchen .receipt-print{display:none!important}
-  body:not(.print-kitchen) .kitchen-print{display:none!important}
-  .kitchen-print, .kitchen-print *{visibility:visible}
-  .kitchen-print{display:block;position:absolute;left:0;top:0;width:58mm;padding:3mm 5mm;font-family:'Courier New',monospace;color:#000;font-size:22px;box-sizing:border-box}
-  .kitchen-print .k-title{text-align:center;font-weight:800;font-size:32px;margin-bottom:2mm}
-  .kitchen-print .k-sub{text-align:center;font-size:22px;margin-bottom:1mm}
-  .kitchen-print hr{border:none;border-top:1px dashed #000;margin:2mm 0}
-  .kitchen-print .k-line{display:flex;gap:5px;margin:1.8mm 0;font-size:28px;font-weight:700}
-  .kitchen-print .kl-code{width:52px;flex-shrink:0}
-  .kitchen-print .kl-name{flex:1}
-  .kitchen-print .kl-qty{flex-shrink:0}
-}
-.mobile-tabbar{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);z-index:60;padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px))}
-.mobile-tabbar button{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--slate);padding:6px 0;position:relative;font-weight:700;cursor:pointer}
-.mobile-tabbar button .mt-icon{font-size:18px}
-.mobile-tabbar button.active{color:var(--blue)}
-.mobile-tabbar .mt-badge{position:absolute;top:0;right:22%;background:var(--red);color:#fff;border-radius:10px;min-width:16px;height:16px;font-size:10px;line-height:16px;text-align:center;padding:0 3px}
-.pending-banner{display:none;position:fixed;top:56px;left:0;right:0;z-index:55;align-items:center;justify-content:space-between;gap:10px;background:var(--orange);color:#fff;padding:10px 16px;cursor:pointer;font-weight:800;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.2);animation:pb-pulse 1.6s ease-in-out infinite}
-.pending-banner .pb-action{font-weight:700;font-size:12px;opacity:.9;white-space:nowrap}
-@keyframes pb-pulse{0%,100%{background:var(--orange)}50%{background:#dc2626}}
-@media (max-width:768px){
-  .layout{flex-direction:column;padding:8px;gap:0;height:calc(100vh - 56px);padding-bottom:58px}
-  .panel{display:none;width:100%!important;flex:1 1 auto!important}
-  .panel.mobile-active{display:flex}
-  .mobile-tabbar{display:flex}
-  .order-line .ol-qty button{width:34px;height:34px;font-size:16px}
-  .order-line .ol-qty span{min-width:18px;text-align:center;font-size:14px}
-  .item-card{padding:12px 10px}
-  .order-actions{flex-wrap:wrap}
-  .order-actions .btn{font-size:12px;padding:9px 6px}
+  .receipt-print .r-line{display:flex;justify-content:space-between;gap:4px;margin:1mm 0}
+  .receipt-print .r-line .rl-name{flex:1}
+  .receipt-print .r-total{display:flex;justify-content:space-between;font-weight:800;font-size:14px;margin-top:2mm}
+  .receipt-print .r-pay{text-align:center;font-weight:800;font-size:11px;margin-top:2mm;border:1px solid #000;padding:1mm}
+  .receipt-print .r-sign{margin-top:8mm}
+  .receipt-print .r-sign-line{border-top:1px solid #000;margin-bottom:1mm}
+  .receipt-print .r-sign-label{text-align:center;font-size:9px}
+  .receipt-print .r-foot{text-align:center;font-size:10px;margin-top:3mm}
 }
 </style>
 </head>
@@ -145,18 +107,14 @@ header button:hover{background:rgba(255,255,255,.22)}
 <header>
   <h1>🍽️ Lucky Tito Restaurant 点餐结账</h1>
   <button onclick="showHistory()">📊 今日流水 Today's Sales</button>
+  <button onclick="togglePriceEdit()" id="price-edit-btn">💲 编辑价格 Edit Prices</button>
   <button onclick="setSyncUrl()" id="sync-btn">🔗 云同步 Cloud Sync</button>
   <span class="clock" id="clock"></span>
 </header>
 
-<div class="pending-banner" id="pending-banner" onclick="checkPhoneOrders()">
-  <span id="pending-banner-text"></span>
-  <span class="pb-action">点击立即接单 Tap to claim now ›</span>
-</div>
-
 <div class="layout">
   <div class="panel" id="tables-panel">
-    <div class="panel-header">🪑 桌台 Tables<button class="btn btn-ghost btn-sm" id="phone-orders-btn" style="margin-left:auto" onclick="checkPhoneOrders()">📥 手机来单 Phone Orders</button><button class="btn btn-primary btn-sm" onclick="openNewTableModal()">＋ 开台 New Table</button></div>
+    <div class="panel-header">🪑 桌台 Tables<button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openNewTableModal()">＋ 开台 New Table</button></div>
     <div class="panel-body" id="tables-list"></div>
   </div>
 
@@ -170,21 +128,13 @@ header button:hover{background:rgba(255,255,255,.22)}
     <div class="order-table-name" id="order-table-name"></div>
     <div class="panel-body" id="order-lines" style="padding:0 10px"></div>
     <div class="order-footer">
-      <button class="btn btn-ghost btn-block" id="upload-btn" style="margin-bottom:10px" onclick="uploadOrderToFrontDesk()">📤 上传到前台 Upload to Front Desk</button>
       <div class="order-total"><span>总计 Total</span><span id="order-total-amt">₱0</span></div>
       <div class="order-actions">
         <button class="btn btn-ghost" style="flex:1" onclick="clearOrder()">🗑 清空 Clear</button>
-        <button class="btn btn-primary" style="flex:1" onclick="printKitchenTicket()">🍳 厨房单 Kitchen</button>
         <button class="btn btn-green" style="flex:2" onclick="checkoutTable()">🖨️ 结账打印 Checkout & Print</button>
       </div>
     </div>
   </div>
-</div>
-
-<div class="mobile-tabbar" id="mobile-tabbar">
-  <button onclick="setMobileView('tables')" data-v="tables"><span class="mt-icon">🪑</span><span>桌台</span></button>
-  <button onclick="setMobileView('menu')" data-v="menu"><span class="mt-icon">🍽️</span><span>菜单</span></button>
-  <button onclick="setMobileView('order')" data-v="order"><span class="mt-icon">🧾</span><span>订单</span><span class="mt-badge" id="mt-order-badge" style="display:none">0</span></button>
 </div>
 
 <!-- NEW TABLE MODAL -->
@@ -223,14 +173,8 @@ header button:hover{background:rgba(255,255,255,.22)}
     <h3>结账确认 Confirm Checkout</h3>
     <div style="background:var(--bg);border-radius:8px;padding:10px 12px">
       <div style="font-weight:800;color:var(--navy)" id="co-table-label"></div>
-      <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--navy);margin-top:6px"><span>小计 Subtotal</span><span id="co-subtotal"></span></div>
-      <div id="co-disc-row" style="display:none;justify-content:space-between;font-size:14px;color:#059669;font-weight:700;margin-top:2px"><span>教练折扣 Inst. Discount (-10%)</span><span id="co-disc-amt"></span></div>
-      <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;color:var(--navy);margin-top:6px;padding-top:6px;border-top:1px dashed #cbd5e1"><span>总计 Total</span><span id="co-total"></span></div>
+      <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;color:var(--navy);margin-top:4px"><span>总计 Total</span><span id="co-total"></span></div>
     </div>
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:10px;font-size:14px;font-weight:700;color:var(--navy)">
-      <input type="checkbox" id="co-inst-disc" onchange="toggleInstDiscount(this.checked)" style="width:18px;height:18px;cursor:pointer">
-      🎓 教练折扣 Inst. Discount (-10%)
-    </label>
     <label>付款方式 Payment Method</label>
     <div class="order-actions">
       <button class="btn btn-primary" style="flex:1" id="co-btn-cash" onclick="setCheckoutRoomCharge(false)">💰 现金/卡 Cash/Card</button>
@@ -260,7 +204,6 @@ header button:hover{background:rgba(255,255,255,.22)}
 </div>
 
 <div class="receipt-print" id="receipt-print"></div>
-<div class="kitchen-print" id="kitchen-print"></div>
 
 <script>
 // ====================================================================
@@ -276,7 +219,7 @@ header button:hover{background:rgba(255,255,255,.22)}
 const CATS=['主厨推荐 Chef Recommendation','饭面简餐 Rice Bowl / Noodle','自由搭配 All You Want','汤与主食 Soup / Rice','酒水饮料 Drinks & Beverages']
 const MENU=[
 // ---- 主厨推荐 Chef Recommendation ----
-{code:'A1',name:'秘制东星斑烤鱼',en:'Grilled Lapulapu (1.5kg 3-4pax)',price:4500,cat:CATS[0],hot:true},
+{code:'A1',name:'秘制东星斑烤鱼',en:'Grilled Coral Trout (1.5kg, 3-4人)',price:4500,cat:CATS[0],hot:true},
 {code:'A0',name:'麻辣香锅虾',en:'Spicy Fried Shrimp Pot',price:1980,cat:CATS[0],hot:true},
 {code:'A2',name:'肥肠豆腐煲',en:'Pork Intestine Tofu Stew',price:780,cat:CATS[0],hot:true},
 {code:'B1',name:'凉拌香辣牛腱子',en:'Pickle Steamed Beef Shank',price:820,cat:CATS[0],hot:true},
@@ -380,37 +323,15 @@ MENU.forEach((m,i)=>{m.id='i'+i})
 // ====================================================================
 //   STATE / STORAGE
 // ====================================================================
-let curTableId=null, curCat='ALL', mobileView='tables'
-let pendingOrderCount=0, audioCtx=null
-// unlock Web Audio on first user interaction (autoplay policies keep AudioContext silent
-// until a real user gesture has happened at least once this session) — cheap, safe to attach broadly
-document.addEventListener('click',()=>{
-  if(!audioCtx){try{audioCtx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}
-  else if(audioCtx.state==='suspended')audioCtx.resume()
-})
-// ---- mobile single-column view switcher (only visually active under the @media max-width:768px
-// breakpoint — on wider screens the .mobile-active class has no effect, so this is safe to call
-// unconditionally regardless of actual device width) ----
-function setMobileView(v){
-  mobileView=v
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('mobile-active'))
-  const map={tables:'tables-panel',menu:'menu-panel',order:'order-panel'}
-  const p=document.getElementById(map[v]);if(p)p.classList.add('mobile-active')
-  document.querySelectorAll('.mobile-tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.v===v))
-}
-function updateMobileOrderBadge(){
-  const badge=document.getElementById('mt-order-badge');if(!badge)return
-  const t=curTableId?loadTables().find(x=>x.id===curTableId):null
-  const n=t?t.items.reduce((s,i)=>s+i.qty,0):0
-  badge.style.display=n>0?'block':'none'
-  badge.textContent=n>99?'99+':n
-}
+let curTableId=null, curCat='ALL', priceEditMode=false
 function uid(){return 't'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function loadTables(){try{return JSON.parse(localStorage.getItem('rt_tables')||'[]')}catch{return[]}}
 function saveTables(t){localStorage.setItem('rt_tables',JSON.stringify(t))}
 function loadHistory(){try{return JSON.parse(localStorage.getItem('rt_history')||'[]')}catch{return[]}}
 function saveHistory(h){localStorage.setItem('rt_history',JSON.stringify(h))}
-function getPrice(item){return item.price}
+function loadPriceOverrides(){try{return JSON.parse(localStorage.getItem('rt_price_overrides')||'{}')}catch{return{}}}
+function savePriceOverrides(o){localStorage.setItem('rt_price_overrides',JSON.stringify(o))}
+function getPrice(item){const o=loadPriceOverrides();return(o[item.id]!=null)?o[item.id]:item.price}
 
 // ====================================================================
 //   CLOUD BRIDGE — push checkout charges to the same Apps Script backend
@@ -434,145 +355,20 @@ function updateSyncBtn(){
 function pushChargeToCloud(record){
   const url=getSyncUrl();if(!url)return
   const summary=record.items.map(it=>it.name+'×'+it.qty).join('、')
-  const charge={id:record.id,table:record.tableLabel,note:record.note,summary,total:record.total,date:record.paidAt.slice(0,16).replace('T',' '),claimed:false,roomCharge:!!record.roomCharge,roomNo:record.roomNo||'',instDiscount:!!record.instDiscount}
+  const charge={id:record.id,table:record.tableLabel,note:record.note,summary,total:record.total,date:record.paidAt.slice(0,16).replace('T',' '),claimed:false,roomCharge:!!record.roomCharge,roomNo:record.roomNo||''}
   fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
     if(!res||!res.ok||!Array.isArray(res.data))throw new Error('load failed')
     const data=res.data
-    // 1. push simplified charge summary (used by index.html for billing)
     let rc=data.find(c=>c.id==='__restaurant_charges__')
     if(!rc){rc={id:'__restaurant_charges__',charges:[]};data.push(rc)}
     if(!Array.isArray(rc.charges))rc.charges=[]
     rc.charges.push(charge)
-    // 2. sync full history to cloud (keep last 90 days) for backup/recovery
-    const cutoff=new Date(Date.now()-90*24*60*60*1000).toISOString()
-    const fullHist=loadHistory().filter(r=>r.paidAt>=cutoff)
+    // Also sync full local history so other devices can view 今日流水
     let rh=data.find(c=>c.id==='__restaurant_history__')
-    if(!rh){rh={id:'__restaurant_history__',history:[]};data.push(rh)}
-    rh.history=fullHist
+    if(!rh){rh={id:'__restaurant_history__',records:[]};data.push(rh)}
+    rh.records=loadHistory()
     return fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)})
   }).catch(()=>{/* offline or unreachable — local checkout/receipt already succeeded, just skip the push */})
-}
-// Restore full history from cloud if local is empty (device switch / localStorage cleared)
-function restoreHistoryFromCloud(){
-  const url=getSyncUrl();if(!url)return
-  if(loadHistory().length>0)return // local has data, no need to restore
-  fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
-    if(!res||!res.ok||!Array.isArray(res.data))return
-    const rh=res.data.find(c=>c.id==='__restaurant_history__')
-    if(rh&&Array.isArray(rh.history)&&rh.history.length>0){
-      saveHistory(rh.history)
-      console.log('✅ 已从云端恢复流水记录 '+rh.history.length+' 条')
-    }
-  }).catch(()=>{})
-}
-// ---- Tableside ordering bridge: phone uploads an in-progress order, front desk pulls it in ----
-// __restaurant_orders__.orders is treated as a pending queue only — front desk clears an entry
-// out of it as soon as it's been pulled in, so it never grows unbounded. Re-uploading the same
-// table before the desk has checked replaces (upserts by srcId) rather than duplicating, which is
-// what lets a server keep adding dishes to one order instead of splitting it into multiple tickets.
-function uploadOrderToFrontDesk(){
-  if(!curTableId){alert('请先选择桌台 Please select a table first');return}
-  const t=loadTables().find(x=>x.id===curTableId)
-  if(!t||t.items.length===0){alert('该桌台还没有点菜 This table has no items yet');return}
-  const url=getSyncUrl()
-  if(!url){alert('请先点右上角"云同步"，填入与前台相同的地址\nPlease tap "Cloud Sync" (top right) and enter the same URL the front desk uses.');return}
-  const btn=document.getElementById('upload-btn')
-  if(btn){btn.disabled=true;btn.textContent='⏳ 上传中… Uploading…'}
-  const order={srcId:t.id,tableLabel:t.label,note:t.note||'',items:t.items.map(i=>({id:i.id,qty:i.qty})),updatedAt:new Date().toISOString()}
-  fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
-    if(!res||!res.ok||!Array.isArray(res.data))throw new Error('load failed')
-    const data=res.data
-    let oq=data.find(c=>c.id==='__restaurant_orders__')
-    if(!oq){oq={id:'__restaurant_orders__',orders:[]};data.push(oq)}
-    if(!Array.isArray(oq.orders))oq.orders=[]
-    const idx=oq.orders.findIndex(o=>o.srcId===order.srcId)
-    if(idx>=0)oq.orders[idx]=order
-    else oq.orders.push(order)
-    return fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)})
-  }).then(()=>{
-    if(btn){btn.disabled=false;btn.textContent='✅ 已上传 '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}
-    setTimeout(()=>{if(btn)btn.textContent='📤 上传到前台 Upload to Front Desk'},3000)
-  }).catch(()=>{
-    if(btn){btn.disabled=false;btn.textContent='❌ 上传失败，点击重试 Failed, tap to retry'}
-  })
-}
-// Front-desk side: pull whatever is currently queued, merge each into a matching local table
-// (matched by srcId so repeated/appended uploads land on the same table instead of duplicating),
-// then clear the cloud queue. One click does pull + merge + clear — no separate review step.
-function checkPhoneOrders(){
-  const url=getSyncUrl()
-  if(!url){alert('请先点右上角"云同步"连接云端地址\nConnect Cloud Sync (top-right) first.');return}
-  const btn=document.getElementById('phone-orders-btn')
-  if(btn){btn.disabled=true;btn.textContent='⏳ 查询中… Checking…'}
-  fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
-    if(!res||!res.ok||!Array.isArray(res.data))throw new Error('load failed')
-    const data=res.data
-    const oq=data.find(c=>c.id==='__restaurant_orders__')
-    const pending=(oq&&Array.isArray(oq.orders))?oq.orders:[]
-    if(btn){btn.disabled=false;btn.textContent='📥 手机来单 Phone Orders'}
-    pendingOrderCount=0;updatePendingBanner() // about to claim everything currently queued (or there's nothing) either way
-    if(!pending.length){alert('暂无新的手机来单 No new phone orders');return}
-    const tables=loadTables()
-    const claimedLabels=[]
-    pending.forEach(o=>{
-      let tbl=tables.find(x=>x.srcId===o.srcId)
-      if(!tbl){
-        tbl={id:uid(),label:o.tableLabel,note:o.note||'',items:[],openedAt:new Date().toISOString(),srcId:o.srcId}
-        tables.push(tbl)
-      }
-      tbl.items=(o.items||[]).filter(it=>MENU.some(m=>m.id===it.id)).map(it=>({id:it.id,qty:it.qty}))
-      if(o.note)tbl.note=o.note
-      claimedLabels.push(tbl.label)
-    })
-    saveTables(tables)
-    renderTables();renderOrderPanel()
-    oq.orders=[]
-    fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)})
-    alert('✅ 已接收 '+claimedLabels.length+' 张来单：'+claimedLabels.join('、'))
-  }).catch(()=>{
-    if(btn){btn.disabled=false;btn.textContent='📥 手机来单 Phone Orders'}
-    alert('❌ 查询失败，请检查网络/云同步设置 Failed — check network/cloud sync settings')
-  })
-}
-// ---- Auto-poll for pending phone orders ----
-// Read-only GET every 10s — never POSTs, so it can run concurrently with uploads/claims
-// without any risk of clobbering data. Purely an "is there something waiting?" check;
-// actually claiming still goes through checkPhoneOrders() (manual button or tapping the banner).
-function pollForPendingOrders(){
-  const url=getSyncUrl()
-  if(!url)return
-  fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
-    if(!res||!res.ok||!Array.isArray(res.data))return
-    const oq=res.data.find(c=>c.id==='__restaurant_orders__')
-    const n=(oq&&Array.isArray(oq.orders))?oq.orders.length:0
-    if(n>pendingOrderCount)beepAlert()
-    pendingOrderCount=n
-    updatePendingBanner()
-  }).catch(()=>{/* network hiccup — silently retry on next interval, don't nag the user */})
-}
-function updatePendingBanner(){
-  const b=document.getElementById('pending-banner')
-  if(!b)return
-  if(pendingOrderCount>0){
-    document.getElementById('pending-banner-text').textContent='📥 '+pendingOrderCount+' 张新来单待处理 New phone order(s) waiting'
-    b.style.display='flex'
-  }else{
-    b.style.display='none'
-  }
-}
-function beepAlert(){
-  if(!audioCtx)return // no user gesture yet this session — banner still shows visually
-  try{playTone(880,0,.35);playTone(1100,.22,.35)}catch(e){}
-}
-function playTone(freq,delay,dur){
-  const t0=audioCtx.currentTime+delay
-  const o=audioCtx.createOscillator(),g=audioCtx.createGain()
-  o.type='sine';o.frequency.value=freq
-  o.connect(g);g.connect(audioCtx.destination)
-  g.gain.setValueAtTime(.0001,t0)
-  g.gain.exponentialRampToValueAtTime(.3,t0+.01)
-  g.gain.exponentialRampToValueAtTime(.0001,t0+dur)
-  o.start(t0);o.stop(t0+dur+.05)
 }
 function fmt(n){return'₱'+Number(n).toLocaleString('en-US',{maximumFractionDigits:0})}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -598,14 +394,14 @@ function renderTables(){
     const cls='table-tile'+(t.id===curTableId?' active':'')+(hasOrder?' has-order':'')
     return '<div class="'+cls+'" onclick="selectTable(\''+t.id+'\')">'
       +'<button class="t-del" onclick="event.stopPropagation();removeTable(\''+t.id+'\')" title="删除桌台 Delete Table">✕</button>'
-      +'<div class="t-name">'+(t.srcId?'📱 ':'')+esc(t.label)+'</div>'
+      +'<div class="t-name">'+esc(t.label)+'</div>'
       +(t.note?'<div class="t-note">'+esc(t.note)+'</div>':'')
       +'<div class="t-meta"><span>'+t.items.reduce((s,i)=>s+i.qty,0)+' 件 items</span><span>'+fmt(total)+'</span></div>'
       +'</div>'
   }).join('')||'<div class="order-empty">暂无桌台，点击"＋开台"新建 No tables yet — click "+ New Table" to add one</div>'
 }
 function orderTotal(t){return t.items.reduce((s,it)=>{const m=MENU.find(x=>x.id===it.id);return s+(m?getPrice(m):0)*it.qty},0)}
-function selectTable(id){curTableId=id;renderTables();renderOrderPanel();setMobileView('menu')}
+function selectTable(id){curTableId=id;renderTables();renderOrderPanel()}
 function openNewTableModal(){
   document.getElementById('nt-label').value=''
   document.getElementById('nt-note').value=''
@@ -669,14 +465,29 @@ function renderMenu(){
   const el=document.getElementById('menu-grid')
   el.innerHTML=items.map(m=>{
     const price=getPrice(m)
-    return '<div class="item-card" onclick="addItemToOrder(\''+m.id+'\')">'
+    const priceHtml=priceEditMode
+      ?'<input type="number" value="'+price+'" onclick="event.stopPropagation()" onchange="updatePrice(\''+m.id+'\',this.value)">'
+      :fmt(price)
+    return '<div class="item-card" onclick="'+(priceEditMode?'':'addItemToOrder(\''+m.id+'\')')+'">'
       +(m.hot?'<span class="ic-hot">👍</span>':'')
       +'<div class="ic-code">'+esc(m.code)+'</div>'
       +'<div class="ic-name">'+esc(m.name)+'</div>'
       +'<div class="ic-en">'+esc(m.en)+'</div>'
-      +'<div class="ic-price">'+fmt(price)+'</div>'
+      +'<div class="ic-price">'+priceHtml+'</div>'
       +'</div>'
   }).join('')||'<div class="order-empty">没有找到匹配的菜品 No matching dishes found</div>'
+}
+function updatePrice(itemId,val){
+  const o=loadPriceOverrides()
+  const n=parseFloat(val)
+  if(val===''||isNaN(n)||n<0)delete o[itemId];else o[itemId]=n
+  savePriceOverrides(o)
+  renderMenu();renderOrderPanel();renderTables()
+}
+function togglePriceEdit(){
+  priceEditMode=!priceEditMode
+  document.getElementById('price-edit-btn').style.background=priceEditMode?'#ea580c':''
+  renderMenu()
 }
 
 // ====================================================================
@@ -730,7 +541,6 @@ function renderOrderPanel(){
     nameEl.innerHTML='<div class="tn-label" style="color:#94a3b8">未选择桌台 No table selected</div>'
     linesEl.innerHTML='<div class="order-empty">从左侧选择或新开一个桌台 Select or open a table from the left</div>'
     totalEl.textContent=fmt(0)
-    updateMobileOrderBadge()
     return
   }
   const t=loadTables().find(x=>x.id===curTableId)
@@ -745,7 +555,7 @@ function renderOrderPanel(){
       if(!m)return''
       const price=getPrice(m)
       return '<div class="order-line">'
-        +'<div class="ol-info"><div class="ol-name">'+esc(m.code)+' '+esc(m.name)+'</div><div class="ol-en">'+esc(m.en)+'</div><div class="ol-price">'+fmt(price)+' / 份 each</div></div>'
+        +'<div class="ol-info"><div class="ol-name">'+esc(m.code)+' '+esc(m.name)+'</div><div class="ol-price">'+fmt(price)+' / 份 each</div></div>'
         +'<div class="ol-qty"><button onclick="changeQty(\''+m.id+'\',-1)">－</button><span>'+line.qty+'</span><button onclick="changeQty(\''+m.id+'\',1)">＋</button></div>'
         +'<div class="ol-sub">'+fmt(price*line.qty)+'</div>'
         +'<span class="ol-del" onclick="removeOrderItem(\''+m.id+'\')">✕</span>'
@@ -753,39 +563,22 @@ function renderOrderPanel(){
     }).join('')
   }
   totalEl.textContent=fmt(orderTotal(t))
-  updateMobileOrderBadge()
 }
 
 // ====================================================================
 //   CHECKOUT + RECEIPT PRINT
 // ====================================================================
-let coTableId=null,coRoomCharge=false,coInstDiscount=false
+let coTableId=null,coRoomCharge=false
 function checkoutTable(){
   if(!curTableId)return
   const t=loadTables().find(x=>x.id===curTableId)
   if(!t||t.items.length===0){alert('该桌台没有订单 This table has no order');return}
   coTableId=curTableId
   document.getElementById('co-table-label').textContent=t.label+(t.note?' · '+t.note:'')
+  document.getElementById('co-total').textContent=fmt(orderTotal(t))
   document.getElementById('co-room-no').value=''
-  coInstDiscount=false
-  document.getElementById('co-inst-disc').checked=false
-  refreshCheckoutTotals()
   setCheckoutRoomCharge(false)
   document.getElementById('checkout-modal').classList.add('show')
-}
-// Instructor discount toggle (-10% off the subtotal, applied at checkout for staff/instructors
-// paying for their own meal directly — separate from the existing claim-to-guest-bill discount
-// in index.html, which applies when a guest's restaurant charges are later added to their folio).
-function toggleInstDiscount(checked){coInstDiscount=checked;refreshCheckoutTotals()}
-function refreshCheckoutTotals(){
-  const t=loadTables().find(x=>x.id===coTableId);if(!t)return
-  const sub=orderTotal(t)
-  const disc=coInstDiscount?sub*0.1:0
-  document.getElementById('co-subtotal').textContent=fmt(sub)
-  const row=document.getElementById('co-disc-row')
-  if(disc>0){row.style.display='flex';document.getElementById('co-disc-amt').textContent='－'+fmt(disc)}
-  else row.style.display='none'
-  document.getElementById('co-total').textContent=fmt(sub-disc)
 }
 function setCheckoutRoomCharge(isRoom){
   coRoomCharge=isRoom
@@ -802,17 +595,15 @@ function confirmCheckout(){
     roomNo=document.getElementById('co-room-no').value.trim()
     if(!roomNo){alert('请输入房号 Please enter the room number');return}
   }
-  const subtotal=orderTotal(t)
-  const discountAmt=coInstDiscount?subtotal*0.1:0
-  const total=subtotal-discountAmt
+  const total=orderTotal(t)
 
   const now=new Date()
   const lines=t.items.map(line=>{
     const m=MENU.find(x=>x.id===line.id)
     const price=m?getPrice(m):0
-    return{code:m?m.code:'',name:m?m.name:'',en:m?m.en:'',qty:line.qty,price,sub:price*line.qty}
+    return{code:m?m.code:'',name:m?m.name:'',qty:line.qty,price,sub:price*line.qty}
   })
-  const record={id:uid(),tableLabel:t.label,note:t.note,items:lines,subtotal,instDiscount:coInstDiscount,discountAmt,total,paidAt:now.toISOString(),roomCharge:coRoomCharge,roomNo}
+  const record={id:uid(),tableLabel:t.label,note:t.note,items:lines,total,paidAt:now.toISOString(),roomCharge:coRoomCharge,roomNo}
   const hist=loadHistory()
   hist.push(record)
   saveHistory(hist)
@@ -837,16 +628,9 @@ function buildReceipt(record,now){
     +'<div class="r-sub">'+dateStr+'</div>'
     +'<hr>'
   record.items.forEach(it=>{
-    html+='<div class="r-line"><div class="rl-name">'+esc(it.code)+' '+esc(it.name)+'</div>'
-      +(it.en?'<div class="rl-en">'+esc(it.en)+'</div>':'')
-      +'<div class="rl-qp"><span>x'+it.qty+'</span><span>'+fmt(it.sub)+'</span></div></div>'
+    html+='<div class="r-line"><span class="rl-name">'+esc(it.code)+' '+esc(it.name)+' x'+it.qty+'</span><span>'+fmt(it.sub)+'</span></div>'
   })
-  html+='<hr>'
-  if(record.discountAmt>0){
-    html+='<div class="r-line"><div class="rl-qp"><span>Subtotal</span><span>'+fmt(record.subtotal)+'</span></div></div>'
-    html+='<div class="r-line"><div class="rl-qp"><span>Inst. Discount -10%</span><span>－'+fmt(record.discountAmt)+'</span></div></div>'
-  }
-  html+='<div class="r-total"><span>Total</span><span>'+fmt(record.total)+'</span></div>'
+  html+='<hr><div class="r-total"><span>Total</span><span>'+fmt(record.total)+'</span></div>'
   html+=record.roomCharge
     ?'<div class="r-pay">ROOM CHARGE 房间挂账 · Room '+esc(record.roomNo)+'</div>'
     :'<div class="r-pay">CASH / CARD 现金/卡</div>'
@@ -856,47 +640,40 @@ function buildReceipt(record,now){
 }
 
 // ====================================================================
-//   KITCHEN TICKET (English-only print for kitchen staff)
-// ====================================================================
-function buildKitchenTicket(t){
-  const now=new Date()
-  const dateStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')
-  let html='<div class="k-title">KITCHEN ORDER</div>'
-    +'<div class="k-sub">Table: '+esc(t.label)+(t.note?' - '+esc(t.note):'')+'</div>'
-    +'<div class="k-sub">'+dateStr+'</div>'
-    +'<hr>'
-  t.items.forEach(line=>{
-    const m=MENU.find(x=>x.id===line.id)
-    if(!m)return
-    html+='<div class="k-line"><span class="kl-code">'+esc(m.code)+'</span><span class="kl-name">'+esc(m.en)+'</span><span class="kl-qty">x'+line.qty+'</span></div>'
-  })
-  document.getElementById('kitchen-print').innerHTML=html
-}
-function printKitchenTicket(){
-  if(!curTableId){alert('请先选择桌台 Please select a table first');return}
-  const t=loadTables().find(x=>x.id===curTableId)
-  if(!t||t.items.length===0){alert('该桌台没有订单 This table has no order');return}
-  buildKitchenTicket(t)
-  document.body.classList.add('print-kitchen')
-  setTimeout(()=>window.print(),100)
-}
-window.addEventListener('afterprint',()=>document.body.classList.remove('print-kitchen'))
-
-// ====================================================================
 //   HISTORY (today's sales)
 // ====================================================================
 function showHistory(){
-  const hist=loadHistory()
-  const today=new Date().toISOString().split('T')[0]
-  const todays=hist.filter(h=>h.paidAt.startsWith(today)).sort((a,b)=>b.paidAt.localeCompare(a.paidAt))
-  const total=todays.reduce((s,h)=>s+h.total,0)
-  document.getElementById('hist-date').textContent=today+' 共 '+todays.length+' 单 ('+todays.length+' orders)'
-  document.getElementById('hist-total').textContent=fmt(total)
-  document.getElementById('hist-list').innerHTML=todays.map(h=>{
-    const time=h.paidAt.slice(11,16)
-    return '<div class="hist-row"><div><div>'+esc(h.tableLabel)+(h.note?' · '+esc(h.note):'')+(h.roomCharge?' · 🛏️ Room '+esc(h.roomNo):'')+(h.instDiscount?' · 🎓 -10%':'')+'</div><div class="h-meta">'+time+' · '+h.items.length+' 项 items</div></div><div>'+fmt(h.total)+'</div></div>'
-  }).join('')||'<div class="order-empty">今天还没有结账记录 No checkouts yet today</div>'
+  const _renderHist=(hist)=>{
+    // Use local date for Philippines timezone (UTC+8)
+    const now=new Date()
+    const pad=n=>String(n).padStart(2,'0')
+    const today=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())
+    const todays=hist.filter(h=>{
+      // paidAt is stored as UTC ISO; convert to local date for comparison
+      const d=new Date(h.paidAt)
+      const local=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())
+      return local===today
+    }).sort((a,b)=>b.paidAt.localeCompare(a.paidAt))
+    const pad2=n=>String(n).padStart(2,'0')
+    document.getElementById('hist-date').textContent=today+' 共 '+todays.length+' 单 ('+todays.length+' orders)'
+    document.getElementById('hist-total').textContent=fmt(todays.reduce((s,h)=>s+h.total,0))
+    document.getElementById('hist-list').innerHTML=todays.map(h=>{
+      const d=new Date(h.paidAt);const time=pad2(d.getHours())+':'+pad2(d.getMinutes())
+      return'<div class="hist-row"><div><div>'+esc(h.tableLabel)+(h.note?' · '+esc(h.note):'')+(h.roomCharge?' · 🛏️ Room '+esc(h.roomNo):'')+'</div><div class="h-meta">'+time+' · '+h.items.length+' 项 items</div></div><div>'+fmt(h.total)+'</div></div>'
+    }).join('')||'<div class="order-empty">今天还没有结账记录 No checkouts yet today</div>'
+    document.getElementById('history-modal').classList.add('show')
+  }
+  const local=loadHistory()
+  if(local.length>0){_renderHist(local);return}
+  const url=getSyncUrl()
+  if(!url){_renderHist([]);return}
+  document.getElementById('hist-list').innerHTML='<div class="order-empty">加载中… Loading…</div>'
   document.getElementById('history-modal').classList.add('show')
+  fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
+    if(!res||!res.ok||!Array.isArray(res.data)){_renderHist([]);return}
+    const rh=res.data.find(c=>c.id==='__restaurant_history__')
+    _renderHist(rh&&Array.isArray(rh.records)?rh.records:[])
+  }).catch(()=>_renderHist([]))
 }
 
 // ====================================================================
@@ -913,12 +690,8 @@ function init(){
   renderMenu()
   renderOrderPanel()
   updateSyncBtn()
-  setMobileView('tables')
   tickClock()
   setInterval(tickClock,30000)
-  pollForPendingOrders()
-  setInterval(pollForPendingOrders,10000)
-  restoreHistoryFromCloud()
 }
 init()
 </script>
