@@ -314,9 +314,7 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
   .bh{flex-direction:row!important}
   .bnum,.blbl,.bdate{text-align:right!important}
   .big{grid-template-columns:1fr 1fr!important}
-  #gc-card{width:100%!important;max-width:190mm!important;padding:14px 18px!important}
-  body.printing-booking #page-booking{display:block!important}
-  @page{size:A4;margin:10mm}
+  @page{size:A4;margin:14mm}
 }
 /* ====== ROOM CALENDAR ====== */
 .rcal-table{border-collapse:collapse;table-layout:fixed;min-width:max-content;font-size:12px}
@@ -1403,7 +1401,14 @@ function cloudLoad(){
       const cloudRcLen=rcEntry&&Array.isArray(rcEntry.charges)?rcEntry.charges.length:0
       if(rcEntry&&Array.isArray(rcEntry.charges))localStorage.setItem('lt_restaurantCharges',JSON.stringify(rcEntry.charges))
       renderRestaurantCharges()
-      const cloud=res.data.filter(c=>c.id!=='__savelog__'&&c.id!=='__meta__'&&c.id!=='__restaurant_charges__'&&c.id!=='__restaurant_orders__'),local=getAll()
+      const _cloudAll=res.data.filter(c=>c.id!=='__savelog__'&&c.id!=='__meta__'&&c.id!=='__restaurant_charges__'&&c.id!=='__restaurant_orders__')
+      // Drop shell records (no name AND no custNo) that may have been pushed back by restaurant's
+      // read-modify-write (restaurant loads full cloud data, only edits __restaurant_charges__, but
+      // writes everything back — if it had a stale copy with a blank guest, it re-introduces it).
+      // Filtering here is self-healing: if any shells are found we also set needsPush so the clean
+      // dataset is immediately written back to cloud, preventing the shell from coming back.
+      const _invalidShells=_cloudAll.filter(c=>!c.name&&!c.custNo)
+      const cloud=_cloudAll.filter(c=>c.name||c.custNo),local=getAll()
       // conflict-aware merge: if a record was edited locally after the last successful sync AND differs
       // from the cloud copy, keep the local edit (instead of silently overwriting it) and flag it.
       const lastSyncTs=localStorage.getItem(TK)?new Date(localStorage.getItem(TK)).getTime():0
@@ -1427,7 +1432,7 @@ function cloudLoad(){
       const localOnlyCount=merged.filter(r=>!cloudMap.has(r.id)).length
       const cloudDlLen=(metaEntry&&Array.isArray(metaEntry.divelog))?metaEntry.divelog.length:0
       const localDlLen=getDivelog().length
-      const needsPush=conflicts.length>0||localOnlyCount>0||(localDlLen>0&&localDlLen>cloudDlLen)||(localRcLen>cloudRcLen)
+      const needsPush=conflicts.length>0||localOnlyCount>0||(localDlLen>0&&localDlLen>cloudDlLen)||(localRcLen>cloudRcLen)||_invalidShells.length>0
       if(needsPush){
         if(conflicts.length)alert('⚠️ 以下客户资料在本机有尚未同步的修改，云端可能有其他设备的更新——已保留本机版本并重新上传，请核对：\n'+conflicts.join('、'))
         cloudSave()
@@ -3015,7 +3020,7 @@ function parseAndApply(){
   if(R.myopia)sv('f-myopia',R.myopia);if(R.divingExp)sv('f-divexp',R.divingExp)
   if(R.gender)sv('f-gender',R.gender)
   if(R.certSystem)sv('f-certsys',R.certSystem);if(R.certLevel)sv('f-certlevel',R.certLevel);if(R.certNumber)sv('f-certno',R.certNumber)
-  if(R.instructor)applyInstructorToAll(R.instructor)
+  if(R.instructor){applyInstructorToAll(R.instructor);renderCourseBlocks()}
   if(R._multiStudent){(getItems()||[]).filter(i=>i.name&&(isCourseItem(i.name)||isFDItem(i.name))).forEach(i=>{if(!_courseInfo[i.name])_courseInfo[i.name]={};_courseInfo[i.name].multiStudentDisc=true});renderCourseBlocks();autoApplyMultiStudentDisc();delete R._multiStudent}
   if(R.location)sv('f-loc',R.location)
   if(R._arrboat){sv('f-arr-boat',R._arrboat)}
@@ -3528,7 +3533,7 @@ function renderList(q){
     const meta=[c.custNo?'🔢 '+escHtml(c.custNo):'',c.date?'📅 '+escHtml(c.date):'',c.location?'📍 '+escHtml(c.location):'',c.instructor?'👨‍🏫 '+escHtml(c.instructor):'',c.roomNum?'🏨 '+escHtml(c.roomNum)+(c.roomType?' ('+escHtml(c.roomType.split(' ')[0])+')':''):'',tot>0?'💰 ¥'+tot.toFixed(0):'',dc>0?'🤿 '+dc+(dc===1?' dive':' dives'):''].filter(Boolean)
     const coBtn='<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;font-weight:600;color:'+(isOut?'#16a34a':'#64748b')+';white-space:nowrap"><input type="checkbox" '+(isOut?'checked':'')+' onchange="toggleCheckedOut(\''+c.id+'\',this)" style="width:14px;height:14px;cursor:pointer;accent-color:#16a34a"> 已退房 Checked Out</label>'
     const batchCb=_batchMode?'<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;cursor:pointer;margin-right:4px"><input type="checkbox" '+(isSel?'checked':'')+' onchange="batchToggle(\''+c.id+'\')" style="width:16px;height:16px;cursor:pointer;accent-color:#0284c7"></label>':''
-    return'<div class="cc" onclick="'+(_batchMode?'':'editC(\''+c.id+'\')')+'\" style="'+(isOut?'opacity:0.5;':'')+(isSel?'background:#e0f2fe;border-color:#0284c7;':'')+'"><div style="display:flex;align-items:center">'+batchCb+'<div class="ava" style="'+(isOut?'background:#94a3b8':'')+'flex-shrink:0">'+escHtml((c.name||'?').charAt(0))+'</div></div><div class="ci"><div class="cn">'+escHtml(c.name)+' <span class="badge '+b+'">'+(isOut?'已结账 Settled':(payLbl[c.payStatus]||'未付 Unpaid'))+'</span>'+(isOut?'<span class="tag" style="font-size:10px;background:#dcfce7;color:#16a34a">✓ 已退房 Checked Out</span>':'')+(c.isHoliday==='是'?'<span class="tag th" style="font-size:10px">节假日 Holiday</span>':'')+'</div><div class="cm">'+meta.map(m=>'<span>'+m+'</span>').join('')+'</div></div><div class="ca" onclick="event.stopPropagation()">'+(!_batchMode?coBtn:'')+'<button class="btn btn-secondary btn-sm" onclick="goBill(\''+c.id+'\')">账单 Bill</button>'+'<button class="btn btn-secondary btn-sm" onclick="showDiveHistory(\''+c.id+'\')" title="潜水记录 Dive History">🤿 潜水 Dives</button>'+'<button class="btn btn-secondary btn-sm" onclick="showGuestCard(\''+c.id+'\')" title="客人登记卡 Guest Registration Card">📋 卡片 Card</button>'+(!_batchMode?'<button class="btn btn-danger btn-sm" onclick="delC(\''+c.id+'\')">删除 Delete</button>':'')+'</div></div>'
+    return'<div class="cc" onclick="'+(_batchMode?'':'editC(\''+c.id+'\')')+'\" style="'+(isOut?'opacity:0.5;':'')+(isSel?'background:#e0f2fe;border-color:#0284c7;':'')+'"><div style="display:flex;align-items:center">'+batchCb+'<div class="ava" style="'+(isOut?'background:#94a3b8':'')+'flex-shrink:0">'+escHtml((c.name||'?').charAt(0))+'</div></div><div class="ci"><div class="cn">'+escHtml(c.name)+' <span class="badge '+b+'">'+(payLbl[c.payStatus]||'未付 Unpaid')+'</span>'+(isOut?'<span class="tag" style="font-size:10px;background:#dcfce7;color:#16a34a">✓ 已退房 Checked Out</span>':'')+(c.isHoliday==='是'?'<span class="tag th" style="font-size:10px">节假日 Holiday</span>':'')+'</div><div class="cm">'+meta.map(m=>'<span>'+m+'</span>').join('')+'</div></div><div class="ca" onclick="event.stopPropagation()">'+(!_batchMode?coBtn:'')+'<button class="btn btn-secondary btn-sm" onclick="goBill(\''+c.id+'\')">账单 Bill</button>'+'<button class="btn btn-secondary btn-sm" onclick="showDiveHistory(\''+c.id+'\')" title="潜水记录 Dive History">🤿 潜水 Dives</button>'+'<button class="btn btn-secondary btn-sm" onclick="showGuestCard(\''+c.id+'\')" title="客人登记卡 Guest Registration Card">📋 卡片 Card</button>'+(!_batchMode?'<button class="btn btn-danger btn-sm" onclick="delC(\''+c.id+'\')">删除 Delete</button>':'')+'</div></div>'
   }).join('')
 }
 function editC(id){const c=getAll().find(x=>x.id===id);if(!c)return;fillForm(c);switchTab('form');window.scrollTo(0,0)}
@@ -3897,15 +3902,6 @@ function renderBill(overrideCustId){
     }
   }
   const restSectionOut=(rIsRmb&&restSection)?restSection.replace(/\u00a5/g,'\u00a7YEN\u00a7'):restSection
-  // Itemized summary blocks for each room-change segment, shown under the main Accommodation block
-  const roomStayBlocks=roomStaySegs.map((rs,idx)=>{
-    const segNights=Math.round((new Date(rs.checkout)-new Date(rs.checkin))/(1000*3600*24))
-    const segDisp=segNights>0?' ('+segNights+' night'+(segNights>1?'s':'')+')':''
-    return'<div class="big" style="margin-top:6px;padding-top:6px;border-top:1px dashed #e2e8f0">'
-      +'<div style="font-size:11px;font-weight:700;color:#0284c7;margin-bottom:2px">\ud83d\udd01 \u6362\u623f Room Change '+(idx+1)+(rs.freeUpgrade?' \u00b7 \ud83c\udf81 Free Upgrade':'')+'</div>'
-      +brow('\u5165\u4f4f Check-in',fdate(rs.checkin))+brow('\u9000\u623f Check-out',fdate(rs.checkout)+segDisp)+brow('\u623f\u578b Room Type',rs.roomType)+brow('\u623f\u95f4\u53f7 Room No.',rs.roomNum)
-      +'</div>'
-  }).join('')
   document.getElementById('bill-out').innerHTML=
 '<div class="bw"><div class="bh">'+
 '<div style="display:flex;align-items:center;flex:1;gap:14px"><img src="'+LOGO_B64+'" style="height:81px;width:auto;flex-shrink:0"><div style="flex:1;text-align:center;min-width:0"><div class="bsn" style="color:#1a6bb5;font-size:21px;font-weight:900;letter-spacing:.2px;white-space:nowrap">Lucky Tito Dive Resort</div><div class="bss">PG Training Center · 账单 Invoice</div></div></div>'+
@@ -4287,8 +4283,8 @@ function renderElearning(){
       rows.push({c,course:ck,el:st.el,cert:st.cert,code:st.code||''})
     })
   })
-  if(!rows.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">\U0001F4DA</div><p>暂无待处理学员 No pending students</p></div>';return}
-  // Completed (both sent & issued) sink to bottom
+  if(!rows.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📚</div><p>暂无待处理学员 No pending students</p></div>';return}
+  // Completed (both sent & issued) sink to bottom; within each group sort by check-in
   rows.sort((a,b)=>{
     const ac=(a.el&&a.cert)?1:0,bc=(b.el&&b.cert)?1:0
     if(ac!==bc)return ac-bc
@@ -4298,9 +4294,10 @@ function renderElearning(){
     const esc=ck.replace(/'/g,"\\'")
     return'<span onclick="toggleElStatus(\''+cId+'\',\''+esc+'\',\''+field+'\')" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;border:2px solid '+(checked?'#0ea5e9':'#d1d5db')+';background:'+(checked?'#0ea5e9':'white')+';cursor:pointer;flex-shrink:0">'+(checked?'<svg width="13" height="13" viewBox="0 0 12 12"><polyline points="1,6 5,10 11,2" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</span>'
   }
+  let html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">'
+  html+='<thead><tr style="background:#f8fafc">'
   const th=s=>'<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;white-space:nowrap">'+s+'</th>'
-  let html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#f8fafc">'
-  html+=th('入住<br>Check-in')+th('姓名<br>Name')+th('出生日期<br>DOB')+th('邮筱<br>Email')+th('OW证书编号<br>OW Cert No.')+th('课程<br>Course')
+  html+=th('入住<br>Check-in')+th('姓名<br>Name')+th('出生日期<br>DOB')+th('邮箱<br>Email')+th('OW证书编号<br>OW Cert No.')+th('课程<br>Course')
   html+='<th style="padding:9px 12px;text-align:center;font-size:11px;font-weight:800;color:#0ea5e9;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;white-space:nowrap">已发<br>Sent</th>'
   html+='<th style="padding:9px 12px;text-align:center;font-size:11px;font-weight:800;color:#059669;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;white-space:nowrap">已签<br>Issued</th>'
   html+=th('证书编号<br>Cert Code')
@@ -4309,10 +4306,10 @@ function renderElearning(){
   rows.forEach(({c,course,el:elSent,cert,code},i)=>{
     const done=elSent&&cert
     const bg=done?'#f0fdf4':i%2===0?'white':'#fafbfc'
-    const dim=done?'color:#9ca3af;':''
+    const dimColor=done?'color:#9ca3af;':''
     const isNewGuest=c.id!==lastId
     lastId=c.id
-    const td=(content,extra='')=>'<td style="padding:8px 12px;font-size:12px;'+dim+extra+'">'+content+'</td>'
+    const td=(content,extra='')=>'<td style="padding:8px 12px;font-size:12px;'+dimColor+extra+'">'+content+'</td>'
     html+='<tr style="background:'+bg+';border-bottom:1px solid #f1f5f9'+(done?';opacity:0.8':'')+'\">'
     html+=td(isNewGuest?fdate(c.checkin):'',(done?'':'color:#0284c7;')+'font-weight:700;white-space:nowrap;')
     html+=td(escHtml(c.name||''),'font-weight:'+(isNewGuest?'700':'400')+';'+(done?'':'color:'+(isNewGuest?'#0f172a':'#64748b')+';'))
@@ -4335,6 +4332,7 @@ function saveElCodes(){
   const btn=document.getElementById('el-save-btn')
   if(btn){btn.textContent='✅ 已保存 Saved!';setTimeout(()=>{btn.textContent='💾 保存 Save'},1800)}
 }
+
 // ====== ROOM CALENDAR ======
 const ROOM_DEFS=[
   // Family A 双床房A ¥420
@@ -4371,16 +4369,18 @@ function daysBetween(a,b){return Math.round((new Date(b)-new Date(a))/(86400000)
 
 function renderRooms(){
   const DAYS=21
-  const today=new Date();today.setHours(0,0,0,0)
+  const _pad=n=>String(n).padStart(2,'0')
+  const _loc=d=>`${d.getFullYear()}-${_pad(d.getMonth()+1)}-${_pad(d.getDate())}`
+  const today=new Date()
+  const todayStr=_loc(today)
   const startDate=new Date(today);startDate.setDate(today.getDate()+_calStart)
-  const startStr=startDate.toISOString().slice(0,10)
+  const startStr=_loc(startDate)
   const dates=[]
   for(let i=0;i<DAYS;i++){
     const d=new Date(startDate);d.setDate(startDate.getDate()+i)
-    dates.push(d.toISOString().slice(0,10))
+    dates.push(_loc(d))
   }
   const endStr=dates[DAYS-1]
-  const todayStr=today.toISOString().slice(0,10)
   const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
   const fmtDate=s=>{const[,m,d]=s.split('-');return parseInt(d)+' '+mo[parseInt(m)-1]}
   document.getElementById('rooms-range').textContent=fmtDate(startStr)+' — '+fmtDate(endStr)
@@ -4744,106 +4744,26 @@ function renderDiveLog(){
     el.innerHTML='<div class="empty-state"><div class="empty-icon">🤿</div><p>暂无潜水记录 No dives logged yet</p>'+recoverBtn+'</div>'
     return
   }
-  el.innerHTML='<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="width:100%;min-width:480px;border-collapse:collapse;font-size:13px">'
+  el.innerHTML='<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="width:100%;min-width:640px;border-collapse:collapse;font-size:13px">'
     +'<thead><tr style="background:#f8fafc">'
-    +'<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">日期·时间·潜点 Date·Time·Site</th>'
-    +'<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">教练·DM Instructor·DM</th>'
+    +'<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">日期 Date</th>'
+    +'<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">时间 Time</th>'
+    +'<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">潜点 Site</th>'
+    +'<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">潜导 DM</th>'
+    +'<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">教练 Instructor</th>'
     +'<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">人员 Divers</th>'
     +'<th style="padding:9px 6px;width:32px"></th>'
     +'</tr></thead><tbody>'
-    +log.map(e=>{
-      const names=e.participants.map(id=>nameMap[id]||'?')
-      const diversCell=names.length>1
-        ?'<span title="'+escHtml(names.join('、'))+'" style="cursor:help;font-weight:700;color:#475569">'+names.length+'人 '+names.length+' divers</span>'
-        :'<span style="color:#475569">'+escHtml(names[0]||'—')+'</span>'
-      const rolesParts=[]
-      if(e.instructor)rolesParts.push('<span style="color:#7c3aed">教练 '+escHtml(e.instructor)+(e.course?' ('+escHtml(e.course)+')':'')+'</span>')
-      if(e.dm)rolesParts.push('<span style="color:#0284c7">DM '+escHtml(e.dm)+'</span>')
-      const rolesCell=rolesParts.length?rolesParts.join(' · '):'<span style="color:#94a3b8">—</span>'
-      return `<tr style="border-top:1px solid #f1f5f9;cursor:pointer" onclick="openDlDetail('${e.id}')" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
-      <td style="padding:8px 12px;white-space:nowrap"><span style="font-weight:600">${dlFmtDate(e.date)} ${e.time}${e.isNight?' 🌙':''}</span> <span style="font-weight:700;color:#0b3d5e">· ${escHtml(e.site)}</span>${e.note?` <span title="${escHtml(e.note)}" style="cursor:help">📝</span>`:''}</td>
-      <td style="padding:8px 12px;white-space:nowrap;font-size:12px;font-weight:600">${rolesCell}</td>
-      <td style="padding:8px 12px;font-size:12px;white-space:nowrap">${diversCell}</td>
-      <td style="padding:8px 4px;text-align:center"><button onclick="event.stopPropagation();deleteDive('${e.id}')" title="删除 Delete" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:16px;line-height:1;padding:2px 4px">✕</button></td>
-    </tr>`}).join('')
+    +log.map(e=>`<tr style="border-top:1px solid #f1f5f9">
+      <td style="padding:8px 12px;white-space:nowrap">${dlFmtDate(e.date)}</td>
+      <td style="padding:8px 12px;white-space:nowrap">${e.time}${e.isNight?' 🌙':''}</td>
+      <td style="padding:8px 12px;font-weight:600">${escHtml(e.site)}${e.note?` <span title="${escHtml(e.note)}" style="cursor:help">📝</span>`:''}</td>
+      <td style="padding:8px 12px;color:#0284c7;font-size:12px;font-weight:600">${escHtml(e.dm||'—')}</td>
+      <td style="padding:8px 12px;color:#7c3aed;font-size:12px;font-weight:600">${e.instructor?escHtml(e.instructor)+(e.course?' ('+escHtml(e.course)+')':''):'—'}</td>
+      <td style="padding:8px 12px;color:#475569;font-size:12px">${e.participants.map(id=>escHtml(nameMap[id]||'?')).join(' · ')}</td>
+      <td style="padding:8px 4px;text-align:center"><button onclick="deleteDive('${e.id}')" title="删除 Delete" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:16px;line-height:1;padding:2px 4px">✕</button></td>
+    </tr>`).join('')
     +'</tbody></table></div>'
-}
-
-// ====== DIVE LOG ENTRY DETAIL / EDIT ======
-function dlSiteOptions(selected){
-  return '<option value="">— 选择潜点 Select Site —</option>'+DIVE_SITES.map(s=>'<option value="'+escHtml(s)+'"'+(s===selected?' selected':'')+'>'+escHtml(s)+'</option>').join('')
-}
-function dlTimeOptions(selected){
-  const opts=[['09:00','09:00'],['11:00','11:00'],['14:00','14:00'],['14:30','14:30'],['16:00','16:00'],['18:00','18:00 🌙 夜潜 Night']]
-  return opts.map(o=>'<option value="'+o[0]+'"'+(o[0]===selected?' selected':'')+'>'+o[1]+'</option>').join('')
-}
-function dlDmOptions(selected){
-  return '<option value="">— 选择潜导 Select DM —</option>'+getDmList().map(n=>'<option value="'+escHtml(n)+'"'+(n===selected?' selected':'')+'>'+escHtml(n)+'</option>').join('')
-}
-function dlInstructorOptions(selected){
-  return '<option value="">— 选择教练 Select Instructor —</option>'+getInstructorList().map(n=>'<option value="'+escHtml(n)+'"'+(n===selected?' selected':'')+'>'+escHtml(n)+'</option>').join('')
-}
-function dlCourseOptions(selected){
-  const list=['FD','POOL','OW1','OW2','OW3','OW4','AOW1','AOW2','AOW3','AOW4','AOW5','DEEP1','DEEP2','DEEP3','SIDEMOUNT1','SIDEMOUNT2','SIDEMOUNT3','SPECIALTY']
-  return '<option value="">— 选择课程 Select Course —</option>'+list.map(c=>'<option value="'+c+'"'+(c===selected?' selected':'')+'>'+c+'</option>').join('')
-}
-function openDlDetail(id){
-  const e=getDivelog().find(x=>x.id===id)
-  if(!e)return
-  const all=getAll()
-  const checkedSet=new Set(e.participants||[])
-  const sorted=[...all].sort((a,b)=>{
-    const ac=checkedSet.has(a.id)?0:1,bc=checkedSet.has(b.id)?0:1
-    if(ac!==bc)return ac-bc
-    return(a.name||'').localeCompare(b.name||'')
-  })
-  const pHtml=sorted.map(c=>'<label style="display:flex;align-items:center;gap:8px;padding:4px 2px;cursor:pointer;font-size:13px;border-bottom:1px solid #f1f5f9">'
-    +'<input type="checkbox" class="dle-cb" value="'+c.id+'" '+(checkedSet.has(c.id)?'checked':'')+' style="width:15px;height:15px;cursor:pointer;accent-color:#0ea5e9">'
-    +'<span style="font-weight:600">'+escHtml(c.name||'—')+'</span>'
-    +(c.roomNum?'<span style="color:#94a3b8;font-size:11px;margin-left:auto">房 Rm '+escHtml(c.roomNum)+'</span>':'')
-    +(c.checkedOut?'<span style="color:#cbd5e1;font-size:10px;margin-left:6px">已退房 Checked out</span>':'')
-    +'</label>').join('')||'<div style="font-size:12px;color:#94a3b8;padding:4px">暂无客人 No guests</div>'
-  document.getElementById('dle-modal-inner').innerHTML=
-    '<div style="font-weight:800;font-size:15px;color:#0b3d5e;margin-bottom:14px">🤿 潜水记录详情 Dive Entry Detail</div>'
-    +'<div style="display:flex;flex-direction:column;gap:10px">'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +'<div><label class="form-label">日期 Date</label><input type="date" id="dle-date" class="form-control" value="'+escHtml(e.date||'')+'"></div>'
-    +'<div><label class="form-label">时间 Time</label><select id="dle-time" class="form-control">'+dlTimeOptions(e.time)+'</select></div>'
-    +'</div>'
-    +'<div><label class="form-label">潜点 Dive Site</label><select id="dle-site" class="form-control">'+dlSiteOptions(e.site)+'</select></div>'
-    +'<div><label class="form-label">DM / 潜导</label><select id="dle-dm" class="form-control">'+dlDmOptions(e.dm)+'</select></div>'
-    +'<div style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="dle-dsd" '+(e.isDsd?'checked':'')+' style="width:16px;height:16px"><label for="dle-dsd" class="form-label" style="margin:0">DSD 体验潜水 DSD Trial Dive</label></div>'
-    +'<div><label class="form-label">教练 Instructor</label><select id="dle-instructor" class="form-control" onchange="document.getElementById(\'dle-course-wrap\').style.display=this.value?\'\':\'none\'">'+dlInstructorOptions(e.instructor)+'</select></div>'
-    +'<div id="dle-course-wrap" style="display:'+(e.instructor?'':'none')+'"><label class="form-label">课程 Course</label><select id="dle-course" class="form-control">'+dlCourseOptions(e.course)+'</select></div>'
-    +'<div><label class="form-label">参与人员 Participants</label><div style="max-height:220px;overflow-y:auto;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px">'+pHtml+'</div></div>'
-    +'<div><label class="form-label">备注 Note</label><textarea id="dle-note" class="form-control" style="min-height:50px">'+escHtml(e.note||'')+'</textarea></div>'
-    +'</div>'
-    +'<div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">'
-    +'<button class="btn btn-ghost btn-sm" onclick="document.getElementById(\'dle-modal\').style.display=\'none\'">取消 Cancel</button>'
-    +'<button class="btn btn-secondary btn-sm" style="color:#ef4444" onclick="if(confirm(\'删除这条潜水记录？Delete this dive entry?\')){const l=getDivelog().filter(x=>x.id!==\''+id+'\');saveDivelog(l);document.getElementById(\'dle-modal\').style.display=\'none\';renderDiveLog()}">🗑 删除 Delete</button>'
-    +'<button class="btn btn-primary btn-sm" onclick="saveDlDetail(\''+id+'\')">💾 保存 Save</button>'
-    +'</div>'
-  document.getElementById('dle-modal').style.display='flex'
-}
-function saveDlDetail(id){
-  const log=getDivelog()
-  const idx=log.findIndex(x=>x.id===id)
-  if(idx<0)return
-  const date=document.getElementById('dle-date').value
-  const time=document.getElementById('dle-time').value
-  const site=document.getElementById('dle-site').value
-  const participants=[...document.querySelectorAll('.dle-cb:checked')].map(cb=>cb.value)
-  if(!date||!site){alert('请选择日期和潜点 Please select date and dive site');return}
-  if(!participants.length){alert('请至少选择一名参与者 Please select at least one participant');return}
-  const dm=document.getElementById('dle-dm')?.value||''
-  const instructor=document.getElementById('dle-instructor')?.value||''
-  const course=document.getElementById('dle-course')?.value||''
-  const isDsd=document.getElementById('dle-dsd')?.checked||false
-  const note=document.getElementById('dle-note')?.value.trim()||''
-  log[idx]={...log[idx],date,time,site,dm,instructor,course,participants,isNight:time==='18:00',isDsd,note}
-  saveDivelog(log)
-  document.getElementById('dle-modal').style.display='none'
-  renderDiveLog()
 }
 
 function deleteDive(id){
@@ -4919,53 +4839,55 @@ function showGuestCard(custId){
   if(!c)return
   const sexMap={'男':'Male 男','女':'Female 女',M:'Male',F:'Female'}
   const sexLbl=sexMap[c.gender]||c.gender||''
+  const gearList=(c.ownGear||[]).join('、')
+  const GEAR_ITEMS=[['潜水服','Wetsuit','尺码 Size'],['BCD','BCD','尺码 Size'],['调节器','Regulator','尺码 Size'],['脚蹼','Fins','尺码 Size'],['面镜','Mask','度数 Myopia'],['电脑表','Dive Computer','']]
   const ownGearArr=c.ownGear||[]
-  const GEAR_DISPLAY=[
-    {label:'潜水服 Wetsuit (size)',keys:['潜水服']},
-    {label:'BCD (size)',keys:['BCD']},
-    {label:'调节器 Regulator',keys:['调节器']},
-    {label:'脚蹼 Fins (size)',keys:['脚蹼']},
-    {label:'面镜 Mask (Myopia)',keys:['面镜']},
-    {label:'电脑表 Dive Computer',keys:['电脑表']}
-  ]
-  const gearChecklist='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 28px;padding:3px 0;font-size:19px">'+GEAR_DISPLAY.map(g=>{
-    const checked=g.keys.some(k=>ownGearArr.includes(k))
-    return'<div style="display:flex;align-items:center;gap:11px;color:'+(checked?'#0f172a;font-weight:700':'#94a3b8;font-weight:400')+'">'+(checked?'☑':'☐')+' '+escHtml(g.label)+'</div>'
+  const gearChecklist='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 28px;padding:8px 0 4px;font-size:18px">'+GEAR_ITEMS.map(function(g){
+    const checked=ownGearArr.includes(g[0])
+    const lbl=g[0]+(g[1]&&g[1]!==g[0]?' '+g[1]:'')
+    const sizeLbl=g[2]
+    return'<span style="display:inline-flex;align-items:center;gap:8px;white-space:nowrap;color:#0f172a;font-weight:500">'+(checked?'☑':'☐')+' '+lbl+(sizeLbl?'<span style="color:#94a3b8;font-weight:400;font-size:13px;margin-left:2px">'+sizeLbl+'</span><span style="border-bottom:1px solid #cbd5e1;display:inline-block;min-width:55px;height:18px"></span>':'')+'</span>'
   }).join('')+'</div>'
-  // label+value-or-blank row (mirrors blankField but fills in the value when known)
-  const fld=(label,val)=>'<div style="display:flex;align-items:baseline;gap:14px;padding:7px 0;font-size:18px"><span style="color:#64748b;white-space:nowrap;min-width:0">'+label+'</span>'+(val?'<span style="flex:1;color:#0f172a;font-weight:600;border-bottom:1px solid #cbd5e1;padding-bottom:2px">'+val+'</span>':'<span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:26px">&nbsp;</span>')+'</div>'
-  const fld2=(l1,v1,l2,v2,r1,r2)=>'<div style="display:flex;gap:32px"><div style="flex:'+(r1||1)+'">'+fld(l1,v1)+'</div><div style="flex:'+(r2||1)+'">'+fld(l2,v2)+'</div></div>'
-  // top header row: fixed-width labels so all values in a column line up vertically, whole row underlined in navy
-  const topRow=(l1,v1,l2,v2)=>'<div style="display:flex;gap:20px;padding:7px 0;border-bottom:2px solid #0b3d5e">'
-    +'<div style="flex:1;display:flex;align-items:baseline;min-width:0"><span style="flex:0 0 255px;font-size:18px;color:#64748b;white-space:nowrap">'+l1+'</span><span style="flex:1;color:#0f172a;font-weight:600;font-size:18px">'+(v1||'')+'</span></div>'
-    +'<div style="flex:1;display:flex;align-items:baseline;min-width:0"><span style="flex:0 0 195px;font-size:18px;color:#64748b;white-space:nowrap">'+l2+'</span><span style="flex:1;color:#0f172a;font-weight:600;font-size:18px">'+(v2||'')+'</span></div>'
-    +'</div>'
-  const fdateB=s=>s?fdate(s):'' // blank-safe date: avoid rendering the '—' placeholder as a fake value
-  const fdob=s=>{if(!s)return'';const m=s.match(/(\d{4})-(\d{2})-(\d{2})/);return m?(m[3]+'/'+m[2]+'/'+m[1]):s} // DD/MM/YYYY for the Date of Birth field
-  const courseSchedule=(c.items&&c.items.length)?c.items.map(i=>isCourseItem(i.name)?shortCourseName(i.name):(/^FD\b/i.test(i.name)?'FD':i.name)).join(', '):''
+  const diveBox=(c.items&&c.items.length)?('<div style="max-width:300px;width:max-content;text-align:center;background:#f0f9ff;border:1.5px solid #0ea5e9;border-radius:8px;padding:6px 10px;font-size:11px;line-height:1.45">'
+    +'<div style="font-size:9px;font-weight:800;color:#0ea5e9;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px;white-space:nowrap">潜水安排 Dive Arrangement</div>'
+    +c.items.map(i=>'<div style="font-weight:800;color:#0b3d5e;font-size:13px;line-height:1.25;white-space:nowrap">'+escHtml(isCourseItem(i.name)?shortCourseName(i.name):(/^FD\b/i.test(i.name)?'FD':i.name))+'</div><div style="color:#475569;font-size:11px;margin-bottom:3px;text-align:center;white-space:nowrap">教练/DM '+escHtml(i.instructor||c.instructor||'—')+'</div>').join('')
+    +'</div>'):''
   document.getElementById('gc-modal-inner').innerHTML=
     '<div id="gc-card" class="bw" style="max-width:900px;width:100%">'
-    +'<div>'
-    +topRow('GROUP INFORMATION 团队信息','','NAME 姓名',escHtml(c.name||''))
-    +topRow('CHECK-IN 到店日期',fdateB(c.checkin),'CHECK-OUT 离店时间',fdateB(c.checkout))
-    +topRow('ROOM NO. 房号',escHtml(c.roomNum||''),'SCHEDULE 行程',escHtml(courseSchedule))
-    +topRow('EQP. CRATE NO. 装备框编号','','INSTRUCTOR 教练',escHtml(c.instructor||''))
+    +'<div style="display:grid;grid-template-columns:auto 1fr auto;align-items:start;gap:10px;border-bottom:2.5px solid #0b3d5e;padding-bottom:14px;margin-bottom:18px">'
+    +'<img src="'+LOGO_B64+'" style="height:74px;width:auto">'
+    +'<div style="text-align:center;min-width:0;padding-top:2px">'
+    +'<div style="font-size:17px;font-weight:800;color:#0b3d5e;letter-spacing:.3px">LUCKY TITO RESORT CORP.</div>'
+    +'<div style="font-size:9px;color:#94a3b8;letter-spacing:0;margin-top:2px;white-space:nowrap">RESORT · DIVING · RESTAURANT · BAR · COFFEE · KTV</div>'
+    +'<div style="margin-top:8px">'
+    +'<div style="font-size:12px;font-weight:700;color:#475569;letter-spacing:.5px;white-space:nowrap">潜水员登记表</div>'
+    +'<div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:1px;margin-top:1px;white-space:nowrap">DIVER REGISTRATION FORM</div>'
     +'</div>'
-    +'<div style="text-align:center;margin:10px 0 8px">'
-    +'<img src="'+LOGO_B64+'" style="height:88px;width:auto">'
-    +'<div style="font-size:29px;font-weight:800;color:#0b3d5e;letter-spacing:.3px;margin-top:4px">LUCKY TITO RESORT CORP.</div>'
-    +'<div style="font-size:11px;color:#94a3b8;letter-spacing:0;margin-top:3px">RESORT · DIVING · RESTAURANT · BAR · COFFEE · KTV</div>'
     +'</div>'
-    +'<div class="bs"><div class="bst">潜水员基本信息表 Diver\'s Information Sheet</div>'
-    +fld2('Date of Birth 生日 (DD/MM/YR)',fdob(c.dob),'Sex 性别',escHtml(sexLbl),62,38)
-    +fld('Email 邮箱',escHtml(c.email||''))
+    +diveBox
     +'</div>'
-    +'<div class="bs"><div class="bst">持证信息 Certification Information</div>'
-    +fld2('发证机构 Certification Authority',escHtml(c.certSystem||''),'持证级别 Cert. Level',escHtml(c.certLevel||''))
-    +fld2('证照编号 C-card No.',escHtml(c.certNumber||''),'潜水经验 Diving Experience',escHtml(c.divingExp||''))
-    +'</div>'
-    +'<div class="bs"><div class="bst">装备信息 Gear Info · 自有装备请打勾 Own Gear</div>'
+    +'<div class="bs"><div class="bst">住宿日期 Date of Staying</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 24px;padding:8px 0;font-size:18px">'
+    +'<span><span class="brl">入住 From</span> <span class="brv">'+fdate(c.checkin)+'</span></span>'
+    +'<span><span class="brl">退房 To</span> <span class="brv">'+fdate(c.checkout)+'</span></span>'
+    +'<span><span class="brl">房间号 Room No.</span> <span class="brv">'+escHtml(c.roomNum||'')+'</span></span>'
+    +'</div></div>'
+    +'<div class="bs"><div class="bst">客人信息 Customer Information</div><div class="big">'
+    +brow('Name 姓名',escHtml(c.name||''))
+    +brow('出生日期 Date of Birth',fdate(c.dob))
+    +brow('Sex 性别',escHtml(sexLbl))
+    +brow('邮箱 Email',escHtml(c.email||''))
+    +'</div></div>'
+    +'<div class="bs"><div class="bst">潜水员信息 Diver\'s Information</div><div class="big">'
+    +browOrBlank('认证系统 Cert. System',escHtml(c.certSystem||''))
+    +browOrBlank('技能等级 Cert. Level',escHtml(c.certLevel||''))
+    +browOrBlank('证书编号 C-Card No.',escHtml(c.certNumber||''))
+    +browOrBlank('潜水经验 Diving Experience',escHtml(c.divingExp||''))
+    +'</div></div>'
+    +'<div class="bs"><div class="bst">装备信息 Gear Info</div>'
+    +'<div style="font-size:14px;color:#94a3b8;margin-bottom:4px">自有装备请打勾 Please check the box for gear you bring yourself</div>'
     +gearChecklist
+    +(c.gearNote?'<div style="font-size:15px;color:#64748b;margin-top:6px">📝 '+escHtml(c.gearNote)+'</div>':'')
     +'</div>'
     +'<div class="bs"><div class="bst">紧急联系人 Emergency Contact</div>'
     +blankField2('姓名 Name','电话 Phone Number')
@@ -5486,21 +5408,15 @@ setInterval(()=>{if(getSyncUrl())cloudLoad()},5*60*1000)
   </div>
 </div>
 
+<!-- WAGE SETTLEMENT CAPTURE (hidden, used only for html2canvas) -->
 <div id="wage-card-wrap" style="position:fixed;left:-9999px;top:0">
   <div id="wage-card"></div>
 </div>
 
-<!-- WAGE SHEET MODAL -->
-<div id="ws-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1500;overflow-y:auto;padding:20px" onclick="if(event.target===this)closeWsModal()">
-  <div style="background:white;border-radius:16px;width:100%;max-width:760px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-    <div class="no-print" style="display:flex;gap:8px;padding:14px 18px;border-bottom:1px solid #f1f5f9;align-items:center;position:sticky;top:0;background:white;border-radius:16px 16px 0 0;z-index:10">
-      <span style="font-size:14px;font-weight:700;color:#0b3d5e">结算单 Settlement Report</span>
-      <div style="margin-left:auto;display:flex;gap:8px">
-        <button class="btn btn-secondary" onclick="window.print()">🖨️ 打印 Print</button>
-        <button class="btn btn-ghost btn-sm" onclick="closeWsModal()">✕</button>
-      </div>
-    </div>
-    <div id="ws-modal-inner" style="padding:20px"></div>
+<!-- WAGE SETTLEMENT REPORT MODAL -->
+<div id="ws-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;overflow-y:auto;padding:20px" onclick="if(event.target===this)closeWsModal()">
+  <div style="background:white;border-radius:16px;width:100%;max-width:640px;margin:0 auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div id="ws-modal-inner"></div>
   </div>
 </div>
 
@@ -5513,24 +5429,4 @@ setInterval(()=>{if(getSyncUrl())cloudLoad()},5*60*1000)
 
 <!-- RESTAURANT RMB RATE MODAL -->
 <div id="rr-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px">
-  <div style="background:white;border-radius:16px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-    <div id="rr-modal-inner"></div>
-  </div>
-</div>
-
-<!-- RESTAURANT CHARGE DETAIL/CONFIRMATION MODAL -->
-<div id="rc-detail-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeRcDetailModal()">
-  <div style="background:white;border-radius:16px;padding:24px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto">
-    <div id="rc-detail-modal-inner"></div>
-  </div>
-</div>
-
-<!-- DIVE LOG ENTRY DETAIL/EDIT MODAL -->
-<div id="dle-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;overflow-y:auto;padding:20px" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:white;border-radius:16px;width:100%;max-width:520px;margin:0 auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-    <div id="dle-modal-inner"></div>
-  </div>
-</div>
-
-</body>
-</html>
+  <div style="background:white;border-radius:16px;
