@@ -20,6 +20,14 @@ function _getRoleKeys(){
 function _initRole(){
   const p=new URLSearchParams(location.search)
   const r=p.get('r')||'view', k=p.get('k')||''
+  // Trust the URL key on any device — this is how shared role links work across devices
+  if(k&&(r==='front'||r==='dive')){
+    try{
+      const stored=JSON.parse(localStorage.getItem('lt_roleKeys')||'{}')
+      stored[r]=k
+      localStorage.setItem('lt_roleKeys',JSON.stringify(stored))
+    }catch{}
+  }
   const keys=_getRoleKeys()
   if(r==='front'&&k&&k===keys.front)_role='front'
   else if(r==='dive'&&k&&k===keys.dive)_role='dive'
