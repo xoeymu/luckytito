@@ -3943,7 +3943,7 @@ function renderBill(overrideCustId){
 '<div style="display:flex;align-items:center;gap:7px;min-width:0"><span class="brl" style="flex-shrink:0">姓名 Name</span><span class="brv" style="overflow:hidden;text-overflow:ellipsis">'+escHtml(c.name)+'</span></div>'+
 (c.email?'<div style="display:flex;align-items:center;gap:7px;min-width:0;margin-left:20px"><span class="brl" style="flex-shrink:0">邮箱 Email</span><span class="brv" style="overflow:hidden;text-overflow:ellipsis">'+escHtml(c.email)+'</span></div>':'')+
 '</div></div>'+
-(hasR?'<div class="bs"><div class="bst">住宿 Accommodation</div><div class="big">'+brow('入住 Check-in',fdate(c.checkin))+brow('退房 Check-out',fdate(c.checkout)+nightDisp)+brow('房型 Room Type',c.roomType)+brow('房间号 Room No.',c.roomNum)+'</div>'+discNote+roomStayBlocks+'</div>':'')+
+(hasR?'<div class="bs"><div class="bst">住宿 Accommodation</div><div class="big">'+brow('入住 Check-in',fdate(c.checkin))+brow('退房 Check-out',fdate(c.checkout)+nightDisp)+brow('房型 Room Type',c.roomType)+brow('房间号 Room No.',c.roomNum)+'</div>'+discNote+roomRows+'</div>':'')+
 '<div class="bs"><div class="bst">费用明细 Charges</div>'+
 '<table class="bit" style="table-layout:fixed"><colgroup><col style="width:50%"><col style="width:16%"><col style="width:10%"><col style="width:24%"></colgroup><thead><tr><th>项目 Item</th><th>单价 Unit Price</th><th>数量 Qty</th><th>小计 Subtotal</th></tr></thead><tbody>'+
 (c.items||[]).map(i=>'<tr><td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+escHtml(i.name)+'">'+escHtml(i.name)+'</td><td>¥ '+(+i.price).toFixed(2)+'</td><td>'+i.qty+'</td><td>¥ '+(i.price*i.qty).toFixed(2)+'</td></tr>').join('')+
