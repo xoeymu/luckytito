@@ -6,48 +6,9 @@
 <title>LUCKY TITO PG TRAINING CENTER MANAGEMENT 潜店管理系统</title>
 <script>
 (function(){
-  const USERS=[
-    {name:'Bonnie',pass:'88888'},
-    {name:'Xoey',pass:'7777'},
-    {name:'Front Desk',pass:'0616'},
-    {name:'Mer',pass:'5555'},
-    {name:'Admin',pass:'6666'}
-  ];
-  // Instructor-only read-only schedule link (?view=inst) bypasses the staff password gate entirely
+  // Instructor-only read-only schedule link (?view=inst) bypasses auth entirely
   if(new URLSearchParams(location.search).get('view')==='inst')return;
-  if(sessionStorage.getItem('lt_auth')==='ok')return;
-  document.addEventListener('DOMContentLoaded',function(){
-    const ov=document.createElement('div');
-    ov.id='pw-overlay';
-    ov.style.cssText='position:fixed;inset:0;background:#0b3d5e;display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:20px';
-    ov.innerHTML='<div style="color:white;font-size:22px;font-weight:800;letter-spacing:1px">🤿 LUCKY TITO PG</div>'
-      +'<div style="color:rgba(255,255,255,.7);font-size:13px;margin-top:-10px">TRAINING CENTER MANAGEMENT</div>'
-      +'<div style="background:white;border-radius:14px;padding:28px 32px;display:flex;flex-direction:column;gap:14px;min-width:280px;text-align:center">'
-      +'<div style="font-size:13px;font-weight:700;color:#0b3d5e">Welcome / 欢迎</div>'
-      +'<input id="pw-input" type="password" placeholder="Password 密码" style="padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:15px;text-align:center;outline:none;font-family:inherit" autofocus>'
-      +'<button id="pw-btn" style="background:#0ea5e9;color:white;border:none;border-radius:8px;padding:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">进入 Enter</button>'
-      +'<div id="pw-err" style="color:#dc2626;font-size:12px;min-height:16px"></div>'
-      +'</div>';
-    document.body.appendChild(ov);
-    document.body.style.overflow='hidden';
-    function tryLogin(){
-      const val=document.getElementById('pw-input').value.trim();
-      const user=USERS.find(u=>u.pass===val);
-      if(user){
-        sessionStorage.setItem('lt_auth','ok');
-        sessionStorage.setItem('lt_user',user.name);
-        ov.remove();document.body.style.overflow='';
-        // Show username in nav if element exists
-        const unEl=document.getElementById('nav-username');if(unEl)unEl.textContent=user.name;
-      }else{
-        document.getElementById('pw-err').textContent='密码错误 Wrong password';
-        document.getElementById('pw-input').value='';
-        document.getElementById('pw-input').focus();
-      }
-    }
-    document.getElementById('pw-btn').onclick=tryLogin;
-    document.getElementById('pw-input').onkeydown=function(e){if(e.key==='Enter')tryLogin()};
-  });
+  // Role is initialised via _initRole() called in DOMContentLoaded below
 })();
 // ====== INSTRUCTOR READ-ONLY VIEW (?view=inst[&sync=<apps-script-url>]) ======
 // Strips the app down to just the 15-day instructor calendar. Never reads/writes
@@ -346,6 +307,8 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
     <div class="nav-tab" onclick="switchTab('dives')" id="tab-dives">Dive Log</div>
   </div>
   <div class="nav-tools">
+    <span id="nav-role-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;color:white;background:#94a3b8;white-space:nowrap;cursor:default" title="当前角色 Current role">查看</span>
+    <button id="nav-role-link-btn" onclick="showRoleLinks()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:white;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit" title="查看/复制角色链接 Role links">🔗</button>
     <span id="nav-username" style="font-size:12px;color:rgba(255,255,255,.75);font-weight:600;padding:0 6px;white-space:nowrap"></span>
     <button class="nav-btn btn-hol" onclick="openHolModal()" style="background:#f59e0b;border-color:#f59e0b">📅 节假日 Holidays</button>
     <div class="sync-pill" onclick="openSyncModal()" title="云同步 Cloud Sync"><span class="sync-dot dot-none" id="sync-dot"></span><span id="sync-text">离线 Offline</span></div>
@@ -1230,6 +1193,99 @@ function getCloudData(){
   extras.push({id:'__restaurant_charges__',charges:getRestaurantCharges()})
   return[...customers,...extras]
 }
+
+// ====== ROLE-BASED ACCESS ======
+// Roles: front (前台) | dive (潜店) | view (查看 — default)
+// Auth: URL params ?r=front&k=KEY  /  ?r=dive&k=KEY  /  ?r=view (no key)
+// Keys auto-generated in localStorage lt_roleKeys on first run.
+// 前台 or 潜店 can open showRoleLinks() to copy/share the correct URLs.
+
+let _role='view'
+
+function _getRoleKeys(){
+  try{
+    let k=JSON.parse(localStorage.getItem('lt_roleKeys')||'{}')
+    let changed=false
+    if(!k.front){k.front=Math.random().toString(36).slice(2,12);changed=true}
+    if(!k.dive){k.dive=Math.random().toString(36).slice(2,12);changed=true}
+    if(changed)localStorage.setItem('lt_roleKeys',JSON.stringify(k))
+    return k
+  }catch{return{front:'',dive:''}}
+}
+
+function _initRole(){
+  const p=new URLSearchParams(location.search)
+  const r=p.get('r')||'view'
+  const k=p.get('k')||''
+  const keys=_getRoleKeys()
+  if(r==='front'&&k&&k===keys.front)_role='front'
+  else if(r==='dive'&&k&&k===keys.dive)_role='dive'
+  else _role='view'
+  document.body.dataset.role=_role
+  const badge=document.getElementById('nav-role-badge')
+  const linkBtn=document.getElementById('nav-role-link-btn')
+  const labels={front:'前台',dive:'潜店',view:'查看'}
+  const colors={front:'#0ea5e9',dive:'#16a34a',view:'#94a3b8'}
+  if(badge){badge.textContent=labels[_role];badge.style.background=colors[_role]}
+  // link button always visible — see nav HTML
+}
+
+// Can the current role write to a section?
+// Sections: guest | schedule | booking | rooms | bill | elearning | groups | divelog | wages
+function _canWrite(section){
+  const p={front:['guest','schedule','booking','rooms','bill','elearning'],dive:['elearning','groups','divelog','wages'],view:[]}
+  return(p[_role]||[]).includes(section)
+}
+
+function _roleBlock(){
+  // Don't stack toasts
+  if(document.getElementById('_rb_toast'))return
+  const t=document.createElement('div')
+  t.id='_rb_toast'
+  t.style.cssText='position:fixed;top:64px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 22px;border-radius:8px;font-size:13px;z-index:9999;pointer-events:none;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.35)'
+  t.textContent='🔒 权限不足 Insufficient permissions'
+  document.body.appendChild(t)
+  setTimeout(()=>t.remove(),2200)
+}
+
+function showRoleLinks(){
+  const keys=_getRoleKeys()
+  const base=location.origin+location.pathname
+  const rows=[
+    ['前台 Front Desk',base+'?r=front&k='+keys.front,'#0ea5e9'],
+    ['潜店 Dive Shop',base+'?r=dive&k='+keys.dive,'#16a34a'],
+    ['查看 View Only',base+'?r=view','#94a3b8']
+  ]
+  const m=document.createElement('div')
+  m.id='role-links-modal'
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center'
+  m.innerHTML='<div style="background:white;border-radius:14px;padding:28px;width:90%;max-width:520px;font-family:inherit">'
+    +'<div style="font-weight:800;font-size:16px;color:#0b3d5e;margin-bottom:18px">🔗 角色链接 Role Links</div>'
+    +rows.map(([lbl,url,col])=>'<div style="margin-bottom:14px">'
+      +'<div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:5px">'+lbl+'</div>'
+      +'<div style="display:flex;gap:8px">'
+      +'<input readonly value="'+url+'" onclick="this.select()" style="flex:1;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;font-family:monospace;color:#334155;min-width:0">'
+      +'<button onclick="navigator.clipboard.writeText(''+url+'').then(()=>{this.textContent='✓';setTimeout(()=>this.textContent='复制',1500)})" style="padding:7px 14px;background:'+col+';color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;flex-shrink:0">复制</button>'
+      +'</div></div>'
+    ).join('')
+    +'<div style="display:flex;gap:8px;justify-content:space-between;margin-top:20px;align-items:center">'
+    +'<button onclick="regenerateRoleKeys()" style="padding:8px 14px;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🔄 重新生成密钥 Regenerate</button>'
+    +'<button onclick="document.getElementById('role-links-modal').remove()" style="padding:8px 22px;background:#0b3d5e;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">关闭</button>'
+    +'</div></div>'
+  document.body.appendChild(m)
+}
+
+function regenerateRoleKeys(){
+  if(!confirm('重新生成密钥后旧链接立即失效，需重新分发。继续？
+Old links will stop working. Continue?'))return
+  localStorage.removeItem('lt_roleKeys')
+  _getRoleKeys()
+  document.getElementById('role-links-modal')?.remove()
+  setTimeout(showRoleLinks,50)
+}
+
+document.addEventListener('DOMContentLoaded',_initRole)
+
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 // Escape free-text before it goes into an HTML string (innerHTML / attribute values). Guest names,
 // notes, etc. can come from Smart Paste (pasted external text) so they're not safe to interpolate raw.
@@ -1453,6 +1509,7 @@ function cloudLoad(){
 // freshest localStorage state when it actually fires) instead of letting bursts race each other.
 let _cloudSaveInFlight=false,_cloudSavePending=false
 function cloudSave(){
+  if(_role==='view')return  // view role cannot write
   if(_cloudSaveInFlight){_cloudSavePending=true;return}
   const url=getSyncUrl();if(!url)return
   _cloudSaveInFlight=true
@@ -1658,6 +1715,7 @@ function rsClearFreeUpgrade(){
   document.getElementById('rs-upgrade-label').style.display='none'
 }
 function saveRoomStay(){
+  if(!_canWrite('rooms')){_roleBlock();return}
   const ci=v('rs-ci'),co=v('rs-co'),rtype=v('rs-rtype'),rnum=v('rs-rnum').trim(),rrate=v('rs-rrate')
   if(!ci||!co){alert('请填写入住/退房日期 Please fill in check-in/check-out dates');return}
   if(new Date(co)<=new Date(ci)){alert('退房日期需晚于入住日期 Check-out must be after check-in');return}
@@ -2422,6 +2480,7 @@ function renderSaveLog(){
   el.innerHTML=log.slice(0,20).map(e=>'<div class="save-log-row">'+e.t+' &nbsp;·&nbsp; <span style="color:#0284c7;font-weight:700">'+(e.user||'?')+'</span> &nbsp;·&nbsp; <strong>'+e.name+'</strong> &nbsp;·&nbsp; '+e.fields+' 项 fields</div>').join('')
 }
 function saveCustomer(){
+  if(!_canWrite('guest')){_roleBlock();return}
   const d=collect();if(!d.name){alert('请填写客户姓名 Please enter guest name');document.getElementById('f-name').focus();return}
   const all=getAll();const i=all.findIndex(c=>c.id===d.id)
   if(i>=0)all[i]=d;else all.unshift(d)
@@ -3323,6 +3382,7 @@ function updateSplitLabel(mode){
   if(sp)sp.textContent='¥ '+(n>0?(fee/n).toFixed(2):'0')
 }
 function applyBatchArrange(mode){
+  if(!_canWrite('schedule')){_roleBlock();return}
   const all=getAll()
   const sel=[..._selectedForArrange].filter(k=>k.endsWith(':'+mode))
   if(!sel.length)return
@@ -3420,6 +3480,7 @@ function renderGroupBlock(grp,mode,ci){
   return h
 }
 function toggleTransPaid(cId,mode){
+  if(!_canWrite('schedule')){_roleBlock();return}
   const all=getAll();const idx=all.findIndex(c=>c.id===cId);if(idx<0)return
   const fld=mode==='arrive'?'arrTransPaid':'depTransPaid'
   all[idx][fld]=all[idx][fld]==='1'?'0':'1'
@@ -3503,6 +3564,7 @@ function batchToggle(id){
   document.getElementById('batch-count').textContent='已选 '+_batchSelected.size+' selected'
 }
 function batchCheckout(){
+  if(!_canWrite('guest')){_roleBlock();return}
   if(!_batchSelected.size)return
   if(!confirm('退房 '+_batchSelected.size+' 位客人？Checkout '+_batchSelected.size+' guest(s)?'))return
   const all=getAll()
@@ -3537,7 +3599,8 @@ function renderList(q){
   }).join('')
 }
 function editC(id){const c=getAll().find(x=>x.id===id);if(!c)return;fillForm(c);switchTab('form');window.scrollTo(0,0)}
-function delC(id){if(!confirm('确认删除？Confirm delete?'))return;saveAll(getAll().filter(c=>c.id!==id));cloudSave();renderList(document.querySelector('.sb')?.value||'')}
+function delC(id){if(!_canWrite('guest')){_roleBlock();return}
+  if(!confirm('确认删除？Confirm delete?'))return;saveAll(getAll().filter(c=>c.id!==id));cloudSave();renderList(document.querySelector('.sb')?.value||'')}
 function goBill(id){showBillModal(id)}
 function showBillModal(custId){
   const c=getAll().find(x=>x.id===custId)
@@ -3600,6 +3663,7 @@ function showDiveSync(){
     +'</div>'
 }
 function applyDiveSyncGap(id,gap){
+  if(!_canWrite('bill')){_roleBlock();return}
   if(gap<=0)return
   const all=getAll();const i=all.findIndex(c=>c.id===id);if(i<0)return
   const c=all[i]
@@ -3634,6 +3698,7 @@ function applyDiveSyncGap(id,gap){
 }
 // Reduces bill FD qty to match FD dive log count (called when bill has more FD than log)
 function applyDiveSyncFix(id){
+  if(!_canWrite('bill')){_roleBlock();return}
   const all=getAll();const i=all.findIndex(c=>c.id===id);if(i<0)return
   const c=all[i]
   const targetQty=getFdDiveCount(id)
@@ -3659,6 +3724,7 @@ function applyDiveSyncFix(id){
 }
 // Removes night surcharge lines from bill (called when no FD night dives in log)
 function removeNightSurcharge(id){
+  if(!_canWrite('bill')){_roleBlock();return}
   const all=getAll();const i=all.findIndex(c=>c.id===id);if(i<0)return
   const c=all[i]
   c.items=(c.items||[]).filter(it=>{const n=(it.name||'').trim();return n!=='夜潜附加费 Night Dive Surcharge'&&n!=='Regular Night Dive 平日夜潜'})
@@ -3672,6 +3738,7 @@ function removeNightSurcharge(id){
 // a guest's FD count can already match the dive log while the night premium is still missing —
 // no in-house FD tier bakes in the night price, so this charge always has to be added as its own row.
 function applyNightSurchargeGap(id,gap){
+  if(!_canWrite('bill')){_roleBlock();return}
   if(gap<=0)return
   const all=getAll();const i=all.findIndex(c=>c.id===id);if(i<0)return
   const c=all[i]
@@ -3687,6 +3754,7 @@ function applyNightSurchargeGap(id,gap){
 }
 let _coModalCb=null
 function toggleCheckedOut(id,cb){
+  if(!_canWrite('guest')){_roleBlock();return}
   const all=getAll();const i=all.findIndex(c=>c.id===id);if(i<0)return
   if(all[i].checkedOut){
     // Un-checkout — just toggle back
@@ -3736,6 +3804,8 @@ function coFinish(id,cur,rate){
   all[i].checkedOut=true
   all[i].checkoutCurrency=cur
   if(rate)all[i].phpRate=rate
+  // Checkout implies payment — mark as fully paid if not already set
+  if(!all[i].payStatus||all[i].payStatus==='未付')all[i].payStatus='已付全款'
   saveAll(all);cloudSave()
   renderList(document.querySelector('.sb')?.value||'')
   // Auto-open the bill (already reflects the just-picked currency) and trigger the print
@@ -3979,6 +4049,7 @@ function exportData(){
   a.download='潜水店客户数据_'+new Date().toISOString().split('T')[0]+'.json';a.click();URL.revokeObjectURL(a.href)
 }
 function importData(e){
+  if(!_canWrite('guest')){_roleBlock();return}
   const f=e.target.files[0];if(!f)return
   const r=new FileReader()
   r.onload=function(ev){
@@ -4250,6 +4321,7 @@ const EL_COURSE_ABBR={
 }
 function elCourseAbbr(name){return EL_COURSE_ABBR[name]||shortCourseName(name)}
 function toggleElStatus(cId,courseKey,field){
+  if(!_canWrite('elearning')){_roleBlock();return}
   const all=getAll();const idx=all.findIndex(c=>c.id===cId);if(idx<0)return
   if(!all[idx].elStatus)all[idx].elStatus={}
   if(!all[idx].elStatus[courseKey])all[idx].elStatus[courseKey]={el:false,cert:false,code:''}
@@ -4258,6 +4330,7 @@ function toggleElStatus(cId,courseKey,field){
   saveAll(all);cloudSave();renderElearning()
 }
 function updateElCode(cId,courseKey,val){
+  if(!_canWrite('elearning')){_roleBlock();return}
   const all=getAll();const idx=all.findIndex(c=>c.id===cId);if(idx<0)return
   if(!all[idx].elStatus)all[idx].elStatus={}
   if(!all[idx].elStatus[courseKey])all[idx].elStatus[courseKey]={el:false,cert:false,code:''}
@@ -4326,6 +4399,7 @@ function renderElearning(){
   el.innerHTML=html
 }
 function saveElCodes(){
+  if(!_canWrite('elearning')){_roleBlock();return}
   document.querySelectorAll('.el-code-input').forEach(inp=>{
     updateElCode(inp.dataset.cid,inp.dataset.course,inp.value)
   })
@@ -4474,6 +4548,7 @@ function isRoomOccupied(roomNum,checkin,checkout,excludeId){
   return false
 }
 function rcalDrop(e){
+  if(!_canWrite('rooms')){_roleBlock();return}
   e.preventDefault()
   document.querySelectorAll('.drop-ok').forEach(x=>x.classList.remove('drop-ok'))
   const newRoom=e.currentTarget.dataset.room
@@ -4517,7 +4592,7 @@ function rcalDrop(e){
 }
 
 // ====== DIVE LOG ======
-const DIVE_SITES=['Sabang Bay','Sabang Wreck','Monkey Beach','Alma Jane','Dugong Wall','The Hill','Manila Channel','Canyons','Kilima Steps','Hole in the Wall','Coral Cove','Cinandigan Wall','West Escarceo','Batangas Channel','Clam Farm','Secret Bay','Dry Dock','Sweetlips Corner','Saint Christoper','Sabang Point','Ernies Point','Wreck Point','Fish Bowl','Horse Head','Atoll','Shark Cave','Pink Wall','Boulders','Montani','Fantasea Reef']
+const DIVE_SITES=['Sabang Bay','Sabang Wreck','Monkey Beach','Alma Jane','Dugong Wall','The Hill','Manila Channel','Canyons','Kilima Steps','Hole in the Wall','Coral Cove','Cinandigan Wall','West Escarceo','Batangas Channel','Clam Farm','Secret Bay','Dry Dock','Sweetlips Corner','Saint Christoper','Sabang Point','Ernies Point','Wreck Point','Fish Bowl','Horse Head','Atoll','Shark Cave','Pink Wall','Boulders','Montani','Fantasea Reef','Verde Island','Lalaguna Point']
 const DEFAULT_DMS=['Mer','Bonnie','Xoey']
 const DEFAULT_INSTRUCTORS=[]
 
@@ -4698,6 +4773,7 @@ function updateDlPCount(){
 }
 
 function logDive(){
+  if(!_canWrite('divelog')){_roleBlock();return}
   const date=document.getElementById('dl-date').value
   const time=document.getElementById('dl-time').value
   const site=document.getElementById('dl-site').value
@@ -4767,6 +4843,7 @@ function renderDiveLog(){
 }
 
 function deleteDive(id){
+  if(!_canWrite('divelog')){_roleBlock();return}
   if(!confirm('删除这条潜水记录？Delete this dive entry?'))return
   saveDivelog(getDivelog().filter(e=>e.id!==id))
   renderDiveLog()
@@ -4932,7 +5009,9 @@ function getWageRates(){
   if(!r.instructorDive)r.instructorDive={fd:20,ow:166,aow:150,specialty:200}
   return r
 }
-function saveWageRates(r){localStorage.setItem('lt_wageRates',JSON.stringify(r));localStorage.setItem('lt_wageRates_ts',Date.now().toString());cloudSave()}
+function saveWageRates(r){
+  if(!_canWrite('wages')){_roleBlock();return}
+localStorage.setItem('lt_wageRates',JSON.stringify(r));localStorage.setItem('lt_wageRates_ts',Date.now().toString());cloudSave()}
 function updateCourseRate(name,val){const r=getWageRates();if(!r.courses)r.courses={};r.courses[name]=parseFloat(val)||0;saveWageRates(r);renderWageLedger()}
 function updateDmRate(field,val){const r=getWageRates();r[field]=parseFloat(val)||0;saveWageRates(r);renderWageLedger()}
 function updateInstructorDiveRate(tier,val){const r=getWageRates();if(!r.instructorDive)r.instructorDive={};r.instructorDive[tier]=parseFloat(val)||0;saveWageRates(r);renderWageLedger()}
@@ -4967,10 +5046,10 @@ function computeInstructorDiveLines(name,inRange){
 }
 function getWageLaunchDate(){let d=localStorage.getItem('lt_wageLaunch');if(!d){d=new Date().toISOString().split('T')[0];localStorage.setItem('lt_wageLaunch',d)}return d}
 function getWageLedger(){try{return JSON.parse(localStorage.getItem('lt_wageLedger')||'{}')}catch{return{}}}
-function saveWageLedger(l){localStorage.setItem('lt_wageLedger',JSON.stringify(l));localStorage.setItem('lt_wageLedger_ts',Date.now().toString());cloudSave()}
+function saveWageLedger(l){if(!_canWrite('wages')){_roleBlock();return}localStorage.setItem('lt_wageLedger',JSON.stringify(l));localStorage.setItem('lt_wageLedger_ts',Date.now().toString());cloudSave()}
 function getWageCutoff(name){const l=getWageLedger();return(l[name]&&l[name].paidThrough)||getWageLaunchDate()}
 function getWagePayments(){try{return JSON.parse(localStorage.getItem('lt_wagePayments')||'[]')}catch{return[]}}
-function saveWagePayments(p){localStorage.setItem('lt_wagePayments',JSON.stringify(p));localStorage.setItem('lt_wagePayments_ts',Date.now().toString());cloudSave()}
+function saveWagePayments(p){if(!_canWrite('wages')){_roleBlock();return}localStorage.setItem('lt_wagePayments',JSON.stringify(p));localStorage.setItem('lt_wagePayments_ts',Date.now().toString());cloudSave()}
 function toggleWageRates(){const el=document.getElementById('wage-rates');if(!el)return;el.style.display=el.style.display==='none'?'block':'none'}
 function wageCurrency(role){return role==='dm'?'₱':'¥'}
 function computeInstructorPending(name){
@@ -5087,6 +5166,7 @@ function renderWageHistory(){
   el.innerHTML=html
 }
 function markWagePaid(name,role){
+  if(!_canWrite('wages')){_roleBlock();return}
   const data=role==='instructor'?computeInstructorPending(name):computeDmPending(name)
   if(!data.lines.length){alert('暂无待结算金额 No pending amount');return}
   if(!confirm('确认标记 '+name+' 已支付 '+wageCurrency(role)+data.total.toFixed(0)+' 吗？Confirm '+name+' has been paid '+wageCurrency(role)+data.total.toFixed(0)+'?'))return
@@ -5255,6 +5335,7 @@ function updateGrpCount(){
 }
 
 function saveGroup(){
+  if(!_canWrite('groups')){_roleBlock();return}
   const coach=(document.getElementById('grp-coach').value||'').trim()
   if(!coach){alert('请输入教练姓名 Please enter coach name');return}
   const students=[...document.querySelectorAll('.grp-cb:checked')].map(cb=>cb.value)
@@ -5315,6 +5396,7 @@ function editGroup(id){
 }
 
 function deleteGroup(id){
+  if(!_canWrite('groups')){_roleBlock();return}
   if(!confirm('删除该团？Delete this group?'))return
   saveGroups(getGroups().filter(g=>g.id!==id));renderGroups()
 }
@@ -5428,5 +5510,4 @@ setInterval(()=>{if(getSyncUrl())cloudLoad()},5*60*1000)
 </div>
 
 <!-- RESTAURANT RMB RATE MODAL -->
-<div id="rr-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px">
-  <div style="background:white;border-radius:16px;
+<div id="rr-modal" s
