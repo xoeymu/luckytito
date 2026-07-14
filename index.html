@@ -3554,8 +3554,14 @@ function renderList(q){
     ?all.filter(c=>[c.name,c.email,c.custNo,c.location,c.instructor,c.roomNum,c.date].join(' ').toLowerCase().includes(s))
     :all.filter(c=>!c.checkedOut)
   ).slice().sort((a,b)=>{
+    // Primary: checkout date → departure flight time → checkin date → end
+    const coA=a.checkout||a.departTime||a.checkin||'9999'
+    const coB=b.checkout||b.departTime||b.checkin||'9999'
+    if(coA!==coB)return coA.localeCompare(coB)
+    // Secondary: arrive time
     const tA=a.arriveTime||'',tB=b.arriveTime||''
     if(tA!==tB)return tA.localeCompare(tB)
+    // Tertiary: room number
     const rA=parseInt(a.roomNum)||9999,rB=parseInt(b.roomNum)||9999
     return rA-rB
   })
@@ -3569,7 +3575,7 @@ function renderList(q){
     const b=isOut?'bo':(bc[c.payStatus]||'bu')
     const isSel=_batchSelected.has(c.id)
     const dc=getDiveCount(c.id)
-    const meta=[c.custNo?'🔢 '+escHtml(c.custNo):'',c.date?'📅 '+escHtml(c.date):'',c.location?'📍 '+escHtml(c.location):'',c.instructor?'👨‍🏫 '+escHtml(c.instructor):'',c.roomNum?'🏨 '+escHtml(c.roomNum)+(c.roomType?' ('+escHtml(c.roomType.split(' ')[0])+')':''):'',tot>0?'💰 ¥'+tot.toFixed(0):'',dc>0?'🤿 '+dc+(dc===1?' dive':' dives'):''].filter(Boolean)
+    const meta=[c.custNo?'🔢 '+escHtml(c.custNo):'',c.date?'📅 '+escHtml(c.date):'',c.location?'📍 '+escHtml(c.location):'',c.instructor?'👨‍🏫 '+escHtml(c.instructor):'',c.roomNum?'🏨 '+escHtml(c.roomNum)+(c.roomType?' ('+escHtml(c.roomType.split(' ')[0])+')':''):'',(c.checkout?'🚪 退房 '+escHtml(c.checkout.slice(5).replace('-','/')):c.departTime?'✈️ 离港 '+escHtml(c.departTime.slice(5,10).replace('-','/')+(c.departTime.length>10?' '+c.departTime.slice(11,16):'')):''),tot>0?'💰 ¥'+tot.toFixed(0):'',dc>0?'🤿 '+dc+(dc===1?' dive':' dives'):''].filter(Boolean)
     const coBtn='<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;font-weight:600;color:'+(isOut?'#16a34a':'#64748b')+';white-space:nowrap"><input type="checkbox" '+(isOut?'checked':'')+' onchange="toggleCheckedOut(\''+c.id+'\',this)" style="width:14px;height:14px;cursor:pointer;accent-color:#16a34a"> 已退房 Checked Out</label>'
     const batchCb=_batchMode?'<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;cursor:pointer;margin-right:4px"><input type="checkbox" '+(isSel?'checked':'')+' onchange="batchToggle(\''+c.id+'\')" style="width:16px;height:16px;cursor:pointer;accent-color:#0284c7"></label>':''
     return'<div class="cc" onclick="'+(_batchMode?'':'editC(\''+c.id+'\')')+'\" style="'+(isOut?'opacity:0.5;':'')+(isSel?'background:#e0f2fe;border-color:#0284c7;':'')+'"><div style="display:flex;align-items:center">'+batchCb+'<div class="ava" style="'+(isOut?'background:#94a3b8':'')+'flex-shrink:0">'+escHtml((c.name||'?').charAt(0))+'</div></div><div class="ci"><div class="cn">'+escHtml(c.name)+' <span class="badge '+b+'">'+(payLbl[c.payStatus]||'未付 Unpaid')+'</span>'+(isOut?'<span class="tag" style="font-size:10px;background:#dcfce7;color:#16a34a">✓ 已退房 Checked Out</span>':'')+(c.isHoliday==='是'?'<span class="tag th" style="font-size:10px">节假日 Holiday</span>':'')+'</div><div class="cm">'+meta.map(m=>'<span>'+m+'</span>').join('')+'</div></div><div class="ca" onclick="event.stopPropagation()">'+(!_batchMode?coBtn:'')+'<button class="btn btn-secondary btn-sm" onclick="goBill(\''+c.id+'\')">账单 Bill</button>'+'<button class="btn btn-secondary btn-sm" onclick="showDiveHistory(\''+c.id+'\')" title="潜水记录 Dive History">🤿 潜水 Dives</button>'+'<button class="btn btn-secondary btn-sm" onclick="showGuestCard(\''+c.id+'\')" title="客人登记卡 Guest Registration Card">📋 卡片 Card</button>'+(!_batchMode?'<button class="btn btn-danger btn-sm" onclick="delC(\''+c.id+'\')">删除 Delete</button>':'')+'</div></div>'
@@ -4657,9 +4663,15 @@ function renderDlParticipants(){
   const el=document.getElementById('dl-participants')
   if(!el)return
   const diveDate=document.getElementById('dl-date')?.value||new Date().toISOString().split('T')[0]
-  const all=getAll().filter(c=>!c.checkedOut&&(c.checkin||'')<=diveDate&&(c.checkout||'')>diveDate)
+  const showAll=document.getElementById('dl-pshow-all')?.dataset.all==='1'
+  // Default: guests who haven't fully checked out (account still open) and have checked in by dive date
+  // "Show All" button also includes already-checked-out guests (rare edge case)
+  const all=getAll().filter(c=>(showAll||!c.checkedOut)&&(c.checkin||'')<=diveDate)
   if(!all.length){el.innerHTML='<div style="font-size:12px;color:#94a3b8;padding:4px">暂无在店客人 No guests currently in-house</div>';return}
-  el.innerHTML='<input type="text" id="dl-pfilter" class="form-control" placeholder="🔍 搜索姓名或房号… Search name/room" style="font-size:12px;padding:6px 8px;margin-bottom:6px" oninput="renderDlParticipantGroups()">'
+  el.innerHTML='<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">'
+    +'<input type="text" id="dl-pfilter" class="form-control" placeholder="🔍 搜索姓名或房号… Search name/room" style="font-size:12px;padding:6px 8px;flex:1" oninput="renderDlParticipantGroups()">'
+    +'<button id="dl-pshow-all" data-all="0" onclick="this.dataset.all=this.dataset.all===\'1\'?\'0\':\'1\';this.textContent=this.dataset.all===\'1\'?\'✅ 全部\':\'全部\';renderDlParticipants()" style="font-size:11px;padding:4px 8px;border:1px solid #cbd5e1;border-radius:6px;background:#f8fafc;cursor:pointer;white-space:nowrap">全部</button>'
+    +'</div>'
     +'<div id="dl-pcount" style="font-size:11px;color:#0284c7;font-weight:700;margin-bottom:4px;min-height:14px"></div>'
     +'<div id="dl-pgroups"></div>'
   renderDlParticipantGroups()
@@ -4673,7 +4685,8 @@ function renderDlParticipantGroups(){
   const checkedBefore=new Set([...document.querySelectorAll('.dl-cb:checked')].map(cb=>cb.value))
   const q=(document.getElementById('dl-pfilter')?.value||'').trim().toLowerCase()
   const diveDate=document.getElementById('dl-date')?.value||new Date().toISOString().split('T')[0]
-  let all=getAll().filter(c=>!c.checkedOut&&(c.checkin||'')<=diveDate&&(c.checkout||'')>diveDate)
+  const showAll=document.getElementById('dl-pshow-all')?.dataset.all==='1'
+  let all=getAll().filter(c=>(showAll||!c.checkedOut)&&(c.checkin||'')<=diveDate)
   if(q)all=all.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.roomNum||'').toLowerCase().includes(q))
   const groups={}
   all.forEach(c=>{
@@ -5474,9 +5487,8 @@ document.addEventListener('DOMContentLoaded',function(){_initRole()});
 </div>
 
 <!-- RESTAURANT RMB RATE MODAL -->
-<!-- RESTAURANT RMB RATE MODAL -->
-<div id="rr-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px">
-  <div style="background:white;border-radius:16px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+<div id="rr-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:white;border-radius:16px;padding:28px 24px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
     <div id="rr-modal-inner"></div>
   </div>
 </div>
@@ -5487,5 +5499,6 @@ document.addEventListener('DOMContentLoaded',function(){_initRole()});
     <div id="rl-modal-inner"></div>
   </div>
 </div>
+
 </body>
 </html>
