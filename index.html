@@ -1252,7 +1252,11 @@ function getCloudData(){
   const localDl=getDivelog()
   const extras=[{id:'__meta__',holidays:getCustomHolidays(),...(localDl.length>0?{divelog:localDl}:{}),dms:getDmList(),groups:getGroups(),wageRates:getWageRates(),wageLedger:getWageLedger(),wagePayments:getWagePayments()}]
   if(log.length)extras.push({id:'__savelog__',log})
-  extras.push({id:'__restaurant_charges__',charges:getRestaurantCharges()})
+  // Include restaurant charges in payload only after we've done at least one cloudLoad
+  // (so lt_restaurantCharges reflects cloud reality) OR if local has charges.
+  // This prevents early cloudSave from sending charges:[] and wiping cloud data.
+  const _localRc=getRestaurantCharges()
+  if(_cloudLoadDone||_localRc.length>0)extras.push({id:'__restaurant_charges__',charges:_localRc})
   return[...customers,...extras]
 }
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
@@ -1424,7 +1428,13 @@ function cloudLoad(){
       const localRcLen=getRestaurantCharges().length
       const rcEntry=res.data.find(c=>c.id==='__restaurant_charges__')
       const cloudRcLen=rcEntry&&Array.isArray(rcEntry.charges)?rcEntry.charges.length:0
-      if(rcEntry&&Array.isArray(rcEntry.charges))localStorage.setItem('lt_restaurantCharges',JSON.stringify(rcEntry.charges))
+      if(rcEntry&&Array.isArray(rcEntry.charges)){
+        // Only overwrite local charges if cloud has data OR local is empty.
+        // Prevents cloud empty-array (from a stale cloudSave race) from wiping
+        // charges that are already in local storage.
+        if(rcEntry.charges.length>0||getRestaurantCharges().length===0)
+          localStorage.setItem('lt_restaurantCharges',JSON.stringify(rcEntry.charges))
+      }
       renderRestaurantCharges()
       const _cloudAll=res.data.filter(c=>c.id!=='__savelog__'&&c.id!=='__meta__'&&c.id!=='__restaurant_charges__'&&c.id!=='__restaurant_orders__')
       // Drop shell records (no name AND no custNo) that may have been pushed back by restaurant's
@@ -1451,6 +1461,7 @@ function cloudLoad(){
       cloud.forEach(cc=>{if(!seen.has(cc.id))merged.push(cc)})
       saveAll(merged)
       localStorage.setItem(TK,new Date().toISOString())
+      _cloudLoadDone=true
       setNavSync('ok','已同步 Synced '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));refreshModalUI()
       // Push back to cloud if: (a) conflicts (local wins) OR (b) local has records not in cloud
       // (covers the case where a previous cloudSave silently failed and data is stuck in local only)
@@ -1476,7 +1487,7 @@ function cloudLoad(){
 // just-saved change (e.g. a claimed restaurant charge) silently disappears from the cloud copy.
 // Serialize sends so only one is ever in flight, and queue at most one follow-up (which will read the
 // freshest localStorage state when it actually fires) instead of letting bursts race each other.
-let _cloudSaveInFlight=false,_cloudSavePending=false
+let _cloudSaveInFlight=false,_cloudSavePending=false,_cloudLoadDone=false
 function cloudSave(){
   if(_role==='view')return
   if(_cloudSaveInFlight){_cloudSavePending=true;return}
