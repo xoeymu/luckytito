@@ -244,10 +244,10 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
 .bit th:not(:first-child){text-align:right}
 .bit td{padding:8px 9px;border-bottom:1px solid #f1f5f9;color:#1a202c}
 .bit td:not(:first-child){text-align:right}
-#gc-card .bs{margin-bottom:18px}
-#gc-card .bst{font-size:17px;margin-bottom:6px;padding-bottom:4px}
-#gc-card .br{padding:9px 0;font-size:21px}
-#gc-card .big{gap:8px 32px}
+#gc-card .bs{margin-bottom:10px}
+#gc-card .bst{font-size:11px;margin-bottom:4px;padding-bottom:3px}
+#gc-card .br{padding:5px 0;font-size:13px;white-space:nowrap}
+#gc-card .big{gap:3px 20px}
 .btb{background:#f8fafc;border-radius:10px;padding:13px 16px;margin-top:16px}
 .btr{display:flex;justify-content:space-between;padding:3px 0;font-size:13px;color:#475569}
 .btf{display:flex;justify-content:space-between;padding:11px 0 0;border-top:2px solid #e2e8f0;margin-top:8px;font-size:17px;font-weight:800;color:#0b3d5e}
@@ -2110,11 +2110,24 @@ function deletePendingRestaurantCharge(id){
   saveRestaurantCharges(arr)
   renderRestaurantCharges()
 }
+// Immediately persist restaurant-related fields to the open customer record so
+// claim/unclaim/discount changes survive without requiring a full saveCustomer() click.
+function _autoSaveRestaurantFields(){
+  const id=v('f-id');if(!id)return
+  const all=getAll();const ix=all.findIndex(c=>c.id===id);if(ix<0)return
+  all[ix].restaurantCharges=_claimedRestaurantCharges
+  all[ix].restaurantDiscount=_restaurantDiscount
+  all[ix].restaurantRmb=_restaurantRmb
+  all[ix].restaurantRate=_restaurantRate
+  all[ix].lastMod=Date.now()
+  saveAll(all)
+}
 function claimRestaurantCharge(id){
   const arr=getRestaurantCharges()
   const c=arr.find(x=>x.id===id);if(!c)return
   _claimedRestaurantCharges.push({id:c.id,table:c.table||'',date:c.date||'',summary:c.summary||'',total:Number(c.total||0)})
   c.claimed=true;c.claimedAt=new Date().toISOString()
+  _autoSaveRestaurantFields()
   saveRestaurantCharges(arr)
   renderRestaurantCharges()
   renderClaimedRestaurantCharges()
@@ -2123,6 +2136,7 @@ function unclaimRestaurantCharge(idx){
   if(!confirm('从账单中移除此笔餐厅消费？Remove this restaurant charge from the bill?'))return
   const removed=_claimedRestaurantCharges[idx]
   _claimedRestaurantCharges.splice(idx,1)
+  _autoSaveRestaurantFields()
   // revert the underlying charge back to unclaimed so it reappears in the pending list
   // and can be claimed again (by this guest or another) instead of being lost forever
   if(removed){
@@ -2134,7 +2148,7 @@ function unclaimRestaurantCharge(idx){
   renderClaimedRestaurantCharges()
 }
 function restaurantDiscountFactor(d){return d==='instructor'?0.9:d==='management'?0.6:1}
-function setRestaurantDiscount(val){_restaurantDiscount=val;renderClaimedRestaurantCharges()}
+function setRestaurantDiscount(val){_restaurantDiscount=val;_autoSaveRestaurantFields();renderClaimedRestaurantCharges()}
 function onRestaurantRmbToggle(cb){
   if(cb.checked){showRrModal()}
   else{_restaurantRmb=false;renderClaimedRestaurantCharges()}
@@ -2156,6 +2170,7 @@ function confirmRrRate(){
   const rate=parseFloat(input.value)
   if(!rate||rate<=0){input.style.border='2px solid #ef4444';return}
   _restaurantRate=rate;_restaurantRmb=true
+  _autoSaveRestaurantFields()
   document.getElementById('rr-modal').style.display='none'
   renderClaimedRestaurantCharges()
 }
@@ -3835,8 +3850,8 @@ function fillBillSel(){
 function fdt(s){if(!s)return'—';const m=s.match(/\d{4}-(\d{2})-(\d{2})(?:T(\d{2}:\d{2}))?/);return m?(m[1]+'/'+m[2]+(m[3]?' '+m[3]:'')):s}
 function fdate(s){if(!s)return'—';const m=s.match(/\d{4}-(\d{2})-(\d{2})/);return m?(m[1]+'/'+m[2]):s}
 function brow(l,v2){return v2?'<div class="br"><span class="brl">'+l+'</span><span class="brv">'+v2+'</span></div>':''}
-function blankField(label){return'<div style="display:flex;align-items:baseline;gap:14px;padding:11px 0;font-size:18px"><span style="color:#64748b;white-space:nowrap;min-width:170px">'+label+'</span><span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:26px">&nbsp;</span></div>'}
-function blankField2(l1,l2){return'<div style="display:flex;gap:32px"><div style="flex:1">'+blankField(l1)+'</div><div style="flex:1">'+(l2?blankField(l2):'')+'</div></div>'}
+function blankField(label){return'<div style="display:flex;align-items:baseline;gap:10px;padding:5px 0;font-size:13px"><span style="color:#64748b;white-space:nowrap;min-width:120px">'+label+'</span><span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:16px">&nbsp;</span></div>'}
+function blankField2(l1,l2){return'<div style="display:flex;gap:16px"><div style="flex:1">'+blankField(l1)+'</div><div style="flex:1">'+(l2?blankField(l2):'')+'</div></div>'}
 function browOrBlank(l,v){return v?brow(l,v):blankField(l)}
 function renderBill(overrideCustId){
   const id=overrideCustId||document.getElementById('bill-sel')?.value||''
@@ -4911,7 +4926,7 @@ function showGuestCard(custId){
     +'</div>'):''
   document.getElementById('gc-modal-inner').innerHTML=
     '<div id="gc-card" class="bw" style="max-width:900px;width:100%">'
-    +'<div style="display:grid;grid-template-columns:auto 1fr auto;align-items:start;gap:10px;border-bottom:2.5px solid #0b3d5e;padding-bottom:14px;margin-bottom:18px">'
+    +'<div style="display:grid;grid-template-columns:auto 1fr auto;align-items:start;gap:10px;border-bottom:2.5px solid #0b3d5e;padding-bottom:8px;margin-bottom:12px">'
     +'<img src="'+LOGO_B64+'" style="height:74px;width:auto">'
     +'<div style="text-align:center;min-width:0;padding-top:2px">'
     +'<div style="font-size:17px;font-weight:800;color:#0b3d5e;letter-spacing:.3px">LUCKY TITO RESORT CORP.</div>'
@@ -4924,7 +4939,7 @@ function showGuestCard(custId){
     +diveBox
     +'</div>'
     +'<div class="bs"><div class="bst">住宿日期 Date of Staying</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 24px;padding:8px 0;font-size:18px">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 16px;padding:4px 0;font-size:13px">'
     +'<span><span class="brl">入住 From</span> <span class="brv">'+fdate(c.checkin)+'</span></span>'
     +'<span><span class="brl">退房 To</span> <span class="brv">'+fdate(c.checkout)+'</span></span>'
     +'<span><span class="brl">房间号 Room No.</span> <span class="brv">'+escHtml(c.roomNum||'')+'</span></span>'
@@ -4942,9 +4957,9 @@ function showGuestCard(custId){
     +browOrBlank('潜水经验 Diving Experience',escHtml(c.divingExp||''))
     +'</div></div>'
     +'<div class="bs"><div class="bst">装备信息 Gear Info</div>'
-    +'<div style="font-size:14px;color:#94a3b8;margin-bottom:4px">自有装备请打勾 Please check the box for gear you bring yourself</div>'
+    +'<div style="font-size:11px;color:#94a3b8;margin-bottom:3px">自有装备请打勾 Please check the box for gear you bring yourself</div>'
     +gearChecklist
-    +(c.gearNote?'<div style="font-size:15px;color:#64748b;margin-top:6px">📝 '+escHtml(c.gearNote)+'</div>':'')
+    +(c.gearNote?'<div style="font-size:12px;color:#64748b;margin-top:4px">📝 '+escHtml(c.gearNote)+'</div>':'')
     +'</div>'
     +'<div class="bs"><div class="bst">紧急联系人 Emergency Contact</div>'
     +blankField2('姓名 Name','电话 Phone Number')
@@ -4953,7 +4968,7 @@ function showGuestCard(custId){
     +'<div style="display:flex;gap:16px;padding:4px 4px 2px;font-size:15px;font-weight:700;color:#64748b"><span style="flex:1">姓名</span><span style="flex:1">签名</span><span style="flex:1">日期</span></div>'
     +'<div style="display:flex;gap:16px;padding:2px 4px 4px"><span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:20px">&nbsp;</span><span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:20px">&nbsp;</span><span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:20px">&nbsp;</span></div>'
     +'</div>'
-    +'<div style="font-size:14px;color:#94a3b8;text-align:center;margin-top:14px;padding:0 6px;line-height:1.6">以上信息仅用于签发证书及联络，无任何商业用途。<br>The above information is for issuing certificates and contact only, not for any commercial purposes.</div>'
+    +'<div style="font-size:11px;color:#94a3b8;text-align:center;margin-top:8px;padding:0 6px;line-height:1.5">以上信息仅用于签发证书及联络，无任何商业用途。<br>The above information is for issuing certificates and contact only, not for any commercial purposes.</div>'
     +'</div>'
   document.getElementById('gc-toolbar').innerHTML=
     '<span style="font-size:14px;font-weight:700;color:#0b3d5e;margin-right:auto">潜水员信息卡 Diver Card</span>'
