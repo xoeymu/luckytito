@@ -41,7 +41,7 @@ function _initRole(){
   }
 }
 function _canWrite(section){
-  const p={front:['guest','schedule','booking','rooms','bill','elearning'],dive:['elearning','groups','divelog','wages'],view:[]}
+  const p={front:['guest','schedule','booking','rooms','bill','elearning'],dive:['elearning','groups','divelog','wages','diveinfo'],view:[]}
   return(p[_role]||[]).includes(section)
 }
 function _roleBlock(section){
@@ -353,6 +353,11 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
 .rcal-block:active{cursor:grabbing;opacity:.8}
 .rcal-cont{min-height:28px;height:28px}
 .rcal-free{min-height:28px;height:28px}
+
+/* Dive role: hide front save, show dive save */
+body[data-role="dive"] .front-save-btn{display:none!important}
+body[data-role="dive"] .dive-save-btn{display:inline-flex!important}
+/* Front role: front save visible (default), dive save hidden (default) */
 </style>
 </head>
 <body>
@@ -749,7 +754,8 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
   <input type="hidden" id="f-custno-stored" value="">
   <div class="form-footer no-print">
     <button class="btn btn-ghost" onclick="resetForm()">清空 Clear</button>
-    <button class="btn btn-primary" onclick="saveCustomer()">💾 保存 Save</button>
+    <button class="btn btn-primary front-save-btn" onclick="saveCustomer()">💾 保存 Save</button>
+    <button class="btn btn-primary dive-save-btn" onclick="saveDiverInfo()" style="display:none">🤿 保存潜水信息 Save Diver Info</button>
   </div>
   <div class="card no-print" style="margin-top:10px">
     <div class="card-header save-log-toggle" onclick="const b=document.getElementById('save-log-body');b.style.display=b.style.display==='none'?'block':'none'">
@@ -2472,6 +2478,31 @@ function renderSaveLog(){
   const log=JSON.parse(localStorage.getItem(SAVE_LOG_KEY)||'[]')
   if(!log.length){el.innerHTML='<span style="font-size:12px;color:#94a3b8">暂无记录 No saves yet</span>';return}
   el.innerHTML=log.slice(0,20).map(e=>'<div class="save-log-row">'+e.t+' &nbsp;·&nbsp; <span style="color:#0284c7;font-weight:700">'+(e.user||'?')+'</span> &nbsp;·&nbsp; <strong>'+e.name+'</strong> &nbsp;·&nbsp; '+e.fields+' 项 fields</div>').join('')
+}
+function saveDiverInfo(){
+  if(_roleBlock('diveinfo'))return
+  const id=v('f-id');if(!id){alert('请先打开一位客人 Please open a guest record first');return}
+  const all=getAll();const ix=all.findIndex(c=>c.id===id);if(ix<0){alert('找不到客人记录 Guest not found');return}
+  const c=all[ix]
+  c.certSystem=v('f-certsys')
+  c.certLevel=v('f-certlevel').trim()
+  c.certNumber=v('f-certno').trim()
+  c.divingExp=v('f-divexp').trim()
+  c.ownGear=getOwnGear()
+  c.gearNote=v('f-gn').trim()
+  c.wetsuitSize=v('f-ws')
+  c.finSize=v('f-fs').trim()
+  c.bcdSize=v('f-bs')
+  c.myopia=v('f-myopia').trim()
+  c.gender=v('f-gender')
+  c.height=v('f-ht')
+  c.weight=v('f-wt')
+  c.clothSize=v('f-cs')
+  c.shoeSize=v('f-shoe').trim()
+  c.lastMod=Date.now()
+  all[ix]=c
+  saveAll(all);cloudSave()
+  const a=document.getElementById('save-alert');if(a){a.style.display='block';setTimeout(()=>a.style.display='none',3000)}
 }
 function saveCustomer(){
   if(_roleBlock('guest'))return
