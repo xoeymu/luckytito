@@ -1256,7 +1256,8 @@ function getCloudData(){
   const customers=getAll()
   const log=JSON.parse(localStorage.getItem(SAVE_LOG_KEY)||'[]')
   const localDl=getDivelog()
-  const extras=[{id:'__meta__',holidays:getCustomHolidays(),...(localDl.length>0?{divelog:localDl}:{}),dms:getDmList(),groups:getGroups(),wageRates:getWageRates(),wageLedger:getWageLedger(),wagePayments:getWagePayments()}]
+  const _dlTs=localStorage.getItem('lt_divelog_ts')||'0'
+  const extras=[{id:'__meta__',holidays:getCustomHolidays(),...(localDl.length>0?{divelog:localDl}:{}),divelogTs:_dlTs,dms:getDmList(),groups:getGroups(),wageRates:getWageRates(),wageLedger:getWageLedger(),wagePayments:getWagePayments()}]
   if(log.length)extras.push({id:'__savelog__',log})
   // Include restaurant charges in payload only after we've done at least one cloudLoad
   // (so lt_restaurantCharges reflects cloud reality) OR if local has charges.
@@ -1416,7 +1417,17 @@ function cloudLoad(){
       if(metaEntry){
         const metaSyncTs=localStorage.getItem(TK)?new Date(localStorage.getItem(TK)).getTime():0
         if(Array.isArray(metaEntry.holidays))localStorage.setItem('dv_holidays',JSON.stringify(metaEntry.holidays))
-        if(Array.isArray(metaEntry.divelog)&&metaEntry.divelog.length>0){localStorage.setItem('lt_divelog',JSON.stringify(metaEntry.divelog));localStorage.setItem('lt_divelog_bak',JSON.stringify(metaEntry.divelog))}
+        if(Array.isArray(metaEntry.divelog)&&metaEntry.divelog.length>0){
+          // Timestamp-based sync: cloud wins only if its divelogTs is newer than local.
+          // This correctly handles add/edit/DELETE (count-based logic fails on delete).
+          const _localDlTs=parseInt(localStorage.getItem('lt_divelog_ts')||'0')
+          const _cloudDlTs=parseInt(metaEntry.divelogTs||'0')
+          if(_cloudDlTs>_localDlTs){
+            localStorage.setItem('lt_divelog',JSON.stringify(metaEntry.divelog))
+            localStorage.setItem('lt_divelog_bak',JSON.stringify(metaEntry.divelog))
+            localStorage.setItem('lt_divelog_ts',_cloudDlTs.toString())
+          }
+        }
         if(Array.isArray(metaEntry.dms))localStorage.setItem('lt_dms',JSON.stringify(metaEntry.dms))
         if(Array.isArray(metaEntry.groups))localStorage.setItem('lt_groups',JSON.stringify(metaEntry.groups))
         if(metaEntry.wageRates){
@@ -1438,8 +1449,15 @@ function cloudLoad(){
         // Only overwrite local charges if cloud has data OR local is empty.
         // Prevents cloud empty-array (from a stale cloudSave race) from wiping
         // charges that are already in local storage.
-        if(rcEntry.charges.length>0||getRestaurantCharges().length===0)
-          localStorage.setItem('lt_restaurantCharges',JSON.stringify(rcEntry.charges))
+        if(rcEntry.charges.length>0||getRestaurantCharges().length===0){
+          // Merge: preserve locally-claimed flags so a restaurant read-modify-write
+          // (which may carry stale claimed:false) doesn't revert charges already claimed.
+          const _localRcArr=getRestaurantCharges()
+          const _localClaimedMap={}
+          _localRcArr.filter(x=>x.claimed).forEach(x=>{_localClaimedMap[x.id]={claimedAt:x.claimedAt}})
+          const _merged=rcEntry.charges.map(c=>_localClaimedMap[c.id]?Object.assign({},c,{claimed:true,claimedAt:_localClaimedMap[c.id].claimedAt}):c)
+          localStorage.setItem('lt_restaurantCharges',JSON.stringify(_merged))
+        }
       }
       renderRestaurantCharges()
       const _cloudAll=res.data.filter(c=>c.id!=='__savelog__'&&c.id!=='__meta__'&&c.id!=='__restaurant_charges__'&&c.id!=='__restaurant_orders__')
@@ -1474,7 +1492,11 @@ function cloudLoad(){
       const localOnlyCount=merged.filter(r=>!cloudMap.has(r.id)).length
       const cloudDlLen=(metaEntry&&Array.isArray(metaEntry.divelog))?metaEntry.divelog.length:0
       const localDlLen=getDivelog().length
-      const needsPush=conflicts.length>0||localOnlyCount>0||(localDlLen>0&&localDlLen>cloudDlLen)||(localRcLen>cloudRcLen)||_invalidShells.length>0
+      // Timestamp-based: local needs push if local DL ts >= cloud DL ts (local is same or newer)
+      const _localDlTsNP=parseInt(localStorage.getItem('lt_divelog_ts')||'0')
+      const _cloudDlTsNP=parseInt((metaEntry&&metaEntry.divelogTs)||'0')
+      const _localDlNewer=localDlLen>0&&_localDlTsNP>=_cloudDlTsNP&&_localDlTsNP>0
+      const needsPush=conflicts.length>0||localOnlyCount>0||_localDlNewer||(localRcLen>cloudRcLen)||_invalidShells.length>0
       if(needsPush){
         if(conflicts.length)alert('⚠️ 以下客户资料在本机有尚未同步的修改，云端可能有其他设备的更新——已保留本机版本并重新上传，请核对：\n'+conflicts.join('、'))
         cloudSave()
@@ -1774,7 +1796,9 @@ function addDiveItemToFees(){
   const opt=sel.options[sel.selectedIndex]
   if(!opt.value||!opt.dataset.name){alert('请先选择项目 Please select an item first');return}
   const price=parseFloat(document.getElementById('dive-item-price').value)||parseFloat(opt.value)||0
-  const qty=parseFloat(document.getElementById('dive-item-qty').value)||1
+  // FD items: default qty=0 (actual count comes from Dive Log auto-sync)
+  const _isFdItem=FD_ALL_NAMES.includes(opt.dataset.name)
+  const qty=_isFdItem?0:(parseFloat(document.getElementById('dive-item-qty').value)||1)
   addItem(opt.dataset.name,price,qty)
   autoUpdateDiscount()
 }
@@ -2033,9 +2057,15 @@ function getRestaurantCharges(){try{return JSON.parse(localStorage.getItem('lt_r
 function saveRestaurantCharges(arr){localStorage.setItem('lt_restaurantCharges',JSON.stringify(arr));cloudSave()}
 function renderRestaurantCharges(){
   const el=document.getElementById('rc-list');if(!el)return
-  const curRoom=(v('f-rnum')||'').trim()
-  const pending=getRestaurantCharges().filter(c=>!c.claimed&&c.roomCharge&&c.roomNo&&c.roomNo===curRoom)
-  if(!pending.length){el.innerHTML='<div style="padding:10px 4px;color:#94a3b8;font-size:12px;text-align:center">暂无待入账餐厅消费 No pending restaurant charges</div>';return}
+  const curRoom=(v('f-rnum')||'').trim().toLowerCase()
+  const allUnclaimed=getRestaurantCharges().filter(c=>!c.claimed&&c.roomCharge)
+  const pending=allUnclaimed.filter(c=>c.roomNo&&c.roomNo.trim().toLowerCase()===curRoom)
+  if(!pending.length){
+    // Show hint if there are unclaimed charges for OTHER rooms
+    const otherRooms=[...new Set(allUnclaimed.filter(c=>c.roomNo&&(!curRoom||c.roomNo.trim().toLowerCase()!==curRoom)).map(c=>c.roomNo))]
+    const hint=otherRooms.length?'<div style="margin-top:4px;font-size:11px;color:#f59e0b">⚠️ 其他房间有待处理账单 Pending charges for room(s): '+otherRooms.map(r=>'<b>'+r+'</b>').join(', ')+'</div>':''
+    el.innerHTML='<div style="padding:10px 4px;color:#94a3b8;font-size:12px;text-align:center">暂无待入账餐厅消费 No pending restaurant charges'+hint+'</div>';return
+  }
   el.innerHTML=pending.map(c=>
     '<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #f1f5f9">'
     +'<div style="flex:1;font-size:12px;min-width:0">'
@@ -3884,11 +3914,41 @@ function brow(l,v2){return v2?'<div class="br"><span class="brl">'+l+'</span><sp
 function blankField(label){return'<div style="display:flex;align-items:baseline;gap:10px;padding:5px 0;font-size:13px"><span style="color:#64748b;white-space:nowrap;min-width:120px">'+label+'</span><span style="flex:1;border-bottom:1px solid #cbd5e1;min-height:16px">&nbsp;</span></div>'}
 function blankField2(l1,l2){return'<div style="display:flex;gap:16px"><div style="flex:1">'+blankField(l1)+'</div><div style="flex:1">'+(l2?blankField(l2):'')+'</div></div>'}
 function browOrBlank(l,v){return v?brow(l,v):blankField(l)}
+// Auto-syncs FD item qty from Dive Log when the bill is rendered.
+// Replaces the manual showDiveSync/applyDiveSyncGap flow for plain FD items.
+// Only activates if the guest already has an FD line item (i.e. they were booked for FD).
+// holFdQty (holiday FDs at ₱195) are billed separately, so subtract them from the log count.
+function syncFdQtyFromLog(c){
+  if(!c||!c.id)return false
+  const items=c.items||[]
+  const hasFdItem=items.some(it=>FD_ALL_NAMES.includes((it.name||'').trim()))
+  if(!hasFdItem)return false  // not booked for FD — don't auto-create
+  const logFdQty=Math.max(0,getFdDiveCount(c.id)-(parseInt(c.holFdQty)||0))
+  // Re-derive correct tier name + price based on actual total dive count
+  const status=fdRoomStatusForRecord(c)
+  let tierName,tierPrice
+  if(status==='walkin'){
+    tierName=FD_WALKIN_NAME;tierPrice=FD_WALKIN_PRICE
+  }else{
+    const t=status==='shared'?FD_TIERS[1]:FD_TIERS[0]
+    const totalDives=logFdQty+(parseInt(c.holFdQty)||0)
+    const useHigh=totalDives>=8
+    tierName=useHigh?t.high:t.low;tierPrice=useHigh?t.highP:t.lowP
+  }
+  const cur=items.find(it=>FD_ALL_NAMES.includes((it.name||'').trim()))
+  if(cur&&cur.qty===logFdQty&&cur.name===tierName&&cur.price===tierPrice)return false
+  // Replace all FD rows with one correctly-named and qty'd row
+  c.items=items.filter(it=>!FD_ALL_NAMES.includes((it.name||'').trim()))
+  c.items.push({name:tierName,price:tierPrice,qty:logFdQty})
+  return true
+}
 function renderBill(overrideCustId){
   const id=overrideCustId||document.getElementById('bill-sel')?.value||''
   if(!id){document.getElementById('bill-out').innerHTML='<div class="empty-state"><p>请选择客户 Select a guest</p></div>';return}
   const c=getAll().find(x=>x.id===id);if(!c)return
-  if(mergeFdTierItems(c)){
+  const _fdMerged=mergeFdTierItems(c)
+  const _fdSynced=syncFdQtyFromLog(c)
+  if(_fdMerged||_fdSynced){
     const all=getAll();const ix=all.findIndex(x=>x.id===id)
     if(ix>=0){all[ix].items=c.items;all[ix].lastMod=Date.now();saveAll(all);cloudSave()}
   }
@@ -4620,6 +4680,7 @@ function getDivelog(){try{return JSON.parse(localStorage.getItem('lt_divelog')||
 function saveDivelog(d){
   if(_roleBlock('divelog'))return
   localStorage.setItem('lt_divelog',JSON.stringify(d))
+  localStorage.setItem('lt_divelog_ts',Date.now().toString())
   // Rolling local backup — updated any time we save a non-empty log so we can recover if lt_divelog is ever wiped
   if(d.length>0)localStorage.setItem('lt_divelog_bak',JSON.stringify(d))
   cloudSave()
