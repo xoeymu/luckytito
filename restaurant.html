@@ -42,6 +42,14 @@ header button:hover{background:rgba(255,255,255,.22)}
 .table-tile .t-del:hover{color:var(--red)}
 .cat-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid var(--border)}
 .cat-tab{padding:6px 12px;border-radius:20px;font-size:12.5px;font-weight:700;background:var(--bg);color:var(--slate);cursor:pointer;border:1.5px solid transparent;white-space:nowrap}
+.item-card .ic-edit-btns{display:none;position:absolute;top:3px;right:3px;gap:3px}
+body[data-menu-edit] .item-card .ic-edit-btns{display:flex}
+body[data-menu-edit] .item-card{cursor:default}
+.ic-edit-btn{border:none;border-radius:5px;padding:3px 6px;font-size:11px;font-weight:700;cursor:pointer;line-height:1.2}
+.ic-edit-btn.edit{background:#3b82f6;color:#fff}
+.ic-edit-btn.del{background:#ef4444;color:#fff}
+.menu-add-btn{grid-column:1/-1;border:2px dashed var(--blue);border-radius:12px;padding:14px;font-size:14px;font-weight:700;color:var(--blue);background:transparent;cursor:pointer;display:none}
+body[data-menu-edit] .menu-add-btn{display:block}
 .cat-tab.active{background:var(--navy);color:#fff}
 .search-row{padding:10px 12px;border-bottom:1px solid var(--border)}
 .search-row input{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px}
@@ -87,14 +95,20 @@ header button:hover{background:rgba(255,255,255,.22)}
   html,body{width:80mm;margin:0;padding:0}
   body *{visibility:hidden}
   .receipt-print, .receipt-print *{visibility:visible}
-  .receipt-print{display:block;position:absolute;left:0;top:0;width:80mm;padding:4mm;font-family:'Courier New',monospace;color:#000;font-size:14px;box-sizing:border-box}
-  .receipt-print .r-title{text-align:center;font-weight:800;font-size:20px;margin-bottom:2mm}
-  .receipt-print .r-sub{text-align:center;font-size:13px;margin-bottom:2mm}
+  /* Use normal flow (not absolute) so width is naturally 100% of page */
+  .receipt-print{display:block;position:fixed;left:0;top:0;right:0;padding:3mm 4mm;font-family:'Courier New',monospace;color:#000;font-size:13px;box-sizing:border-box}
+  .receipt-print .r-title{text-align:center;font-weight:800;font-size:17px;margin-bottom:2mm}
+  .receipt-print .r-sub{text-align:center;font-size:12px;margin-bottom:1.5mm}
   .receipt-print hr{border:none;border-top:1px dashed #000;margin:2mm 0}
-  .receipt-print .r-line{display:flex;justify-content:space-between;gap:4px;margin:1.5mm 0;font-size:14px}
-  .receipt-print .r-line .rl-name{flex:1}
-  .receipt-print .r-total{display:flex;justify-content:space-between;font-weight:800;font-size:18px;margin-top:3mm}
-  .receipt-print .r-pay{text-align:center;font-weight:800;font-size:14px;margin-top:2mm;border:2px solid #000;padding:1.5mm}
+  /* Two-line item: name on top, price right-aligned below */
+  .receipt-print .r-line{margin:2mm 0;font-size:13px}
+  .receipt-print .r-line .rl-name{display:block;font-weight:700}
+  .receipt-print .r-line .rl-price{display:block;text-align:right;font-size:13px}
+  /* Total: label floated left, amount right-aligned */
+  .receipt-print .r-total{font-weight:800;font-size:17px;margin-top:3mm;border-top:1px solid #000;padding-top:2mm;overflow:hidden}
+  .receipt-print .r-total-label{float:left}
+  .receipt-print .r-total-amt{display:block;text-align:right}
+  .receipt-print .r-pay{text-align:center;font-weight:800;font-size:13px;margin-top:2mm;border:2px solid #000;padding:1.5mm;clear:both}
   .receipt-print .r-sign{margin-top:10mm}
   .receipt-print .r-sign-line{border-top:1px solid #000;margin-bottom:1mm}
   .receipt-print .r-sign-label{text-align:center;font-size:11px}
@@ -107,7 +121,7 @@ header button:hover{background:rgba(255,255,255,.22)}
 <header>
   <h1>🍽️ Lucky Tito Restaurant 点餐结账</h1>
   <button onclick="showHistory()">📊 今日流水 Today's Sales</button>
-  <button onclick="togglePriceEdit()" id="price-edit-btn">💲 编辑价格 Edit Prices</button>
+  <button onclick="toggleMenuEdit()" id="price-edit-btn">✏️ 编辑菜单 Edit Menu</button>
   <button onclick="setSyncUrl()" id="sync-btn">🔗 云同步 Cloud Sync</button>
   <span class="clock" id="clock"></span>
 </header>
@@ -324,7 +338,7 @@ MENU.forEach((m,i)=>{m.id='i'+i})
 // ====================================================================
 //   STATE / STORAGE
 // ====================================================================
-let curTableId=null, curCat='ALL', priceEditMode=false
+let curTableId=null, curCat='ALL', menuEditMode=false
 function uid(){return 't'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function loadTables(){try{return JSON.parse(localStorage.getItem('rt_tables')||'[]')}catch{return[]}}
 function saveTables(t){localStorage.setItem('rt_tables',JSON.stringify(t))}
@@ -332,7 +346,27 @@ function loadHistory(){try{return JSON.parse(localStorage.getItem('rt_history')|
 function saveHistory(h){localStorage.setItem('rt_history',JSON.stringify(h))}
 function loadPriceOverrides(){try{return JSON.parse(localStorage.getItem('rt_price_overrides')||'{}')}catch{return{}}}
 function savePriceOverrides(o){localStorage.setItem('rt_price_overrides',JSON.stringify(o))}
-function getPrice(item){const o=loadPriceOverrides();return(o[item.id]!=null)?o[item.id]:item.price}
+function getPrice(item){
+  // check menu overrides first, then legacy price-only overrides, then default
+  const mo=loadMenuOverrides();const po=loadPriceOverrides()
+  if(mo[item.id]!=null&&mo[item.id].price!=null)return mo[item.id].price
+  return(po[item.id]!=null)?po[item.id]:item.price
+}
+function loadMenuOverrides(){try{return JSON.parse(localStorage.getItem('rt_menu_overrides')||'{}')}catch{return{}}}
+function saveMenuOverrides(o){localStorage.setItem('rt_menu_overrides',JSON.stringify(o))}
+function loadMenuCustom(){try{return JSON.parse(localStorage.getItem('rt_menu_custom')||'[]')}catch{return[]}}
+function saveMenuCustom(a){localStorage.setItem('rt_menu_custom',JSON.stringify(a))}
+function loadMenuDeleted(){try{return JSON.parse(localStorage.getItem('rt_menu_deleted')||'[]')}catch{return[]}}
+function saveMenuDeleted(a){localStorage.setItem('rt_menu_deleted',JSON.stringify(a))}
+function getEffectiveMenu(){
+  const ov=loadMenuOverrides(),del=loadMenuDeleted(),cust=loadMenuCustom(),po=loadPriceOverrides()
+  const base=MENU.filter(m=>!del.includes(m.id)).map(m=>{
+    const o=ov[m.id]||{}
+    const price=o.price!=null?o.price:(po[m.id]!=null?po[m.id]:m.price)
+    return Object.assign({},m,o,{price})
+  })
+  return base.concat(cust)
+}
 
 // ====================================================================
 //   CLOUD BRIDGE — push checkout charges to the same Apps Script backend
@@ -403,7 +437,7 @@ function renderTables(){
       +'</div>'
   }).join('')||'<div class="order-empty">暂无桌台，点击"＋开台"新建 No tables yet — click "+ New Table" to add one</div>'
 }
-function orderTotal(t){return t.items.reduce((s,it)=>{const m=MENU.find(x=>x.id===it.id);return s+(m?getPrice(m):0)*it.qty},0)}
+function orderTotal(t){const em=getEffectiveMenu();return t.items.reduce((s,it)=>{const m=em.find(x=>x.id===it.id);return s+(m?getPrice(m):0)*it.qty},0)}
 function selectTable(id){curTableId=id;renderTables();renderOrderPanel()}
 function openNewTableModal(){
   document.getElementById('nt-label').value=''
@@ -462,34 +496,34 @@ function renderCatTabs(){
 function setCat(c){curCat=c;renderCatTabs();renderMenu()}
 function renderMenu(){
   const search=(document.getElementById('search-input').value||'').trim().toLowerCase()
-  let items=MENU
+  let items=getEffectiveMenu()
   if(curCat!=='ALL')items=items.filter(m=>m.cat===curCat)
-  if(search)items=items.filter(m=>m.code.toLowerCase().includes(search)||m.name.toLowerCase().includes(search)||m.en.toLowerCase().includes(search))
+  if(search)items=items.filter(m=>(m.code||'').toLowerCase().includes(search)||(m.name||'').toLowerCase().includes(search)||(m.en||'').toLowerCase().includes(search))
   const el=document.getElementById('menu-grid')
-  el.innerHTML=items.map(m=>{
+  const cards=items.map(m=>{
     const price=getPrice(m)
-    const priceHtml=priceEditMode
-      ?'<input type="number" value="'+price+'" onclick="event.stopPropagation()" onchange="updatePrice(\''+m.id+'\',this.value)">'
-      :fmt(price)
-    return '<div class="item-card" onclick="'+(priceEditMode?'':'addItemToOrder(\''+m.id+'\')')+'">'
-      +(m.hot?'<span class="ic-hot">👍</span>':'')
-      +'<div class="ic-code">'+esc(m.code)+'</div>'
-      +'<div class="ic-name">'+esc(m.name)+'</div>'
-      +'<div class="ic-en">'+esc(m.en)+'</div>'
-      +'<div class="ic-price">'+priceHtml+'</div>'
+    const editBtns='<div class="ic-edit-btns">'
+      +'<button class="ic-edit-btn edit" onclick="event.stopPropagation();openEditDish(''+m.id+'')">✏️</button>'
+      +'<button class="ic-edit-btn del" onclick="event.stopPropagation();deleteDish(''+m.id+'')">🗑</button>'
       +'</div>'
-  }).join('')||'<div class="order-empty">没有找到匹配的菜品 No matching dishes found</div>'
+    return '<div class="item-card" style="position:relative" onclick="'+(menuEditMode?'':'addItemToOrder(''+m.id+'')')+'">'
+      +editBtns
+      +(m.hot?'<span class="ic-hot">👍</span>':'')
+      +'<div class="ic-code">'+esc(m.code||'')+'</div>'
+      +'<div class="ic-name">'+esc(m.name||'')+'</div>'
+      +'<div class="ic-en">'+esc(m.en||'')+'</div>'
+      +'<div class="ic-price">'+fmt(price)+'</div>'
+      +'</div>'
+  })
+  const addBtn='<button class="menu-add-btn" onclick="openAddDish()">＋ 新增菜品 Add Dish</button>'
+  el.innerHTML=(menuEditMode?addBtn:'')+cards.join('')||'<div class="order-empty">没有找到匹配的菜品 No matching dishes found</div>'
 }
-function updatePrice(itemId,val){
-  const o=loadPriceOverrides()
-  const n=parseFloat(val)
-  if(val===''||isNaN(n)||n<0)delete o[itemId];else o[itemId]=n
-  savePriceOverrides(o)
-  renderMenu();renderOrderPanel();renderTables()
-}
-function togglePriceEdit(){
-  priceEditMode=!priceEditMode
-  document.getElementById('price-edit-btn').style.background=priceEditMode?'#ea580c':''
+function toggleMenuEdit(){
+  menuEditMode=!menuEditMode
+  const btn=document.getElementById('price-edit-btn')
+  btn.style.background=menuEditMode?'#ea580c':''
+  if(menuEditMode)document.body.setAttribute('data-menu-edit','1')
+  else document.body.removeAttribute('data-menu-edit')
   renderMenu()
 }
 
@@ -553,8 +587,9 @@ function renderOrderPanel(){
   if(t.items.length===0){
     linesEl.innerHTML='<div class="order-empty">还没有点菜<br>从中间菜单点击菜品添加 No items yet<br>Click a dish from the menu to add</div>'
   }else{
+    const _em=getEffectiveMenu()
     linesEl.innerHTML=t.items.map(line=>{
-      const m=MENU.find(x=>x.id===line.id)
+      const m=_em.find(x=>x.id===line.id)
       if(!m)return''
       const price=getPrice(m)
       return '<div class="order-line">'
@@ -579,14 +614,15 @@ function printKitchen(){
   const now=new Date()
   const pad=n=>String(n).padStart(2,'0')
   const dateStr=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+' '+pad(now.getHours())+':'+pad(now.getMinutes())
-  let html='<div class="r-title">厨房单 Kitchen Order</div>'
+  let html='<div class="r-title">Kitchen Order</div>'
     +'<div class="r-sub">'+esc(t.label)+(t.note?' · '+esc(t.note):'')+'</div>'
     +'<div class="r-sub">'+dateStr+'</div>'
     +'<hr>'
+  const _kem=getEffectiveMenu()
   t.items.forEach(it=>{
-    const m=MENU.find(x=>x.id===it.id)
+    const m=_kem.find(x=>x.id===it.id)
     if(!m)return
-    html+='<div class="r-line"><span class="rl-name" style="font-size:14px;font-weight:700">'+esc(m.code)+' '+esc(m.name)+'</span><span style="font-size:16px;font-weight:900">×'+it.qty+'</span></div>'
+    html+='<div class="r-line"><span class="rl-name" style="font-size:16px;font-weight:700">'+esc(m.code)+' '+esc(m.name)+'</span><span class="rl-price" style="font-size:20px;font-weight:900">QTY: '+it.qty+'</span></div>'
   })
   html+='<hr>'
   document.getElementById('receipt-print').innerHTML=html
@@ -622,8 +658,9 @@ function confirmCheckout(){
   const total=orderTotal(t)
 
   const now=new Date()
+  const _brem=getEffectiveMenu()
   const lines=t.items.map(line=>{
-    const m=MENU.find(x=>x.id===line.id)
+    const m=_brem.find(x=>x.id===line.id)
     const price=m?getPrice(m):0
     return{code:m?m.code:'',name:m?m.name:'',qty:line.qty,price,sub:price*line.qty}
   })
@@ -652,9 +689,9 @@ function buildReceipt(record,now){
     +'<div class="r-sub">'+dateStr+'</div>'
     +'<hr>'
   record.items.forEach(it=>{
-    html+='<div class="r-line"><span class="rl-name">'+esc(it.code)+' '+esc(it.name)+'</span><span style="white-space:nowrap">'+fmt(it.price)+'×'+it.qty+'='+fmt(it.sub)+'</span></div>'
+    html+='<div class="r-line"><span class="rl-name">'+esc(it.code)+' '+esc(it.name)+'</span><span class="rl-price">'+fmt(it.price)+' × '+it.qty+' = '+fmt(it.sub)+'</span></div>'
   })
-  html+='<hr><div class="r-total"><span>Total</span><span>'+fmt(record.total)+'</span></div>'
+  html+='<hr><div class="r-total"><span class="r-total-label">Total</span><span class="r-total-amt">'+fmt(record.total)+'</span></div>'
   html+=record.roomCharge
     ?'<div class="r-pay">ROOM CHARGE 房间挂账 · Room '+esc(record.roomNo)+'</div>'
     :'<div class="r-pay">CASH / CARD 现金/卡</div>'
@@ -701,6 +738,88 @@ function showHistory(){
 }
 
 // ====================================================================
+//   MENU EDITOR
+// ====================================================================
+let _dishEditId=null
+function openAddDish(){
+  _dishEditId=null
+  document.getElementById('de-title').textContent='新增菜品 Add Dish'
+  document.getElementById('de-code').value=''
+  document.getElementById('de-name').value=''
+  document.getElementById('de-en').value=''
+  document.getElementById('de-price').value=''
+  document.getElementById('de-cat').value=CATS[0]
+  document.getElementById('de-hot').checked=false
+  document.getElementById('dish-edit-modal').classList.add('show')
+  setTimeout(()=>document.getElementById('de-code').focus(),50)
+}
+function openEditDish(id){
+  _dishEditId=id
+  const m=getEffectiveMenu().find(x=>x.id===id)
+  if(!m)return
+  document.getElementById('de-title').textContent='编辑菜品 Edit Dish'
+  document.getElementById('de-code').value=m.code||''
+  document.getElementById('de-name').value=m.name||''
+  document.getElementById('de-en').value=m.en||''
+  document.getElementById('de-price').value=m.price||''
+  document.getElementById('de-cat').value=m.cat||CATS[0]
+  document.getElementById('de-hot').checked=!!m.hot
+  document.getElementById('dish-edit-modal').classList.add('show')
+  setTimeout(()=>document.getElementById('de-name').focus(),50)
+}
+function confirmDish(){
+  const code=document.getElementById('de-code').value.trim()
+  const name=document.getElementById('de-name').value.trim()
+  const en=document.getElementById('de-en').value.trim()
+  const price=parseFloat(document.getElementById('de-price').value)
+  const cat=document.getElementById('de-cat').value
+  const hot=document.getElementById('de-hot').checked
+  if(!name){alert('请输入菜品名称 Please enter a dish name');return}
+  if(isNaN(price)||price<0){alert('请输入有效价格 Please enter a valid price');return}
+  if(_dishEditId){
+    // check if it's a base MENU item or custom
+    const isBase=MENU.some(m=>m.id===_dishEditId)
+    if(isBase){
+      const ov=loadMenuOverrides()
+      ov[_dishEditId]={code,name,en,price,cat,hot}
+      saveMenuOverrides(ov)
+    }else{
+      const cust=loadMenuCustom()
+      const ix=cust.findIndex(x=>x.id===_dishEditId)
+      if(ix>=0)cust[ix]=Object.assign(cust[ix],{code,name,en,price,cat,hot})
+      saveMenuCustom(cust)
+    }
+  }else{
+    const cust=loadMenuCustom()
+    cust.push({id:uid(),code,name,en,price,cat,hot})
+    saveMenuCustom(cust)
+  }
+  closeModal('dish-edit-modal')
+  renderMenu();renderOrderPanel();renderTables()
+}
+function deleteDish(id){
+  const m=getEffectiveMenu().find(x=>x.id===id)
+  const label=(m?m.name+' ('+m.code+')':id)
+  if(!confirm('确定删除菜品「'+label+'」？ Delete this dish?'))return
+  const isBase=MENU.some(x=>x.id===id)
+  if(isBase){
+    const del=loadMenuDeleted()
+    if(!del.includes(id)){del.push(id);saveMenuDeleted(del)}
+    // also remove any override
+    const ov=loadMenuOverrides();delete ov[id];saveMenuOverrides(ov)
+  }else{
+    const cust=loadMenuCustom().filter(x=>x.id!==id)
+    saveMenuCustom(cust)
+  }
+  renderMenu();renderOrderPanel();renderTables()
+}
+function renderCatTabsForSelect(){
+  const sel=document.getElementById('de-cat')
+  if(!sel||sel.options.length>0)return
+  CATS.forEach(cat=>{const o=document.createElement('option');o.value=cat;o.textContent=cat;sel.appendChild(o)})
+}
+
+// ====================================================================
 //   INIT
 // ====================================================================
 function tickClock(){
@@ -710,6 +829,7 @@ function tickClock(){
 function init(){
   ensureDefaultTables()
   renderCatTabs()
+  renderCatTabsForSelect()
   renderTables()
   renderMenu()
   renderOrderPanel()
@@ -719,6 +839,31 @@ function init(){
 }
 init()
 </script>
+
+<!-- DISH EDIT MODAL -->
+<div class="modal-overlay" id="dish-edit-modal">
+  <div class="modal-box" style="max-width:360px">
+    <h3 id="de-title">编辑菜品 Edit Dish</h3>
+    <label>代码 Code</label>
+    <input type="text" id="de-code" placeholder="例如 A1, B2, D3…" style="margin-bottom:10px">
+    <label>中文名 Name</label>
+    <input type="text" id="de-name" placeholder="菜品名称" style="margin-bottom:10px">
+    <label>英文名 English</label>
+    <input type="text" id="de-en" placeholder="English name (optional)" style="margin-bottom:10px">
+    <label>分类 Category</label>
+    <select id="de-cat" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--border);font-size:13px;margin-bottom:10px"></select>
+    <label>价格 Price (₱)</label>
+    <input type="number" id="de-price" placeholder="0" min="0" style="margin-bottom:10px">
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+      <input type="checkbox" id="de-hot" style="width:16px;height:16px">
+      <span>推荐/辣 Hot / Recommended 👍</span>
+    </label>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('dish-edit-modal')">取消 Cancel</button>
+      <button class="btn btn-primary" style="flex:1" onclick="confirmDish()">✅ 保存 Save</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
