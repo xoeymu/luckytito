@@ -569,6 +569,14 @@ body[data-role="dive"] .dive-save-btn{display:inline-flex!important}
           <div id="room-type-tip" class="room-info-tip"></div>
         </div>
         <div class="fg"><label>房间号 Room No.</label><input type="text" id="f-rnum" placeholder="301" oninput="updateCustNo();onRoomNumChange()"></div>
+        <div class="fg"><label>FD计费 FD Rate</label>
+          <select id="f-fd-tier-override" style="width:100%">
+            <option value="">🔄 自动 Auto</option>
+            <option value="shared">👥 双人+ Group</option>
+            <option value="solo">🧍 单人 Solo</option>
+            <option value="walkin">🚶 散客 Walk-in</option>
+          </select>
+        </div>
       </div>
       <div id="hol-alert" style="display:none;margin-top:10px"></div>
       <input type="hidden" id="f-rrate">
@@ -2255,6 +2263,8 @@ const FD_ALL_NAMES=[FD_WALKIN_NAME,...FD_TIERS.flatMap(t=>[t.low,t.high])]
 // is "WI") · 'solo' (has a room, not shared) · 'shared' (room shared with another guest on
 // overlapping dates, via getSharedNights). Drives autoFdTier's auto rename/reprice below.
 function fdRoomStatus(){
+  const override=v('f-fd-tier-override')
+  if(override)return override  // manual override takes priority
   const rnum=v('f-rnum').trim()
   if(!rnum||/^wi$/i.test(rnum))return'walkin'
   const ci=v('f-ci'),co=v('f-co')
@@ -2291,6 +2301,7 @@ function mergeFdTierItems(c){
 // pricing dive items added programmatically (e.g. dive-log sync) for a guest who may not be the one
 // currently open in the edit form. A room number present (and not "WI"/walk-in) means in-house guest.
 function fdRoomStatusForRecord(c){
+  if(c.fdTierOverride)return c.fdTierOverride  // manual override takes priority
   const rnum=(c.roomNum||'').trim()
   if(!rnum||/^wi$/i.test(rnum))return'walkin'
   if(!c.checkin||!c.checkout)return'solo'
@@ -2348,7 +2359,7 @@ function collect(){
     arrCarTime:v('f-arr-ct').trim(),arrCarFee:v('f-arr-cf'),arrBoat:v('f-arr-boat').trim(),arrPlate:v('f-arr-plate').trim(),arrDriverPhone:v('f-arr-drv').trim(),
     departFlight:v('f-df').trim(),departTime:getFlightTime('f-dt-date','f-dt-h','f-dt-m'),depTerminal:v('f-dep-term'),
     depCarTime:v('f-dep-ct').trim(),depCarFee:v('f-dep-cf'),depBoat:v('f-dep-boat').trim(),depPlate:v('f-dep-plate').trim(),depDriverPhone:v('f-dep-drv').trim(),
-    checkin:v('f-ci'),checkout:v('f-co'),roomType:v('f-rtype'),roomNum:v('f-rnum').trim(),
+    checkin:v('f-ci'),checkout:v('f-co'),roomType:v('f-rtype'),roomNum:v('f-rnum').trim(),fdTierOverride:v('f-fd-tier-override')||'',
     roomRate:v('f-rrate'),
     freeUpgrade:v('f-upgrade-rate')?'免费升级 Free Upgrade ¥'+v('f-upgrade-rate')+'/晚':'',
     upgrade:v('f-upgrade-rate')?'免费升级 Free Upgrade ¥'+v('f-upgrade-rate')+'/晚':'',
@@ -2387,7 +2398,7 @@ function fillForm(c){
   sv('f-arr-ct',c.arrCarTime);sv('f-arr-cf',c.arrCarFee);sv('f-arr-boat',c.arrBoat);sv('f-arr-plate',c.arrPlate);sv('f-arr-drv',c.arrDriverPhone)
   sv('f-df',c.departFlight);setFlightTime(c.departTime,'f-dt-date','f-dt-h','f-dt-m');sv('f-dep-term',c.depTerminal)
   sv('f-dep-ct',c.depCarTime);sv('f-dep-cf',c.depCarFee);sv('f-dep-boat',c.depBoat);sv('f-dep-plate',c.depPlate);sv('f-dep-drv',c.depDriverPhone)
-  sv('f-ci',c.checkin);sv('f-co',c.checkout);sv('f-rtype',c.roomType);sv('f-rnum',c.roomNum);sv('f-rrate',c.roomRate)
+  sv('f-ci',c.checkin);sv('f-co',c.checkout);sv('f-rtype',c.roomType);sv('f-rnum',c.roomNum);sv('f-rrate',c.roomRate);sv('f-fd-tier-override',c.fdTierOverride||'')
   if(c.roomType){const opt=[...document.getElementById('f-rtype').options].find(o=>o.value===c.roomType);if(opt)document.getElementById('room-type-tip').textContent=ROOM_TYPES.find(r=>r.val===c.roomType)?.note||''}
   sv('f-rdisc',c.roomDiscount);sv('f-rdisc-custom',c.roomDiscountCustom)
   document.getElementById('room-disc-custom-wrap').style.display=c.roomDiscount==='custom'?'block':'none'
