@@ -790,7 +790,12 @@ body[data-role="dive"] .dive-save-btn{display:inline-flex!important}
   <div class="scal-wrap no-print" style="margin-top:16px">
     <div class="scal-head" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
       <span class="card-title">👨‍🏫 教练排课 Instructor Schedule (15天)</span>
-      <button class="btn btn-secondary btn-sm no-print" onclick="generateInstLink()">🔗 Share view-only link 生成分享链接</button>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-ghost btn-sm no-print" onclick="shiftDate(-1)" title="上一天 Prev day">◀</button>
+        <button class="btn btn-ghost btn-sm no-print" onclick="shiftDate(1)" title="下一天 Next day">▶</button>
+        <button class="btn btn-ghost btn-sm no-print" onclick="setToday()" title="今天 Today">今天</button>
+        <button class="btn btn-secondary btn-sm no-print" onclick="generateInstLink()">🔗 Share view-only link 生成分享链接</button>
+      </div>
     </div>
     <div id="inst-cal"></div>
   </div>
@@ -3278,6 +3283,17 @@ function renderSemiCal(){
     if(hol)html+='<br><span style="color:#ef4444;font-size:9px;font-weight:800">PH</span>'
     html+='</th>'
   })
+  html+='</tr>'
+  // Count row — in-house guests per day
+  html+='<tr><th style="font-size:10px;font-weight:700;color:#64748b;text-align:left;padding:3px 8px 4px;border-right:1px solid #e2e8f0;border-bottom:2px solid #cbd5e1;background:#f1f5f9;white-space:nowrap">在店人数<br>In-house</th>'
+  days.forEach(({ds,isT,hol})=>{
+    const cnt=all.filter(c=>c.checkin&&c.checkout&&ds>=c.checkin&&ds<c.checkout).length
+    const maxN=Math.max(1,...days.map(({ds:d2})=>all.filter(c=>c.checkin&&c.checkout&&d2>=c.checkin&&d2<c.checkout).length))
+    const ratio=cnt/maxN
+    const bg=isT?`rgba(2,132,199,${0.1+ratio*0.5})`:hol?`rgba(220,38,38,${0.07+ratio*0.4})`:`rgba(99,102,241,${ratio*0.45})`
+    const tc=cnt===0?'#cbd5e1':ratio>0.6?'#1e1b4b':'#3730a3'
+    html+=`<th style="font-size:13px;font-weight:800;color:${tc};text-align:center;padding:3px 3px 4px;border-right:1px solid #f1f5f9;border-bottom:2px solid #cbd5e1;background:${bg};min-width:52px">${cnt||'·'}</th>`
+  })
   html+='</tr></thead><tbody>'
   if(!guests.length){
     html+='<tr><td colspan="'+(days.length+1)+'" style="text-align:center;color:#cbd5e1;font-size:13px;padding:22px">该时间段暂无客人 No guests in this period</td></tr>'
@@ -3981,16 +3997,7 @@ function renderBill(overrideCustId){
   const hasR=c.checkin||c.checkout||c.roomType||c.roomNum||(c.roomStays&&c.roomStays.length)
   const nights=c.checkin&&c.checkout?Math.round((new Date(c.checkout)-new Date(c.checkin))/(1000*3600*24)):0
   const{holNights:rHol,normNights:rNorm}=(c.checkin&&c.checkout?getRoomNightBreakdown(c.checkin,c.checkout):{holNights:0,normNights:0})
-  let discNote=''
-  if(hasR&&c.roomRate&&nights>0){
-    const rate=parseFloat(c.roomRate)
-    const d=effectiveRoomDiscount(c)
-    const f=roomDiscountFactor(d,c.roomDiscountCustom)
-    const saved=rNorm*rate*(1-f)
-    if(rHol>0&&rNorm>0&&f<1)discNote='<div style="font-size:12px;color:#0284c7;margin-top:5px;font-weight:600">'+rHol+' holiday night(s) at full rate 节假日原价 · '+rNorm+' discounted night(s) 折扣晚, saved 省 ¥'+saved.toFixed(2)+'</div>'
-    else if(rHol>0&&rNorm===0)discNote='<div style="font-size:12px;color:#92400e;margin-top:5px;font-weight:600">All nights are public holidays · 全部节假日 — no discount applied 不享折扣</div>'
-    else if(f<1&&saved>0){const lb={'9折':'10% off 九折','85折':'15% off 八五折','8折':'20% off 八折','custom':'custom disc 自定义折扣'}[d]||d;discNote='<div style="font-size:12px;color:#059669;margin-top:5px;font-weight:600">'+lb+' — saved 省 ¥'+saved.toFixed(2)+'</div>'}
-  }
+  const discNote=''
   // Build room fee rows (split by holiday/non-holiday and solo/shared). Factored into a helper so
   // it can be reused both for the primary stay and for any additional room-change segments below —
   // each segment is billed with the same per-night rules, just against its own dates/rate/room.

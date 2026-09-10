@@ -16,6 +16,7 @@ header h1{font-size:17px;margin:0;font-weight:800;letter-spacing:.3px}
 header .clock{margin-left:auto;font-size:13px;color:#cbd5e1}
 header button{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;font-weight:600}
 header button:hover{background:rgba(255,255,255,.22)}
+.pending-badge{display:inline-block;background:#ef4444;color:#fff;border-radius:10px;font-size:11px;font-weight:800;padding:1px 6px;margin-left:5px;vertical-align:middle}
 .layout{display:flex;gap:12px;padding:12px;height:calc(100vh - 56px)}
 .panel{background:var(--card);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;flex-direction:column;overflow:hidden}
 .panel-header{padding:12px 14px;border-bottom:1px solid var(--border);font-weight:800;font-size:13px;color:var(--navy);display:flex;align-items:center;gap:8px}
@@ -122,7 +123,7 @@ body[data-menu-edit] .menu-add-btn{display:block}
   <h1>🍽️ Lucky Tito Restaurant 点餐结账</h1>
   <button onclick="showHistory()">📊 今日流水 Today's Sales</button>
   <button onclick="toggleMenuEdit()" id="price-edit-btn">✏️ 编辑菜单 Edit Menu</button>
-  <button onclick="setSyncUrl()" id="sync-btn">🔗 云同步 Cloud Sync</button>
+  <button onclick="setSyncUrl()" id="sync-btn">🔗 云同步 Cloud Sync<span id="pending-badge" class="pending-badge" style="display:none"></span></button>
   <span class="clock" id="clock"></span>
 </header>
 
@@ -387,25 +388,54 @@ function updateSyncBtn(){
   b.textContent=on?'🔗 已连接 Connected':'🔗 云同步 Cloud Sync'
   b.style.background=on?'rgba(34,197,94,.35)':''
 }
-function pushChargeToCloud(record){
+// ── Pending queue ──────────────────────────────────────────────────────────
+function loadPending(){try{return JSON.parse(localStorage.getItem('rt_pending')||'[]')}catch{return[]}}
+function savePending(q){localStorage.setItem('rt_pending',JSON.stringify(q));updatePendingBadge()}
+function updatePendingBadge(){
+  const b=document.getElementById('pending-badge');if(!b)return
+  const n=loadPending().length
+  b.style.display=n?'inline-block':'none';b.textContent=n
+}
+function _doPush(charge,onSuccess){
   const url=getSyncUrl();if(!url)return
-  const summary=record.items.map(it=>it.name+'×'+it.qty).join('、')
-  const charge={id:record.id,table:record.tableLabel,note:record.note,summary,total:record.total,date:record.paidAt.slice(0,16).replace('T',' '),claimed:false,roomCharge:!!record.roomCharge,roomNo:record.roomNo||''}
   fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
     if(!res||!res.ok||!Array.isArray(res.data))throw new Error('load failed')
     const data=res.data
-    let rc=data.find(c=>c.id==='__restaurant_charges__')
+    let rc=data.find(x=>x.id==='__restaurant_charges__')
     if(!rc){rc={id:'__restaurant_charges__',charges:[]};data.push(rc)}
     if(!Array.isArray(rc.charges))rc.charges=[]
-    // Idempotency guard: skip if this charge ID was already pushed
-    if(rc.charges.some(x=>x.id===charge.id))return
+    if(rc.charges.some(x=>x.id===charge.id)){onSuccess&&onSuccess();return}
     rc.charges.push(charge)
-    // Also sync full local history so other devices can view 今日流水
-    let rh=data.find(c=>c.id==='__restaurant_history__')
+    let rh=data.find(x=>x.id==='__restaurant_history__')
     if(!rh){rh={id:'__restaurant_history__',records:[]};data.push(rh)}
     rh.records=loadHistory()
     return fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)})
-  }).catch(()=>{/* offline or unreachable — local checkout/receipt already succeeded, just skip the push */})
+      .then(()=>onSuccess&&onSuccess())
+  })
+}
+function pushChargeToCloud(record){
+  const summary=record.items.map(it=>it.name+'×'+it.qty).join('、')
+  const charge={id:record.id,table:record.tableLabel,note:record.note,summary,total:record.total,date:record.paidAt.slice(0,16).replace('T',' '),claimed:false,roomCharge:!!record.roomCharge,roomNo:record.roomNo||''}
+  // Always enqueue first so no data is lost if network fails
+  const q=loadPending();if(!q.some(x=>x.id===charge.id)){q.push(charge);savePending(q)}
+  if(!getSyncUrl())return
+  _doPush(charge,()=>{
+    const q2=loadPending().filter(x=>x.id!==charge.id);savePending(q2)
+  })
+}
+function retryPendingCharges(){
+  const url=getSyncUrl();if(!url)return
+  const q=loadPending();if(!q.length)return
+  // Push one at a time to avoid race conditions
+  let i=0
+  function next(){
+    if(i>=q.length)return
+    const charge=q[i++]
+    _doPush(charge,()=>{
+      const q2=loadPending().filter(x=>x.id!==charge.id);savePending(q2);next()
+    })
+  }
+  next()
 }
 function fmt(n){return'₱'+Number(n).toLocaleString('en-US',{maximumFractionDigits:0})}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -834,8 +864,12 @@ function init(){
   renderMenu()
   renderOrderPanel()
   updateSyncBtn()
+  updatePendingBadge()
   tickClock()
   setInterval(tickClock,30000)
+  // Retry any charges that failed to push in a previous session
+  setTimeout(retryPendingCharges,3000)
+  setInterval(retryPendingCharges,120000)  // retry every 2 min
 }
 init()
 </script>
