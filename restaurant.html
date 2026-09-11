@@ -692,7 +692,7 @@ function confirmCheckout(){
   const lines=t.items.map(line=>{
     const m=_brem.find(x=>x.id===line.id)
     const price=m?getPrice(m):0
-    return{code:m?m.code:'',name:m?m.name:'',qty:line.qty,price,sub:price*line.qty}
+    return{code:m?m.code:'',name:m?m.name:'',en:m?m.en||'':'',qty:line.qty,price,sub:price*line.qty}
   })
   const record={id:uid(),tableLabel:t.label,note:t.note,items:lines,total,paidAt:now.toISOString(),roomCharge:coRoomCharge,roomNo}
   const hist=loadHistory()
@@ -719,7 +719,7 @@ function buildReceipt(record,now){
     +'<div class="r-sub">'+dateStr+'</div>'
     +'<hr>'
   record.items.forEach(it=>{
-    html+='<div class="r-line"><span class="rl-name">'+esc(it.code)+' '+esc(it.name)+'</span><span class="rl-price">'+fmt(it.price)+' × '+it.qty+' = '+fmt(it.sub)+'</span></div>'
+    html+='<div class="r-line"><span class="rl-name">'+esc(it.code)+' '+esc(it.name)+(it.en?'<br><span style="font-size:11px;color:#555">'+esc(it.en)+'</span>':'')+'</span><span class="rl-price">'+fmt(it.price)+' × '+it.qty+' = '+fmt(it.sub)+'</span></div>'
   })
   html+='<hr><div class="r-total"><span class="r-total-label">Total</span><span class="r-total-amt">'+fmt(record.total)+'</span></div>'
   html+=record.roomCharge
