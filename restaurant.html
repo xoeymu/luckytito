@@ -533,10 +533,10 @@ function renderMenu(){
   const cards=items.map(m=>{
     const price=getPrice(m)
     const editBtns='<div class="ic-edit-btns">'
-      +'<button class="ic-edit-btn edit" onclick="event.stopPropagation();openEditDish(''+m.id+'')">✏️</button>'
-      +'<button class="ic-edit-btn del" onclick="event.stopPropagation();deleteDish(''+m.id+'')">🗑</button>'
+      +'<button class="ic-edit-btn edit" onclick="event.stopPropagation();openEditDish(&apos;'+m.id+'&apos;)">✏️</button>'
+      +'<button class="ic-edit-btn del" onclick="event.stopPropagation();deleteDish(&apos;'+m.id+'&apos;)">🗑</button>'
       +'</div>'
-    return '<div class="item-card" style="position:relative" onclick="'+(menuEditMode?'':'addItemToOrder(''+m.id+'')')+'">'
+    return '<div class="item-card" style="position:relative" onclick="'+(menuEditMode?'':'addItemToOrder(&apos;'+m.id+'&apos;)')+'">'
       +editBtns
       +(m.hot?'<span class="ic-hot">👍</span>':'')
       +'<div class="ic-code">'+esc(m.code||'')+'</div>'
