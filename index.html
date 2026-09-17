@@ -565,6 +565,8 @@ body[data-role="dive"] .dive-save-btn{display:inline-flex!important}
             <option value="Family Room A 双床房A" data-rate="420">双床房A Family A — ¥420/晚</option>
             <option value="Family Room B 双床房B" data-rate="450">双床房B Family B — ¥450/晚</option>
             <option value="Student Dorm 学员宿舍" data-rate="125">学员宿舍 Student Dorm — ¥125/晚</option>
+            <option value="Dorm F 女宿舍" data-rate="125">女宿舍 Dorm F — ¥125/晚</option>
+            <option value="Dorm M 男宿舍" data-rate="125">男宿舍 Dorm M — ¥125/晚</option>
           </select>
           <div id="room-type-tip" class="room-info-tip"></div>
         </div>
@@ -610,6 +612,8 @@ body[data-role="dive"] .dive-save-btn{display:inline-flex!important}
           <option value="Family Room A 双床房A" data-rate="420">双床房A Family A — ¥420/晚</option>
           <option value="Family Room B 双床房B" data-rate="450">双床房B Family B — ¥450/晚</option>
           <option value="Student Dorm 学员宿舍" data-rate="125">学员宿舍 Student Dorm — ¥125/晚</option>
+            <option value="Dorm F 女宿舍" data-rate="125">女宿舍 Dorm F — ¥125/晚</option>
+            <option value="Dorm M 男宿舍" data-rate="125">男宿舍 Dorm M — ¥125/晚</option>
         </select>
       </div>
       <div class="g2" style="margin-top:8px">
@@ -1839,7 +1843,7 @@ function hasStudentCourseForRecord(c){
 // 9折 (student discount) is silently dropped if the record has no qualifying courses.
 function effectiveRoomDiscount(c){
   const d=c.roomDiscount
-  if((c.roomType||'').includes('学员宿舍'))return''
+  if((c.roomType||'').includes('学员宿舍')||(c.roomType||'').includes('Dorm F')||(c.roomType||'').includes('Dorm M'))return''
   if(d==='9折'&&!hasStudentCourseForRecord(c))return''
   return d||''
 }
@@ -2289,10 +2293,12 @@ function mergeFdTierItems(c){
   if(status==='walkin'){
     matchNames=[FD_WALKIN_NAME];tierName=FD_WALKIN_NAME;tierPrice=FD_WALKIN_PRICE
   }else{
-    const t=status==='shared'?FD_TIERS[1]:FD_TIERS[0]
+    // Course guests always get the best rate: 双人+ 8潜以上 ¥150
+    const hasCourse=hasStudentCourseForRecord(c)
+    const t=hasCourse?FD_TIERS[1]:(status==='shared'?FD_TIERS[1]:FD_TIERS[0])
     matchNames=[t.low,t.high]
     const totalDives=getFdDiveCount(c.id)+(parseInt(c.holFdQty)||0)
-    const useHigh=totalDives>=8
+    const useHigh=hasCourse||totalDives>=8
     tierName=useHigh?t.high:t.low;tierPrice=useHigh?t.highP:t.lowP
   }
   const matched=items.filter(it=>matchNames.includes((it.name||'').trim()))
@@ -2324,9 +2330,11 @@ function autoFdTier(tr){
   if(status==='walkin'){
     newName=FD_WALKIN_NAME;newP=FD_WALKIN_PRICE
   }else{
-    const t=status==='shared'?FD_TIERS[1]:FD_TIERS[0]
+    // Course guests always get the best rate: 双人+ 8潜以上 ¥150
+    const hasCourse=hasStudentCourse()
+    const t=hasCourse?FD_TIERS[1]:(status==='shared'?FD_TIERS[1]:FD_TIERS[0])
     const holQ=parseInt(_holFdQty)||0
-    const useHigh=(qty+holQ)>=8
+    const useHigh=hasCourse||(qty+holQ)>=8
     newName=useHigh?t.high:t.low;newP=useHigh?t.highP:t.lowP
   }
   if(nameIn.value!==newName)nameIn.value=newName
@@ -3957,9 +3965,11 @@ function syncFdQtyFromLog(c){
   if(status==='walkin'){
     tierName=FD_WALKIN_NAME;tierPrice=FD_WALKIN_PRICE
   }else{
-    const t=status==='shared'?FD_TIERS[1]:FD_TIERS[0]
+    // Course guests always get the best rate: 双人+ 8潜以上 ¥150
+    const hasCourse=hasStudentCourseForRecord(c)
+    const t=hasCourse?FD_TIERS[1]:(status==='shared'?FD_TIERS[1]:FD_TIERS[0])
     const totalDives=logFdQty+(parseInt(c.holFdQty)||0)
-    const useHigh=totalDives>=8
+    const useHigh=hasCourse||totalDives>=8
     tierName=useHigh?t.high:t.low;tierPrice=useHigh?t.highP:t.lowP
   }
   const cur=items.find(it=>FD_ALL_NAMES.includes((it.name||'').trim()))

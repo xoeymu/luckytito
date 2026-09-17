@@ -189,7 +189,16 @@ body[data-menu-edit] .menu-add-btn{display:block}
     <h3>结账确认 Confirm Checkout</h3>
     <div style="background:var(--bg);border-radius:8px;padding:10px 12px">
       <div style="font-weight:800;color:var(--navy)" id="co-table-label"></div>
-      <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;color:var(--navy);margin-top:4px"><span>总计 Total</span><span id="co-total"></span></div>
+      <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;color:var(--navy);margin-top:4px"><span>原价 Original</span><span id="co-total"></span></div>
+      <div id="co-disc-line" style="display:none;margin-top:4px;border-top:1px dashed #cbd5e1;padding-top:4px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#ea580c;font-weight:700"><span id="co-disc-label"></span><span id="co-disc-amt"></span></div>
+        <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:900;color:var(--green);margin-top:2px"><span>实收 Final</span><span id="co-final"></span></div>
+      </div>
+    </div>
+    <label>折扣 Discount</label>
+    <div class="order-actions" style="flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" style="flex:1;min-width:90px;background:#fff7ed;color:#ea580c;border:1.5px solid #fed7aa" id="co-disc-coach" onclick="setDiscount(coDiscount===0.1?0:0.1)">🤿 教练 10% OFF</button>
+      <button class="btn btn-ghost btn-sm" style="flex:1;min-width:90px;background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca" id="co-disc-mgr" onclick="setDiscount(coDiscount===0.4?0:0.4)">⭐ 管理 40% OFF</button>
     </div>
     <label>付款方式 Payment Method</label>
     <div class="order-actions">
@@ -199,6 +208,10 @@ body[data-menu-edit] .menu-add-btn{display:block}
     <div id="co-room-no-wrap" style="display:none">
       <label>房号 Room Number</label>
       <input type="text" id="co-room-no" placeholder="例如：12 / Villa 3">
+      <div style="display:flex;gap:5px;margin-top:6px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('co-room-no').value='Dorm F'">Dorm F</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('co-room-no').value='Dorm M'">Dorm M</button>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('checkout-modal')">取消 Cancel</button>
@@ -415,7 +428,7 @@ function _doPush(charge,onSuccess){
 }
 function pushChargeToCloud(record){
   const summary=record.items.map(it=>it.name+'×'+it.qty).join('、')
-  const charge={id:record.id,table:record.tableLabel,note:record.note,summary,total:record.total,date:record.paidAt.slice(0,16).replace('T',' '),claimed:false,roomCharge:!!record.roomCharge,roomNo:record.roomNo||''}
+  const charge={id:record.id,table:record.tableLabel,note:record.note,summary,total:record.total,date:record.paidAt.slice(0,16).replace('T',' '),claimed:false,roomCharge:!!record.roomCharge,roomNo:record.roomNo||'',discount:record.discountInfo?record.discountInfo.label:''}
   // Always enqueue first so no data is lost if network fails
   const q=loadPending();if(!q.some(x=>x.id===charge.id)){q.push(charge);savePending(q)}
   if(!getSyncUrl())return
@@ -636,7 +649,7 @@ function renderOrderPanel(){
 // ====================================================================
 //   CHECKOUT + RECEIPT PRINT
 // ====================================================================
-let coTableId=null,coRoomCharge=false
+let coTableId=null,coRoomCharge=false,coDiscount=0
 function printKitchen(){
   if(!curTableId)return
   const t=loadTables().find(x=>x.id===curTableId)
@@ -667,7 +680,27 @@ function checkoutTable(){
   document.getElementById('co-total').textContent=fmt(orderTotal(t))
   document.getElementById('co-room-no').value=''
   setCheckoutRoomCharge(false)
+  setDiscount(0)
   document.getElementById('checkout-modal').classList.add('show')
+}
+function setDiscount(d){
+  coDiscount=d
+  ;[['co-disc-coach',0.1],['co-disc-mgr',0.4]].forEach(([id,val])=>{
+    const el=document.getElementById(id);if(!el)return
+    el.style.outline=val===d?'2px solid currentColor':''
+    el.style.fontWeight=val===d?'900':'700'
+  })
+  const rawText=document.getElementById('co-total').textContent||''
+  const raw=parseFloat(rawText.replace(/[^\d.]/g,''))||0
+  const discLine=document.getElementById('co-disc-line')
+  if(d>0&&raw>0){
+    discLine.style.display='block'
+    document.getElementById('co-disc-label').textContent=d===0.1?'🤿 教练折扣 Instructor 10% OFF':'⭐ 管理折扣 Manager 40% OFF'
+    document.getElementById('co-disc-amt').textContent='-₱'+Math.round(raw*d)
+    document.getElementById('co-final').textContent='₱'+Math.round(raw*(1-d))
+  } else {
+    discLine.style.display='none'
+  }
 }
 function setCheckoutRoomCharge(isRoom){
   coRoomCharge=isRoom
@@ -685,7 +718,9 @@ function confirmCheckout(){
     roomNo=document.getElementById('co-room-no').value.trim()
     if(!roomNo){alert('请输入房号 Please enter the room number');return}
   }
-  const total=orderTotal(t)
+  const _rawTotal=orderTotal(t)
+  const total=coDiscount>0?Math.round(_rawTotal*(1-coDiscount)):_rawTotal
+  const discountInfo=coDiscount>0?{rate:coDiscount,label:coDiscount===0.1?'Instructor 10% OFF':'Manager 40% OFF',saved:_rawTotal-total}:null
 
   const now=new Date()
   const _brem=getEffectiveMenu()
@@ -694,7 +729,7 @@ function confirmCheckout(){
     const price=m?getPrice(m):0
     return{code:m?m.code:'',name:m?m.name:'',en:m?m.en||'':'',qty:line.qty,price,sub:price*line.qty}
   })
-  const record={id:uid(),tableLabel:t.label,note:t.note,items:lines,total,paidAt:now.toISOString(),roomCharge:coRoomCharge,roomNo}
+  const record={id:uid(),tableLabel:t.label,note:t.note,items:lines,total,paidAt:now.toISOString(),roomCharge:coRoomCharge,roomNo,discountInfo}
   const hist=loadHistory()
   hist.push(record)
   saveHistory(hist)
@@ -721,6 +756,10 @@ function buildReceipt(record,now){
   record.items.forEach(it=>{
     html+='<div class="r-line"><span class="rl-name">'+esc(it.code)+' '+esc(it.name)+(it.en?'<br><span style="font-size:11px;color:#555">'+esc(it.en)+'</span>':'')+'</span><span class="rl-price">'+fmt(it.price)+' × '+it.qty+' = '+fmt(it.sub)+'</span></div>'
   })
+  if(record.discountInfo){
+    html+='<div class="r-line" style="color:#64748b"><span class="rl-name">Subtotal</span><span class="rl-price">'+fmt(record.total+record.discountInfo.saved)+'</span></div>'
+    html+='<div class="r-line" style="color:#ea580c;font-weight:700"><span class="rl-name">'+esc(record.discountInfo.label)+'</span><span class="rl-price">-'+fmt(record.discountInfo.saved)+'</span></div>'
+  }
   html+='<hr><div class="r-total"><span class="r-total-label">Total</span><span class="r-total-amt">'+fmt(record.total)+'</span></div>'
   html+=record.roomCharge
     ?'<div class="r-pay">ROOM CHARGE 房间挂账 · Room '+esc(record.roomNo)+'</div>'
