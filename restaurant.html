@@ -97,7 +97,7 @@ body[data-menu-edit] .menu-add-btn{display:block}
   body *{visibility:hidden}
   .receipt-print, .receipt-print *{visibility:visible}
   /* Use normal flow (not absolute) so width is naturally 100% of page */
-  .receipt-print{display:block;position:fixed;left:0;top:0;right:0;padding:2mm 3mm;font-family:'Courier New',monospace;color:#000;font-size:12px;box-sizing:border-box}
+  .receipt-print{display:block;width:100%;padding:2mm 3mm;font-family:'Courier New',monospace;color:#000;font-size:12px;box-sizing:border-box}
   .receipt-print .r-title{text-align:center;font-weight:800;font-size:16px;margin-bottom:1.5mm}
   .receipt-print .r-sub{text-align:center;font-size:11px;margin-bottom:1mm}
   .receipt-print hr{border:none;border-top:1px dashed #000;margin:1.5mm 0}
@@ -754,11 +754,15 @@ function buildReceipt(record,now){
     +'<div class="r-sub">'+dateStr+'</div>'
     +'<hr>'
   record.items.forEach(it=>{
-    html+='<div class="r-line"><span class="rl-name">'+esc(it.code)+' '+esc(it.name)+(it.en?'<br><span style="font-size:11px;color:#555">'+esc(it.en)+'</span>':'')+'</span><span class="rl-price">'+fmt(it.price)+' × '+it.qty+' = '+fmt(it.sub)+'</span></div>'
+    const detail=(it.en?esc(it.en)+' · ':'')+fmt(it.price)+(it.qty>1?' × '+it.qty:'')
+    html+='<div class="r-line">'
+      +'<div class="rl-top"><span class="rl-name">'+esc(it.code)+' '+esc(it.name)+'</span><span class="rl-sub">'+fmt(it.sub)+'</span></div>'
+      +'<div class="rl-detail">'+detail+'</div>'
+      +'</div>'
   })
   if(record.discountInfo){
-    html+='<div class="r-line" style="color:#64748b"><span class="rl-name">Subtotal</span><span class="rl-price">'+fmt(record.total+record.discountInfo.saved)+'</span></div>'
-    html+='<div class="r-line" style="color:#ea580c;font-weight:700"><span class="rl-name">'+esc(record.discountInfo.label)+'</span><span class="rl-price">-'+fmt(record.discountInfo.saved)+'</span></div>'
+    html+='<div class="r-line" style="color:#64748b"><div class="rl-top"><span class="rl-name">Subtotal 小计</span><span class="rl-sub">'+fmt(record.total+record.discountInfo.saved)+'</span></div></div>'
+    html+='<div class="r-line" style="color:#ea580c;font-weight:700"><div class="rl-top"><span class="rl-name">'+esc(record.discountInfo.label)+'</span><span class="rl-sub">-'+fmt(record.discountInfo.saved)+'</span></div></div>'
   }
   html+='<hr><div class="r-total"><span class="r-total-label">Total</span><span class="r-total-amt">'+fmt(record.total)+'</span></div>'
   html+=record.roomCharge
