@@ -4022,7 +4022,7 @@ function renderBill(overrideCustId){
     const maxN=shared.size>0?Math.max(...shared.values()):1
     const splitLbl='÷'+maxN
     const{holSolo,holShare,normSolo,normShare,holSoloAmt,holShareAmt,normSoloAmt,normShareAmt,extraPersonNights,extraPersonCharge}=computeRoomNights(ci,co,rate,shared,hols,rf)
-    const mkRow=(lbl,up,qty,sub)=>{const nm=rt+(lbl?' ('+lbl+')':'');return'<tr><td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+nm+'">'+nm+'</td><td>'+up+'</td><td>'+qty+'</td><td>¥ '+sub+'</td></tr>'}
+    const mkRow=(lbl,up,qty,sub)=>{const nm=rt+(lbl?' ('+lbl+')':'');return'<tr><td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+nm+'">'+rt+'</td><td>'+up+'</td><td>'+qty+'</td><td>¥ '+sub+'</td></tr>'}
     const nts=n=>n+' nt'+(n>1?'s':'')
     let rows=''
     if(holSolo>0)rows+=mkRow('Holiday · 节假日 (full rate 原价)',('¥'+rate+'/nt'),nts(holSolo),holSoloAmt.toFixed(2))

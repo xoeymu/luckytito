@@ -97,19 +97,19 @@ body[data-menu-edit] .menu-add-btn{display:block}
   body *{visibility:hidden}
   .receipt-print, .receipt-print *{visibility:visible}
   /* Use normal flow (not absolute) so width is naturally 100% of page */
-  .receipt-print{display:block;position:fixed;left:0;top:0;right:0;padding:3mm 4mm;font-family:'Courier New',monospace;color:#000;font-size:13px;box-sizing:border-box}
-  .receipt-print .r-title{text-align:center;font-weight:800;font-size:17px;margin-bottom:2mm}
-  .receipt-print .r-sub{text-align:center;font-size:12px;margin-bottom:1.5mm}
-  .receipt-print hr{border:none;border-top:1px dashed #000;margin:2mm 0}
-  /* Two-line item: name on top, price right-aligned below */
-  .receipt-print .r-line{margin:2mm 0;font-size:13px}
-  .receipt-print .r-line .rl-name{display:block;font-weight:700}
-  .receipt-print .r-line .rl-price{display:block;text-align:right;font-size:13px}
-  /* Total: label floated left, amount right-aligned */
-  .receipt-print .r-total{font-weight:800;font-size:17px;margin-top:3mm;border-top:1px solid #000;padding-top:2mm;overflow:hidden}
-  .receipt-print .r-total-label{float:left}
-  .receipt-print .r-total-amt{display:block;text-align:right}
-  .receipt-print .r-pay{text-align:center;font-weight:800;font-size:13px;margin-top:2mm;border:2px solid #000;padding:1.5mm;clear:both}
+  .receipt-print{display:block;position:fixed;left:0;top:0;right:0;padding:2mm 3mm;font-family:'Courier New',monospace;color:#000;font-size:12px;box-sizing:border-box}
+  .receipt-print .r-title{text-align:center;font-weight:800;font-size:16px;margin-bottom:1.5mm}
+  .receipt-print .r-sub{text-align:center;font-size:11px;margin-bottom:1mm}
+  .receipt-print hr{border:none;border-top:1px dashed #000;margin:1.5mm 0}
+  /* Item row: name+subtotal on one line, english+unit-price on next */
+  .receipt-print .r-line{margin:1.5mm 0;font-size:12px}
+  .receipt-print .r-line .rl-top{display:flex;justify-content:space-between;align-items:baseline;font-weight:700;gap:4px}
+  .receipt-print .r-line .rl-top .rl-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .receipt-print .r-line .rl-top .rl-sub{white-space:nowrap;font-weight:800}
+  .receipt-print .r-line .rl-detail{font-size:10px;color:#444;margin-top:0.5mm}
+  /* Total */
+  .receipt-print .r-total{font-weight:800;font-size:16px;margin-top:2mm;border-top:1.5px solid #000;padding-top:2mm;display:flex;justify-content:space-between}
+  .receipt-print .r-pay{text-align:center;font-weight:800;font-size:12px;margin-top:2mm;border:2px solid #000;padding:1.5mm}
   .receipt-print .r-sign{margin-top:10mm}
   .receipt-print .r-sign-line{border-top:1px solid #000;margin-bottom:1mm}
   .receipt-print .r-sign-label{text-align:center;font-size:11px}
