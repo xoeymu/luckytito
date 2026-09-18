@@ -4437,6 +4437,7 @@ function toggleElStatus(cId,courseKey,field){
   if(!all[idx].elStatus[courseKey])all[idx].elStatus[courseKey]={el:false,cert:false,code:''}
   all[idx].elStatus[courseKey][field]=!all[idx].elStatus[courseKey][field]
   if(field==='cert'){all[idx].elStatus[courseKey].certAt=all[idx].elStatus[courseKey].cert?new Date().toISOString():''}
+  all[idx].lastMod=Date.now()
   saveAll(all);cloudSave();renderElearning()
 }
 function updateElCode(cId,courseKey,val){
@@ -4444,6 +4445,7 @@ function updateElCode(cId,courseKey,val){
   if(!all[idx].elStatus)all[idx].elStatus={}
   if(!all[idx].elStatus[courseKey])all[idx].elStatus[courseKey]={el:false,cert:false,code:''}
   all[idx].elStatus[courseKey].code=val.trim()
+  all[idx].lastMod=Date.now()
   saveAll(all);cloudSave()
 }
 function renderElearning(){
@@ -4458,10 +4460,11 @@ function renderElearning(){
     if(!courses.length)return
     if(q&&!(c.name||'').toLowerCase().includes(q))return
     const arriving=(c.checkin||'')>=today&&(c.checkin||'')<=limitStr
+    const checkedOut=c.checkout&&c.checkout<today  // already left
     courses.forEach(item=>{
       const ck=item.name
       const st=(c.elStatus||{})[ck]||{el:false,cert:false,code:''}
-      if(!arriving&&st.cert)return
+      if(checkedOut&&st.cert)return  // hide only after checkout AND cert done
       rows.push({c,course:ck,el:st.el,cert:st.cert,code:st.code||''})
     })
   })
