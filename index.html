@@ -3268,59 +3268,71 @@ function renderSemiCal(){
     const ds=dt.toISOString().split('T')[0]
     const dow='SMTWTFS'[dt.getDay()]
     const hol=isHolidayDate(ds),isT=ds===today
-    days.push({ds,dow,hol,isT})
+    const dayNum=dt.getDate()
+    const monthKey=dt.getFullYear()+'-'+(dt.getMonth()+1)
+    const monthLabel=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][dt.getMonth()]+' '+dt.getFullYear()
+    days.push({ds,dow,hol,isT,dayNum,monthKey,monthLabel})
   }
   const rangeEl=document.getElementById('semi-cal-range')
   if(rangeEl)rangeEl.textContent=fdate(days[0].ds)+' – '+fdate(days[days.length-1].ds)
-  // Collect unique guests visible in this 15-day window (Gantt rows)
+  // Collect guests in this window, sorted by check-in then name
   const guestMap={}
   all.forEach(c=>{
     if(!c.checkin||!c.checkout)return
     days.forEach(({ds})=>{if(ds>=c.checkin&&ds<c.checkout)guestMap[c.id]=c})
   })
   const guests=Object.values(guestMap).sort((a,b)=>(a.checkin||'').localeCompare(b.checkin||'')||(a.name||'').localeCompare(b.name||''))
-  // Build Gantt table: rows=guests, cols=days
-  let html='<div style="overflow-x:auto;padding-bottom:6px"><table style="border-collapse:collapse;table-layout:auto;min-width:900px;width:100%"><thead><tr>'
-  html+='<th style="font-size:11px;font-weight:700;color:#64748b;text-align:left;padding:6px 8px 5px;border-right:1px solid #e2e8f0;border-bottom:2px solid #e2e8f0;background:#f8fafc;white-space:nowrap;min-width:90px;max-width:130px">Guest</th>'
-  days.forEach(({ds,dow,hol,isT})=>{
-    const bg=isT?'#e0f2fe':hol?'#fff0f0':'#f8fafc'
-    const tc=isT?'#0284c7':hol?'#dc2626':'#64748b'
-    html+=`<th style="font-size:11px;font-weight:700;color:${tc};text-align:center;padding:6px 3px 5px;border-right:1px solid #f1f5f9;border-bottom:2px solid #e2e8f0;background:${bg};white-space:nowrap;min-width:52px">`
-    if(isT)html+='<span class="scal-today-dot" style="font-size:9px">T</span>'
-    html+=fdate(ds)+'<br><span style="font-weight:500;font-size:10px">'+dow+'</span>'
-    if(hol)html+='<br><span style="color:#ef4444;font-size:9px;font-weight:800">PH</span>'
-    html+='</th>'
+  // Build month groups for top header
+  const monthGroups=[]
+  days.forEach(({monthKey,monthLabel})=>{
+    if(!monthGroups.length||monthGroups[monthGroups.length-1].key!==monthKey)monthGroups.push({key:monthKey,label:monthLabel,count:1})
+    else monthGroups[monthGroups.length-1].count++
+  })
+  // Table: cols=dates, rows=numbered guest slots (like 图2)
+  const thBase='border:1px solid #475569;text-align:center;white-space:nowrap;padding:4px 3px'
+  let html='<div style="overflow-x:auto;padding-bottom:6px"><table style="border-collapse:collapse;table-layout:fixed;min-width:900px;width:100%"><thead>'
+  // Row 1: month banner
+  html+='<tr><th style="background:#1e293b;color:#94a3b8;font-size:10px;font-weight:700;padding:4px 6px;'+thBase+';width:54px">NO.</th>'
+  monthGroups.forEach(({label,count})=>{
+    html+=`<th colspan="${count}" style="${thBase};background:#1e293b;color:#fbbf24;font-size:13px;font-weight:800;letter-spacing:2px">${label}</th>`
   })
   html+='</tr>'
-  // Count row — in-house guests per day
-  html+='<tr><th style="font-size:10px;font-weight:700;color:#64748b;text-align:left;padding:3px 8px 4px;border-right:1px solid #e2e8f0;border-bottom:2px solid #cbd5e1;background:#f1f5f9;white-space:nowrap">在店人数<br>In-house</th>'
+  // Row 2: day number + DOW
+  html+='<tr><th style="background:#334155;color:#94a3b8;font-size:10px;font-weight:700;'+thBase+'">DATE</th>'
+  days.forEach(({dayNum,dow,hol,isT})=>{
+    const bg=isT?'#0369a1':hol?'#b91c1c':'#334155'
+    const tc=isT||hol?'#fff':'#e2e8f0'
+    html+=`<th style="${thBase};background:${bg};color:${tc};font-size:13px;font-weight:800;min-width:52px">${dayNum}<br><span style="font-size:10px;font-weight:500">${dow}</span>${hol?'<br><span style="font-size:8px;font-weight:700;opacity:.85">PH</span>':''}</th>`
+  })
+  html+='</tr>'
+  // Row 3: in-house count
+  const maxN=Math.max(1,...days.map(({ds})=>all.filter(c=>c.checkin&&c.checkout&&ds>=c.checkin&&ds<c.checkout).length))
+  html+='<tr><th style="background:#f1f5f9;color:#475569;font-size:9px;font-weight:700;'+thBase+';border-color:#e2e8f0">在店<br>人数</th>'
   days.forEach(({ds,isT,hol})=>{
     const cnt=all.filter(c=>c.checkin&&c.checkout&&ds>=c.checkin&&ds<c.checkout).length
-    const maxN=Math.max(1,...days.map(({ds:d2})=>all.filter(c=>c.checkin&&c.checkout&&d2>=c.checkin&&d2<c.checkout).length))
     const ratio=cnt/maxN
-    const bg=isT?`rgba(2,132,199,${0.1+ratio*0.5})`:hol?`rgba(220,38,38,${0.07+ratio*0.4})`:`rgba(99,102,241,${ratio*0.45})`
+    const bg=isT?`rgba(2,132,199,${0.15+ratio*0.5})`:hol?`rgba(220,38,38,${0.1+ratio*0.4})`:`rgba(99,102,241,${ratio*0.45})`
     const tc=cnt===0?'#cbd5e1':ratio>0.6?'#1e1b4b':'#3730a3'
-    html+=`<th style="font-size:13px;font-weight:800;color:${tc};text-align:center;padding:3px 3px 4px;border-right:1px solid #f1f5f9;border-bottom:2px solid #cbd5e1;background:${bg};min-width:52px">${cnt||'·'}</th>`
+    html+=`<th style="font-size:14px;font-weight:800;color:${tc};${thBase};background:${bg};border-color:#e2e8f0">${cnt||'·'}</th>`
   })
   html+='</tr></thead><tbody>'
   if(!guests.length){
-    html+='<tr><td colspan="'+(days.length+1)+'" style="text-align:center;color:#cbd5e1;font-size:13px;padding:22px">该时间段暂无客人 No guests in this period</td></tr>'
+    html+=`<tr><td colspan="${days.length+1}" style="text-align:center;color:#cbd5e1;font-size:13px;padding:22px">该时间段暂无客人 No guests in this period</td></tr>`
   } else {
-    guests.forEach(c=>{
+    guests.forEach((c,idx)=>{
       const ct=guestCourseType(c),col=SCAL_COLORS[ct]||SCAL_COLORS.STAY
+      const dispName=(c.name||'').toUpperCase()
       const labels=guestCourseLabels(c)
-      const badges=labels.map(l=>`<span style="font-size:9px;font-weight:700;padding:0 3px;border-radius:3px;background:rgba(0,0,0,.12)">${l}</span>`).join('')
+      const labelHtml=labels.length?`<div style="font-size:8px;font-weight:700;opacity:.75;margin-top:1px;overflow:hidden;text-overflow:ellipsis">${labels.join(' · ')}</div>`:''
       html+='<tr>'
-      // Sticky guest name column
-      html+=`<td style="padding:3px 7px;border-right:1px solid #e2e8f0;border-bottom:1px solid #f1f5f9;background:${col.bg};color:${col.tc};font-size:11px;font-weight:700;cursor:pointer;vertical-align:middle;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" onclick="editC('${c.id}')" title="${escHtml(c.name+(c.checkin&&c.checkout?' '+fdate(c.checkin)+'→'+fdate(c.checkout):''))}"><div style="overflow:hidden;text-overflow:ellipsis">${escHtml(c.name)}${badges?'<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:1px">'+badges+'</div>':''}</div></td>`
+      html+=`<td style="background:#f8fafc;color:#475569;font-size:11px;font-weight:700;text-align:center;padding:3px 4px;border:1px solid #e2e8f0;vertical-align:middle">${idx+1}</td>`
       days.forEach(({ds,hol,isT})=>{
         const inHouse=c.checkin&&c.checkout&&ds>=c.checkin&&ds<c.checkout
         if(inHouse){
-          const cellBg=col.bg
-          html+=`<td style="background:${cellBg};border-right:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;padding:4px 3px;text-align:center"><div style="height:8px;border-radius:4px;background:${col.tc};opacity:.35;margin:0 3px"></div></td>`
+          html+=`<td style="background:${col.bg};color:${col.tc};font-size:10px;font-weight:700;text-align:center;padding:3px 2px;border:1px solid rgba(0,0,0,.08);cursor:pointer;overflow:hidden;vertical-align:middle" onclick="editC('${c.id}')" title="${escHtml(c.name+' '+labels.join('/'))}"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(dispName)}</div>${labelHtml}</td>`
         } else {
-          const bg=isT?'#f0f9ff':hol?'#fff9f9':'white'
-          html+=`<td style="background:${bg};border-right:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;padding:4px 3px"></td>`
+          const bg=isT?'#f0f9ff':hol?'#fff5f5':'#fff'
+          html+=`<td style="background:${bg};border:1px solid #f1f5f9"></td>`
         }
       })
       html+='</tr>'
