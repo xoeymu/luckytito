@@ -355,9 +355,11 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
   .bk-td{font-size:9.5px!important;padding:4px 5px!important}
   /* Page break before terms (back side) — zero height to avoid blank gap */
   .bk-page-break{page-break-before:always!important;height:0!important;margin:0!important;padding:0!important}
-  /* Remove .page padding-bottom:60px that creates a trailing blank page */
-  body.printing-booking #page-booking{padding:0!important;margin:0!important;max-width:100%!important}
+  /* Show ONLY booking page — override .page{display:none!important} with higher specificity */
+  body.printing-booking #page-booking{display:block!important;padding:0!important;margin:0!important;max-width:100%!important}
   body.printing-booking #booking-out{padding:0!important;margin:0!important}
+  /* Hide no-print sections still inside booking page */
+  body.printing-booking .scal-wrap,body.printing-booking .bill-controls{display:none!important}
 }
 /* ====== ROOM CALENDAR ====== */
 .rcal-table{border-collapse:collapse;table-layout:fixed;min-width:max-content;font-size:12px}
@@ -4020,7 +4022,7 @@ function calcRoomSubtotal(c){
   ;(c.roomStays||[]).forEach(rs=>{if(rs.checkin&&rs.checkout&&rs.roomRate)segs.push(rs)})
   return segs.reduce((sum,seg)=>{
     const rate=parseFloat(seg.roomRate)
-    const isDormRoom=(seg.roomType||'').includes('学员宿舍')
+    const isDormRoom=(seg.roomType||'').includes('学员宿舍')||(seg.roomType||'').includes('Dorm F')||(seg.roomType||'').includes('Dorm M')
     const tempC={id:c.id,roomNum:seg.roomNum,checkin:seg.checkin,checkout:seg.checkout}
     const shared=isDormRoom?new Map():getSharedNights(tempC)
     const f=isDormRoom?1:roomDiscountFactor(effectiveRoomDiscount(c),c.roomDiscountCustom)
