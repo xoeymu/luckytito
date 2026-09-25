@@ -355,6 +355,9 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
   .bk-td{font-size:9.5px!important;padding:4px 5px!important}
   /* Page break before terms (back side) — zero height to avoid blank gap */
   .bk-page-break{page-break-before:always!important;height:0!important;margin:0!important;padding:0!important}
+  /* Remove .page padding-bottom:60px that creates a trailing blank page */
+  body.printing-booking #page-booking{padding:0!important;margin:0!important;max-width:100%!important}
+  body.printing-booking #booking-out{padding:0!important;margin:0!important}
 }
 /* ====== ROOM CALENDAR ====== */
 .rcal-table{border-collapse:collapse;table-layout:fixed;min-width:max-content;font-size:12px}
