@@ -337,7 +337,14 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
   .bh{flex-direction:row!important}
   .bnum,.blbl,.bdate{text-align:right!important}
   .big{grid-template-columns:1fr 1fr!important}
-  @page{size:A4;margin:14mm}
+  @page{size:A4;margin:12mm}
+  /* Booking sheet A4 two-sided: shrink fonts, add page break before terms */
+  .bk-sheet{padding:12px 16px!important}
+  .bk-logo-title{font-size:24px!important}
+  .bk-section-hd{font-size:10.5px!important;padding:5px 10px!important;letter-spacing:1.5px!important}
+  .bk-th{font-size:9px!important;padding:4px 5px!important}
+  .bk-td{font-size:9.5px!important;padding:4px 5px!important}
+  .bk-page-break{page-break-before:always!important}
 }
 /* ====== ROOM CALENDAR ====== */
 .rcal-table{border-collapse:collapse;table-layout:fixed;min-width:max-content;font-size:12px}
@@ -4302,28 +4309,28 @@ function renderBooking(){
   })
   out.innerHTML=`<div class="bk-sheet">
     <!-- Header -->
-    <div style="text-align:center;padding-bottom:18px;border-bottom:3px solid #e0e0e0;margin-bottom:16px">
-      <img src="${LOGO_B64}" style="height:70px;width:auto;margin-bottom:6px">
+    <div style="text-align:center;padding-bottom:14px;border-bottom:3px solid #e0e0e0;margin-bottom:12px">
+      <img src="${LOGO_B64}" style="height:60px;width:auto;margin-bottom:4px">
       <div class="bk-logo-title">Lucky Tito Dive Resort</div>
-      <div style="font-size:13px;font-weight:800;color:#4a90c4;letter-spacing:4px;margin:5px 0 3px">BOOKING CONFIRMATION SHEET</div>
-      <div style="font-size:13px;color:#999;letter-spacing:2px">行程预定确认单</div>
+      <div style="font-size:12px;font-weight:800;color:#4a90c4;letter-spacing:4px;margin:4px 0 2px">BOOKING CONFIRMATION SHEET</div>
+      <div style="font-size:12px;color:#999;letter-spacing:2px">行程预定确认单</div>
     </div>
     <!-- Booking date -->
-    <div style="font-size:12px;margin-bottom:14px"><span style="font-weight:800">预定日期 DATE OF BOOKING:</span><span style="margin-left:20px">${fBkBookDate(new Date().toISOString().slice(0,10))}</span></div>
+    <div style="font-size:11px;margin-bottom:12px"><span style="font-weight:800">预定日期 DATE OF BOOKING:</span><span style="margin-left:20px">${fBkBookDate(new Date().toISOString().slice(0,10))}</span></div>
     <!-- Booking Details -->
     <table style="width:100%;border-collapse:collapse;margin-bottom:14px">
       <tr><td colspan="2" class="bk-section-hd">预定详情 BOOKING DETAILS</td></tr>
       <tr>
-        <td style="text-align:right;font-weight:800;font-size:12px;padding:8px 20px 4px;width:50%">入住日期 CHECK-IN DATE:</td>
-        <td style="font-size:12px;padding:8px 8px 4px">${displayCI}</td>
+        <td style="text-align:right;font-weight:800;font-size:11px;padding:6px 20px 3px;width:50%">入住日期 CHECK-IN DATE:</td>
+        <td style="font-size:11px;padding:6px 8px 3px">${displayCI}</td>
       </tr>
       <tr>
-        <td style="text-align:right;font-weight:800;font-size:12px;padding:4px 20px 8px">退房日期 CHECK-OUT DATE:</td>
-        <td style="font-size:12px;padding:4px 8px 8px">${displayCO}</td>
+        <td style="text-align:right;font-weight:800;font-size:11px;padding:3px 20px 6px">退房日期 CHECK-OUT DATE:</td>
+        <td style="font-size:11px;padding:3px 8px 6px">${displayCO}</td>
       </tr>
     </table>
     <!-- Check-in / Check-out Time -->
-    <div style="text-align:center;font-size:12px;font-weight:700;color:#1a3a5c;background:#eaf3fb;border:1px solid #bcdcf2;border-radius:6px;padding:8px 14px;margin-bottom:14px;line-height:1.7">
+    <div style="text-align:center;font-size:11px;font-weight:700;color:#1a3a5c;background:#eaf3fb;border:1px solid #bcdcf2;border-radius:6px;padding:6px 12px;margin-bottom:12px;line-height:1.65">
       <div>入住时间为下午2点，退房时间为中午12点，提前/推迟入住时间需视客房情况办理。</div>
       <div>Check-in time is 2:00PM while check-out is at 12:00NN. Request for early check-in/late check-out is subject to room availability.</div>
     </div>
@@ -4347,29 +4354,31 @@ function renderBooking(){
     <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
       <tr><td colspan="2" class="bk-section-hd orange">付款详情 PAYMENT DETAILS</td></tr>
       <tr>
-        <td style="font-weight:800;font-size:12px;padding:10px 16px">已付定金 AMOUNT DEPOSITED:</td>
-        <td style="font-size:12px;padding:10px 8px">${guests.reduce((s,c)=>s+(+c.deposit||0),0)>0?'¥ '+guests.reduce((s,c)=>s+(+c.deposit||0),0).toFixed(2):''}</td>
+        <td style="font-weight:800;font-size:11px;padding:7px 14px">已付定金 AMOUNT DEPOSITED:</td>
+        <td style="font-size:11px;padding:7px 8px">${guests.reduce((s,c)=>s+(+c.deposit||0),0)>0?'¥ '+guests.reduce((s,c)=>s+(+c.deposit||0),0).toFixed(2):''}</td>
       </tr>
     </table>
+    <!-- Page break: terms go on back side -->
+    <div class="bk-page-break"></div>
     <!-- Terms -->
-    <div style="font-size:12px;line-height:2;margin-bottom:6px">
+    <div style="font-size:11px;line-height:1.85;margin-bottom:6px">
       <div style="font-weight:800;margin-bottom:2px">预定须知:</div>
       <div>1、预定一经确认不予退款，一年之内保留预约，可转让。</div>
       <div>2、客房定金为首晚房费，FUNDIVE定金500元，课程定金 1000元。</div>
       <div>3、出行日期变更请提前7天告知我们，如遇节假日，需补足差价。</div>
       <div>4、不住店潜水员需到店先行支付潜水费用，住店潜水员将在离店前收到明细账单。</div>
     </div>
-    <div style="font-size:11px;line-height:2;color:#333;margin-bottom:20px">
+    <div style="font-size:10px;line-height:1.8;color:#333;margin-bottom:16px">
       <div>1.Once the reservation is confirmed, there will be no refund. The reservation will be retained within one year and can be transferred to others.</div>
       <div>2.For room deposit should be first night's room fee, the FUNDIVE deposit is 500 yuan, and the course deposit is 1000 yuan.</div>
       <div>3.Please inform us 7 days in advance if the travel date changes. If it falls on a holiday, the price difference will need to be paid.</div>
       <div>4.Walk-in diver should be pay first when check in. In-house diver will receive the bill before check out.</div>
     </div>
     <!-- Check-in Notice -->
-    <table style="width:100%;border-collapse:collapse;margin-bottom:10px">
+    <table style="width:100%;border-collapse:collapse;margin-bottom:8px">
       <tr><td class="bk-section-hd">入住须知 CHECK-IN NOTICE</td></tr>
     </table>
-    <div style="font-size:12px;line-height:1.9;margin-bottom:6px">
+    <div style="font-size:11px;line-height:1.8;margin-bottom:4px">
       <div>1.不接受18岁以下客人单独入住。</div>
       <div>2.客房内不可吸烟，如有违反需支付10000元全屋清洁费用，其他损坏照价赔偿。</div>
       <div>3.0-12岁儿童使用现有床铺免费，不含儿童早餐。</div>
@@ -4381,7 +4390,7 @@ function renderBooking(){
       <div>9.如发生紧急状况，度假区会尽力提供救助和救援，但因此而导致的人身或财产损失，度假区概不负责。</div>
       <div>10.顾客在使用度假区设施时应注意人身安全，如楼梯、餐厅、洗澗间、装备区等，发生意外伤害度假区概不负责。</div>
     </div>
-    <div style="font-size:11px;line-height:1.9;color:#333;margin-bottom:24px">
+    <div style="font-size:10px;line-height:1.75;color:#333;margin-bottom:18px">
       <div>1.Guest under age 18 must be accompanied by an adult.</div>
       <div>2.Smoking is not allowed inside the room. Cleaning fee shall be charged if any violation occurs. Other damages shall be compensated according to the purchase price.</div>
       <div>3.Chidren under age 12 can use existing beds for free and no breakfast included.</div>
