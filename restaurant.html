@@ -93,11 +93,13 @@ body[data-menu-edit] .menu-add-btn{display:block}
 .receipt-print{display:none}
 @media print{
   @page{size:80mm auto;margin:0}
-  html,body{width:80mm;margin:0;padding:0}
+  /* Collapse body height so it never creates a second page */
+  html{width:80mm;margin:0;padding:0;height:0;overflow:hidden}
+  body{width:80mm;margin:0;padding:0;height:0;overflow:hidden}
   body *{visibility:hidden}
   .receipt-print, .receipt-print *{visibility:visible}
-  /* Use normal flow (not absolute) so width is naturally 100% of page */
-  .receipt-print{display:block;width:100%;padding:2mm 3mm;font-family:'Courier New',monospace;color:#000;font-size:12px;box-sizing:border-box}
+  /* Absolute at top:0 — renders on page 1 only (unlike fixed which repeats on every page) */
+  .receipt-print{display:block;position:absolute;left:0;top:0;width:80mm;padding:2mm 3mm;font-family:'Courier New',monospace;color:#000;font-size:12px;box-sizing:border-box}
   .receipt-print .r-title{text-align:center;font-weight:800;font-size:16px;margin-bottom:1.5mm}
   .receipt-print .r-sub{text-align:center;font-size:11px;margin-bottom:1mm}
   .receipt-print hr{border:none;border-top:1px dashed #000;margin:1.5mm 0}
@@ -208,9 +210,25 @@ body[data-menu-edit] .menu-add-btn{display:block}
     <div id="co-room-no-wrap" style="display:none">
       <label>房号 Room Number</label>
       <input type="text" id="co-room-no" placeholder="例如：12 / Villa 3">
-      <div style="display:flex;gap:5px;margin-top:6px;flex-wrap:wrap">
-        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('co-room-no').value='Dorm F'">Dorm F</button>
-        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('co-room-no').value='Dorm M'">Dorm M</button>
+      <div style="margin-top:6px">
+        <div style="font-size:10px;color:#94a3b8;margin-bottom:3px">♀ Dorm F</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('co-room-no').value='Dorm F1'">F1</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('co-room-no').value='Dorm F2'">F2</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('co-room-no').value='Dorm F3'">F3</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('co-room-no').value='Dorm F4'">F4</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('co-room-no').value='Dorm F5'">F5</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('co-room-no').value='Dorm F6'">F6</button>
+        </div>
+        <div style="font-size:10px;color:#94a3b8;margin-bottom:3px">♂ Dorm M</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('co-room-no').value='Dorm M1'">M1</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('co-room-no').value='Dorm M2'">M2</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('co-room-no').value='Dorm M3'">M3</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('co-room-no').value='Dorm M4'">M4</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('co-room-no').value='Dorm M5'">M5</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('co-room-no').value='Dorm M6'">M6</button>
+        </div>
       </div>
     </div>
     <div class="modal-actions">
@@ -773,6 +791,13 @@ function buildReceipt(record,now){
   document.getElementById('receipt-print').innerHTML=html
 }
 
+function reprintReceipt(id){
+  const hist=loadHistory()
+  const h=hist.find(x=>x.id===id);if(!h)return
+  buildReceipt(h,new Date(h.paidAt))
+  setTimeout(()=>window.print(),150)
+}
+
 // ====================================================================
 //   HISTORY (today's sales)
 // ====================================================================
@@ -793,7 +818,15 @@ function showHistory(){
     document.getElementById('hist-total').textContent=fmt(todays.reduce((s,h)=>s+h.total,0))
     document.getElementById('hist-list').innerHTML=todays.map(h=>{
       const d=new Date(h.paidAt);const time=pad2(d.getHours())+':'+pad2(d.getMinutes())
-      return'<div class="hist-row"><div><div>'+esc(h.tableLabel)+(h.note?' · '+esc(h.note):'')+(h.roomCharge?' · 🛏️ Room '+esc(h.roomNo):'')+'</div><div class="h-meta">'+time+' · '+h.items.length+' 项 items</div></div><div>'+fmt(h.total)+'</div></div>'
+      const hJson=JSON.stringify(h).replace(/'/g,'&#39;')
+      return'<div class="hist-row">'
+        +'<div><div>'+esc(h.tableLabel)+(h.note?' · '+esc(h.note):'')+(h.roomCharge?' · 🛏️ Room '+esc(h.roomNo):'')+'</div>'
+        +'<div class="h-meta">'+time+' · '+h.items.length+' 项 items</div></div>'
+        +'<div style="display:flex;align-items:center;gap:10px">'
+          +'<span style="font-weight:800">'+fmt(h.total)+'</span>'
+          +'<button class="btn btn-ghost btn-sm" style="font-size:11px;padding:3px 8px" onclick="reprintReceipt(\''+h.id+'\')">🖨️ 补打</button>'
+        +'</div>'
+        +'</div>'
     }).join('')||'<div class="order-empty">今天还没有结账记录 No checkouts yet today</div>'
     document.getElementById('history-modal').classList.add('show')
   }
