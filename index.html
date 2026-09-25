@@ -338,13 +338,23 @@ input[type=radio],input[type=checkbox]{width:auto;accent-color:#0ea5e9;cursor:po
   .bnum,.blbl,.bdate{text-align:right!important}
   .big{grid-template-columns:1fr 1fr!important}
   @page{size:A4;margin:12mm}
-  /* Booking sheet A4 two-sided: shrink fonts, add page break before terms */
+  /* Booking sheet A4 two-sided print:
+     Hide ALL modals and non-booking elements so they don't bleed in as blank pages */
+  body.printing-booking #bill-modal,
+  body.printing-booking #ws-modal,
+  body.printing-booking #gc-modal,
+  body.printing-booking #bm-modal,
+  body.printing-booking #co-modal,
+  body.printing-booking #room-stay-modal,
+  body.printing-booking #rc-detail-modal{display:none!important}
+  /* Shrink fonts for A4 */
   .bk-sheet{padding:12px 16px!important}
   .bk-logo-title{font-size:24px!important}
   .bk-section-hd{font-size:10.5px!important;padding:5px 10px!important;letter-spacing:1.5px!important}
   .bk-th{font-size:9px!important;padding:4px 5px!important}
   .bk-td{font-size:9.5px!important;padding:4px 5px!important}
-  .bk-page-break{page-break-before:always!important}
+  /* Page break before terms (back side) — zero height to avoid blank gap */
+  .bk-page-break{page-break-before:always!important;height:0!important;margin:0!important;padding:0!important}
 }
 /* ====== ROOM CALENDAR ====== */
 .rcal-table{border-collapse:collapse;table-layout:fixed;min-width:max-content;font-size:12px}
