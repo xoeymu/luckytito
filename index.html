@@ -1675,7 +1675,7 @@ function onRoomTypeChange(){
   if(picker&&btns){
     if(isDormF||isDormM){
       const prefix=isDormF?'F':'M'
-      btns.innerHTML=[1,2,3,4,5,6].map(n=>`<button type="button" class="btn btn-ghost btn-sm" style="min-width:36px" onclick="sv('f-rnum','${prefix}'+${n});updateCustNo();onRoomNumChange()">${prefix}${n}</button>`).join('')
+      btns.innerHTML=[1,2,3,4,5,6].map(n=>`<button type="button" class="btn btn-ghost btn-sm" style="min-width:36px" onclick="sv('f-rnum','Dorm ${prefix}'+${n});updateCustNo();onRoomNumChange()">${prefix}${n}</button>`).join('')
       picker.style.display='block'
     } else {
       picker.style.display='none'
@@ -1762,7 +1762,7 @@ function rsRoomTypeChange(){
   if(picker&&btns){
     if(isDormF||isDormM){
       const prefix=isDormF?'F':'M'
-      btns.innerHTML=[1,2,3,4,5,6].map(n=>`<button type="button" class="btn btn-ghost btn-sm" style="min-width:36px" onclick="sv('rs-rnum','${prefix}'+${n})">${prefix}${n}</button>`).join('')
+      btns.innerHTML=[1,2,3,4,5,6].map(n=>`<button type="button" class="btn btn-ghost btn-sm" style="min-width:36px" onclick="sv('rs-rnum','Dorm ${prefix}'+${n})">${prefix}${n}</button>`).join('')
       picker.style.display='block'
     } else {
       picker.style.display='none'
