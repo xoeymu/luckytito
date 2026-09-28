@@ -1306,11 +1306,12 @@ function getCloudData(){
   const _dlTs=localStorage.getItem('lt_divelog_ts')||'0'
   const extras=[{id:'__meta__',holidays:getCustomHolidays(),...(localDl.length>0?{divelog:localDl}:{}),divelogTs:_dlTs,dms:getDmList(),groups:getGroups(),wageRates:getWageRates(),wageLedger:getWageLedger(),wagePayments:getWagePayments()}]
   if(log.length)extras.push({id:'__savelog__',log})
-  // Include restaurant charges in payload only after we've done at least one cloudLoad
-  // (so lt_restaurantCharges reflects cloud reality) OR if local has charges.
-  // This prevents early cloudSave from sending charges:[] and wiping cloud data.
-  const _localRc=getRestaurantCharges()
-  if(_cloudLoadDone||_localRc.length>0)extras.push({id:'__restaurant_charges__',charges:_localRc})
+  // Restaurant charges are intentionally excluded from the main cloudSave payload.
+  // They have their own dedicated save path (_cloudSaveRestaurantCharges) that uses a
+  // read-modify-write pattern to avoid overwriting charges pushed by restaurant.html
+  // between our last cloudLoad and this save. Including them here would silently delete
+  // any restaurant charges pushed after the last cloudLoad (the race condition that caused
+  // morning charges to disappear when index.html did a periodic guest-data save).
   return[...customers,...extras]
 }
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
@@ -2127,7 +2128,36 @@ function addItem(name,price,qty){
 function rmItem(id){document.getElementById('ir-'+id)?.remove();rowIds=rowIds.filter(r=>r!==id);updateSub();autoUpdateDiscount()}
 // ====== RESTAURANT CHARGES (pushed from restaurant.html via shared cloud sync) ======
 function getRestaurantCharges(){try{return JSON.parse(localStorage.getItem('lt_restaurantCharges')||'[]')}catch{return[]}}
-function saveRestaurantCharges(arr){localStorage.setItem('lt_restaurantCharges',JSON.stringify(arr));cloudSave()}
+// Dedicated read-modify-write save for restaurant charges only.
+// Does NOT touch customer data — reads the current cloud __restaurant_charges__ entry,
+// merges our local state (which has claimed flags) with any cloud-only charges pushed by
+// restaurant.html since our last cloudLoad, then writes back. This prevents the main
+// cloudSave (which only carries guest records) from overwriting restaurant charges.
+function _cloudSaveRestaurantCharges(arr){
+  const url=getSyncUrl();if(!url)return
+  cloudFetchJSON(url,'load',8000).then(res=>{
+    if(!res||!res.ok||!Array.isArray(res.data))return
+    const data=res.data
+    let rc=data.find(x=>x.id==='__restaurant_charges__')
+    if(!rc){rc={id:'__restaurant_charges__',charges:[]};data.push(rc)}
+    if(!Array.isArray(rc.charges))rc.charges=[]
+    // Merge: arr is our authoritative local list with claimed/writtenOff flags applied.
+    // Preserve any cloud charges NOT in arr — those were pushed by restaurant.html after
+    // our last cloudLoad and would be lost if we simply overwrote with arr.
+    const arrIds=new Set(arr.map(c=>c.id))
+    const cloudOnly=rc.charges.filter(c=>!arrIds.has(c.id))
+    rc.charges=[...arr,...cloudOnly]
+    fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)})
+  }).catch(()=>{})
+}
+function saveRestaurantCharges(arr){
+  localStorage.setItem('lt_restaurantCharges',JSON.stringify(arr))
+  _cloudSaveRestaurantCharges(arr)
+  // cloudSave() is intentionally NOT called here — restaurant charges now have their own
+  // targeted save path above. Guest-data changes that accompany a claim/unclaim are saved
+  // via _autoSaveRestaurantFields → saveAll, and will be picked up by the next cloudSave
+  // triggered by the caller or the 2-minute periodic sync interval.
+}
 function renderRestaurantCharges(){
   const el=document.getElementById('rc-list');if(!el)return
   const curRoom=(v('f-rnum')||'').trim().toLowerCase()
@@ -5658,7 +5688,7 @@ if(getSyncUrl()){setNavSync('ok','在线 Online');cloudLoad()}else setNavSync('n
 // Auto bidirectional sync every 5 minutes: pull from cloud first (picks up other devices' changes),
 // then cloudSave only if local has records not in cloud (covers failed-save retry too).
 // This replaces the old auto-cloudSave which would push stale local state over other devices' updates.
-setInterval(()=>{if(getSyncUrl())cloudLoad()},5*60*1000)
+setInterval(()=>{if(getSyncUrl())cloudLoad()},2*60*1000)
 // Restore username display after page refresh
 ;(function(){const u=sessionStorage.getItem('lt_user');const el=document.getElementById('nav-username');if(u&&el)el.textContent='👤 '+u})()
 

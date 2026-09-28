@@ -446,7 +446,11 @@ function _doPush(charge,onSuccess){
 }
 function pushChargeToCloud(record){
   const summary=record.items.map(it=>it.name+'×'+it.qty).join('、')
-  const charge={id:record.id,table:record.tableLabel,note:record.note,summary,total:record.total,date:record.paidAt.slice(0,16).replace('T',' '),claimed:false,roomCharge:!!record.roomCharge,roomNo:record.roomNo||'',discount:record.discountInfo?record.discountInfo.label:''}
+  // Use local date/time (not UTC) so the date stored in the charge matches what is
+  // printed on the physical receipt (which also uses local time via getDate()/getHours()).
+  const _pd=new Date(record.paidAt)
+  const _localDate=_pd.getFullYear()+'-'+String(_pd.getMonth()+1).padStart(2,'0')+'-'+String(_pd.getDate()).padStart(2,'0')+' '+String(_pd.getHours()).padStart(2,'0')+':'+String(_pd.getMinutes()).padStart(2,'0')
+  const charge={id:record.id,table:record.tableLabel,note:record.note,summary,total:record.total,date:_localDate,claimed:false,roomCharge:!!record.roomCharge,roomNo:record.roomNo||'',discount:record.discountInfo?record.discountInfo.label:''}
   // Always enqueue first so no data is lost if network fails
   const q=loadPending();if(!q.some(x=>x.id===charge.id)){q.push(charge);savePending(q)}
   if(!getSyncUrl())return
