@@ -3894,10 +3894,14 @@ function applyDiveSyncGap(id,gap){
     matchNames=[FD_WALKIN_NAME]
     name=FD_WALKIN_NAME;price=FD_WALKIN_PRICE
   }else{
-    const t=status==='shared'?FD_TIERS[1]:FD_TIERS[0]
+    const hasCourse=hasStudentCourseForRecord(c)
+    const t=hasCourse?FD_TIERS[1]:(status==='shared'?FD_TIERS[1]:FD_TIERS[0])
     matchNames=[t.low,t.high]
+    const holFdItemQty2=items.filter(it=>(it.name||'').trim()==='节假日FD Holiday FD')
+      .reduce((s,it)=>s+(parseFloat(it.qty)||0),0)
+    const totalHolFd2=(parseInt(c.holFdQty)||0)+holFdItemQty2
     const totalDives=getFdDiveCount(id)+(parseInt(c.holFdQty)||0)
-    const useHigh=totalDives>=8
+    const useHigh=hasCourse||totalDives>=8
     name=useHigh?t.high:t.low;price=useHigh?t.highP:t.lowP
   }
   // Merge with any existing FD-tier row(s) for this guest's status (e.g. the default 1-dive row
@@ -3917,17 +3921,23 @@ function applyDiveSyncGap(id,gap){
 function applyDiveSyncFix(id){
   const all=getAll();const i=all.findIndex(c=>c.id===id);if(i<0)return
   const c=all[i]
-  const targetQty=getFdDiveCount(id)
   const items=c.items||[]
+  // Subtract both holFdQty field and any '节假日FD Holiday FD' line items so holiday
+  // dives don't end up in the regular-FD row (same fix as syncFdQtyFromLog).
+  const holFdItemQty=items.filter(it=>(it.name||'').trim()==='节假日FD Holiday FD')
+    .reduce((s,it)=>s+(parseFloat(it.qty)||0),0)
+  const totalHolFd=(parseInt(c.holFdQty)||0)+holFdItemQty
+  const targetQty=Math.max(0,getFdDiveCount(id)-totalHolFd)
   const kept=items.filter(it=>!isDiveCountItem(it.name))
   if(targetQty>0){
     const status=fdRoomStatusForRecord(c)
     let name,price
     if(status==='walkin'){name=FD_WALKIN_NAME;price=FD_WALKIN_PRICE}
     else{
-      const t=status==='shared'?FD_TIERS[1]:FD_TIERS[0]
-      const totalDives=targetQty+(parseInt(c.holFdQty)||0)
-      const useHigh=totalDives>=8
+      const hasCourse=hasStudentCourseForRecord(c)
+      const t=hasCourse?FD_TIERS[1]:(status==='shared'?FD_TIERS[1]:FD_TIERS[0])
+      const totalDives=targetQty+totalHolFd
+      const useHigh=hasCourse||totalDives>=8
       name=useHigh?t.high:t.low;price=useHigh?t.highP:t.lowP
     }
     kept.push({name,price,qty:targetQty})
@@ -4083,7 +4093,15 @@ function syncFdQtyFromLog(c){
   const items=c.items||[]
   const hasFdItem=items.some(it=>FD_ALL_NAMES.includes((it.name||'').trim()))
   if(!hasFdItem)return false  // not booked for FD — don't auto-create
-  const logFdQty=Math.max(0,getFdDiveCount(c.id)-(parseInt(c.holFdQty)||0))
+  // Count holiday FDs from BOTH the holFdQty field AND any manually-added
+  // '节假日FD Holiday FD' line items in c.items. Using only holFdQty missed the
+  // case where staff added holiday FDs via the items menu instead of the field,
+  // causing all logged dives to be assigned to the regular-FD row (the bug that
+  // made 8 holiday + 3 regular = 11 regular-priced dives).
+  const holFdItemQty=items.filter(it=>(it.name||'').trim()==='节假日FD Holiday FD')
+    .reduce((s,it)=>s+(parseFloat(it.qty)||0),0)
+  const totalHolFd=(parseInt(c.holFdQty)||0)+holFdItemQty
+  const logFdQty=Math.max(0,getFdDiveCount(c.id)-totalHolFd)
   // Re-derive correct tier name + price based on actual total dive count
   const status=fdRoomStatusForRecord(c)
   let tierName,tierPrice
@@ -4093,7 +4111,7 @@ function syncFdQtyFromLog(c){
     // Course guests always get the best rate: 双人+ 8潜以上 ¥150
     const hasCourse=hasStudentCourseForRecord(c)
     const t=hasCourse?FD_TIERS[1]:(status==='shared'?FD_TIERS[1]:FD_TIERS[0])
-    const totalDives=logFdQty+(parseInt(c.holFdQty)||0)
+    const totalDives=logFdQty+totalHolFd
     const useHigh=hasCourse||totalDives>=8
     tierName=useHigh?t.high:t.low;tierPrice=useHigh?t.highP:t.lowP
   }
