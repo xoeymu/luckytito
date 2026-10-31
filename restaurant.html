@@ -692,9 +692,9 @@ function printKitchen(){
     if(!m)return
     // Use English name if available; fall back to stripping Chinese from the Chinese name
     const displayName=m.en?m.en:stripCN(m.name)||m.code
-    html+='<div class="r-line" style="display:flex;justify-content:space-between;align-items:baseline;margin:3mm 0">'
-      +'<span style="font-size:26px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(m.code)+' '+esc(displayName)+'</span>'
-      +'<span style="font-size:32px;font-weight:900;white-space:nowrap;margin-left:4mm">×'+it.qty+'</span>'
+    html+='<div class="r-line" style="display:flex;justify-content:space-between;align-items:flex-start;margin:3mm 0;gap:4mm">'
+      +'<span style="font-size:26px;font-weight:700;flex:1;word-break:break-word">'+esc(m.code)+' '+esc(displayName)+'</span>'
+      +'<span style="font-size:32px;font-weight:900;white-space:nowrap;flex-shrink:0">×'+it.qty+'</span>'
       +'</div>'
   })
   html+='<hr>'
