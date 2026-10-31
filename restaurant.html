@@ -679,15 +679,23 @@ function printKitchen(){
   const now=new Date()
   const pad=n=>String(n).padStart(2,'0')
   const dateStr=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+' '+pad(now.getHours())+':'+pad(now.getMinutes())
-  let html='<div class="r-title">Kitchen Order</div>'
-    +'<div class="r-sub">'+esc(t.label)+(t.note?' · '+esc(t.note):'')+'</div>'
-    +'<div class="r-sub">'+dateStr+'</div>'
+  // Strip Chinese characters from a string, keep alphanumeric + punctuation
+  const stripCN=s=>s.replace(/[一-鿿㐀-䶿]+/g,'').trim()
+  const tableLabel=stripCN(t.label)||(t.label)
+  let html='<div class="r-title" style="font-size:28px">Kitchen Order</div>'
+    +'<div class="r-sub" style="font-size:18px">'+esc(tableLabel)+(t.note?' · '+esc(stripCN(t.note)||t.note):'')+'</div>'
+    +'<div class="r-sub" style="font-size:16px">'+dateStr+'</div>'
     +'<hr>'
   const _kem=getEffectiveMenu()
   t.items.forEach(it=>{
     const m=_kem.find(x=>x.id===it.id)
     if(!m)return
-    html+='<div class="r-line"><span class="rl-name" style="font-size:16px;font-weight:700">'+esc(m.code)+' '+esc(m.en||m.name)+'</span><span class="rl-price" style="font-size:20px;font-weight:900">QTY: '+it.qty+'</span></div>'
+    // Use English name if available; fall back to stripping Chinese from the Chinese name
+    const displayName=m.en?m.en:stripCN(m.name)||m.code
+    html+='<div class="r-line" style="display:flex;justify-content:space-between;align-items:baseline;margin:3mm 0">'
+      +'<span style="font-size:26px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(m.code)+' '+esc(displayName)+'</span>'
+      +'<span style="font-size:32px;font-weight:900;white-space:nowrap;margin-left:4mm">×'+it.qty+'</span>'
+      +'</div>'
   })
   html+='<hr>'
   document.getElementById('receipt-print').innerHTML=html
