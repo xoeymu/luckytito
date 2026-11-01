@@ -2165,11 +2165,16 @@ function saveRestaurantCharges(arr){
 function renderRestaurantCharges(){
   const el=document.getElementById('rc-list');if(!el)return
   const curRoom=(v('f-rnum')||'').trim().toLowerCase()
+  // Also match charges against any room the guest previously stayed in (room-change mid-stay).
+  // _roomStays holds prior segments; collect all room numbers so a charge billed to room 102
+  // still appears under this guest after they moved to room 205.
+  const allGuestRooms=new Set([curRoom].filter(Boolean))
+  ;(_roomStays||[]).forEach(rs=>{const rn=(rs.roomNum||'').trim().toLowerCase();if(rn)allGuestRooms.add(rn)})
   const allUnclaimed=getRestaurantCharges().filter(c=>!c.claimed&&c.roomCharge)
-  const pending=allUnclaimed.filter(c=>c.roomNo&&c.roomNo.trim().toLowerCase()===curRoom)
+  const pending=allUnclaimed.filter(c=>c.roomNo&&allGuestRooms.has(c.roomNo.trim().toLowerCase()))
   if(!pending.length){
     // Show hint if there are unclaimed charges for OTHER rooms — with write-off buttons
-    const others=allUnclaimed.filter(c=>c.roomNo&&(!curRoom||c.roomNo.trim().toLowerCase()!==curRoom))
+    const others=allUnclaimed.filter(c=>c.roomNo&&(allGuestRooms.size===0||!allGuestRooms.has(c.roomNo.trim().toLowerCase())))
     let hint=''
     if(others.length){
       const rows=others.map(c=>'<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #fde68a">'

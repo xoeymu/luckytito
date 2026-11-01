@@ -439,7 +439,12 @@ function _doPush(charge,onSuccess){
     rc.charges.push(charge)
     let rh=data.find(x=>x.id==='__restaurant_history__')
     if(!rh){rh={id:'__restaurant_history__',records:[]};data.push(rh)}
-    rh.records=loadHistory()
+    // Merge local history into cloud: keep cloud records not in local, plus all local records.
+    // This prevents a different device (with empty localStorage) from wiping cloud history.
+    const localRecs=loadHistory()
+    const localIds=new Set(localRecs.map(r=>r.id))
+    const cloudOnly=Array.isArray(rh.records)?rh.records.filter(r=>!localIds.has(r.id)):[]
+    rh.records=[...localRecs,...cloudOnly]
     return fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)})
       .then(()=>onSuccess&&onSuccess())
   })
@@ -843,15 +848,21 @@ function showHistory(){
     document.getElementById('history-modal').classList.add('show')
   }
   const local=loadHistory()
-  if(local.length>0){_renderHist(local);return}
   const url=getSyncUrl()
-  if(!url){_renderHist([]);return}
+  if(!url){_renderHist(local);return}
+  // Always fetch from cloud to get records from other devices (e.g. restaurant PC).
+  // Show local data immediately as a placeholder while loading.
+  if(local.length>0){_renderHist(local)}
   document.getElementById('hist-list').innerHTML='<div class="order-empty">加载中… Loading…</div>'
   document.getElementById('history-modal').classList.add('show')
   fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
-    if(!res||!res.ok||!Array.isArray(res.data)){_renderHist([]);return}
+    if(!res||!res.ok||!Array.isArray(res.data)){_renderHist(local);return}
     const rh=res.data.find(c=>c.id==='__restaurant_history__')
-    _renderHist(rh&&Array.isArray(rh.records)?rh.records:[])
+    // Merge cloud + local so neither device's records are lost
+    const cloudRecs=rh&&Array.isArray(rh.records)?rh.records:[]
+    const localIds=new Set(local.map(r=>r.id))
+    const merged=[...local,...cloudRecs.filter(r=>!localIds.has(r.id))]
+    _renderHist(merged)
   }).catch(()=>_renderHist([]))
 }
 
