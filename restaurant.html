@@ -99,23 +99,23 @@ body[data-menu-edit] .menu-add-btn{display:block}
   body *{visibility:hidden}
   .receipt-print, .receipt-print *{visibility:visible}
   /* Absolute at top:0 — renders on page 1 only (unlike fixed which repeats on every page) */
-  .receipt-print{display:block;position:absolute;left:0;top:0;width:80mm;padding:2mm 3mm;font-family:'Courier New',monospace;color:#000;font-size:14px;box-sizing:border-box}
-  .receipt-print .r-title{text-align:center;font-weight:800;font-size:19px;margin-bottom:1.5mm}
-  .receipt-print .r-sub{text-align:center;font-size:13px;margin-bottom:1mm}
+  .receipt-print{display:block;position:absolute;left:0;top:0;width:80mm;padding:2mm 3mm;font-family:'Courier New',monospace;color:#000;font-size:17px;box-sizing:border-box}
+  .receipt-print .r-title{text-align:center;font-weight:800;font-size:23px;margin-bottom:1.5mm}
+  .receipt-print .r-sub{text-align:center;font-size:16px;margin-bottom:1mm}
   .receipt-print hr{border:none;border-top:1px dashed #000;margin:1.5mm 0}
   /* Item row: name+subtotal on one line, english+unit-price on next */
-  .receipt-print .r-line{margin:1.5mm 0;font-size:14px}
+  .receipt-print .r-line{margin:1.5mm 0;font-size:17px}
   .receipt-print .r-line .rl-top{display:flex;justify-content:space-between;align-items:flex-start;font-weight:700;gap:4px}
   .receipt-print .r-line .rl-top .rl-name{flex:1;min-width:0;word-break:break-word}
   .receipt-print .r-line .rl-top .rl-sub{white-space:nowrap;font-weight:800;flex-shrink:0}
-  .receipt-print .r-line .rl-detail{font-size:12px;color:#444;margin-top:0.5mm}
+  .receipt-print .r-line .rl-detail{font-size:14px;color:#444;margin-top:0.5mm}
   /* Total */
-  .receipt-print .r-total{font-weight:800;font-size:19px;margin-top:2mm;border-top:1.5px solid #000;padding-top:2mm;display:flex;justify-content:space-between}
-  .receipt-print .r-pay{text-align:center;font-weight:800;font-size:14px;margin-top:2mm;border:2px solid #000;padding:1.5mm}
+  .receipt-print .r-total{font-weight:800;font-size:23px;margin-top:2mm;border-top:1.5px solid #000;padding-top:2mm;display:flex;justify-content:space-between}
+  .receipt-print .r-pay{text-align:center;font-weight:800;font-size:17px;margin-top:2mm;border:2px solid #000;padding:1.5mm}
   .receipt-print .r-sign{margin-top:10mm}
   .receipt-print .r-sign-line{border-top:1px solid #000;margin-bottom:1mm}
-  .receipt-print .r-sign-label{text-align:center;font-size:13px}
-  .receipt-print .r-foot{text-align:center;font-size:14px;margin-top:3mm}
+  .receipt-print .r-sign-label{text-align:center;font-size:16px}
+  .receipt-print .r-foot{text-align:center;font-size:17px;margin-top:3mm}
 }
 </style>
 </head>
@@ -385,10 +385,11 @@ function getPrice(item){
   return(po[item.id]!=null)?po[item.id]:item.price
 }
 function loadMenuOverrides(){try{return JSON.parse(localStorage.getItem('rt_menu_overrides')||'{}')}catch{return{}}}
-function saveMenuOverrides(o){localStorage.setItem('rt_menu_overrides',JSON.stringify(o))}
+function saveMenuOverrides(o){localStorage.setItem('rt_menu_overrides',JSON.stringify(o));_cloudSaveMenu()}
 function loadMenuCustom(){try{return JSON.parse(localStorage.getItem('rt_menu_custom')||'[]')}catch{return[]}}
-function saveMenuCustom(a){localStorage.setItem('rt_menu_custom',JSON.stringify(a))}
+function saveMenuCustom(a){localStorage.setItem('rt_menu_custom',JSON.stringify(a));_cloudSaveMenu()}
 function loadMenuDeleted(){try{return JSON.parse(localStorage.getItem('rt_menu_deleted')||'[]')}catch{return[]}}
+function saveMenuDeleted(a){localStorage.setItem('rt_menu_deleted',JSON.stringify(a));_cloudSaveMenu()}
 function saveMenuDeleted(a){localStorage.setItem('rt_menu_deleted',JSON.stringify(a))}
 function getEffectiveMenu(){
   const ov=loadMenuOverrides(),del=loadMenuDeleted(),cust=loadMenuCustom(),po=loadPriceOverrides()
@@ -398,6 +399,44 @@ function getEffectiveMenu(){
     return Object.assign({},m,o,{price})
   })
   return base.concat(cust)
+}
+// Push menu edits (custom dishes, overrides, deletions) to cloud using read-modify-write.
+function _cloudSaveMenu(){
+  const url=getSyncUrl();if(!url)return
+  fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
+    if(!res||!res.ok||!Array.isArray(res.data))return
+    const data=res.data
+    // Update menu record
+    let rm=data.find(x=>x.id==='__restaurant_menu__')
+    if(!rm){rm={id:'__restaurant_menu__'};data.push(rm)}
+    rm.custom=loadMenuCustom()
+    rm.overrides=loadMenuOverrides()
+    rm.deleted=loadMenuDeleted()
+    // Protect charges: merge local pending charges into cloud charges so nothing is lost
+    // even if a checkout happened between our read and write.
+    let rc=data.find(x=>x.id==='__restaurant_charges__')
+    if(!rc){rc={id:'__restaurant_charges__',charges:[]};data.push(rc)}
+    if(!Array.isArray(rc.charges))rc.charges=[]
+    const localPending=loadPending()
+    if(localPending.length>0){
+      const cloudIds=new Set(rc.charges.map(c=>c.id))
+      localPending.forEach(c=>{if(!cloudIds.has(c.id))rc.charges.push(c)})
+    }
+    fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)})
+  }).catch(()=>{})
+}
+// Pull menu from cloud and merge into local (cloud wins for custom/overrides/deleted).
+function _cloudLoadMenu(onDone){
+  const url=getSyncUrl();if(!url){onDone&&onDone();return}
+  fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
+    if(!res||!res.ok||!Array.isArray(res.data)){onDone&&onDone();return}
+    const rm=res.data.find(x=>x.id==='__restaurant_menu__')
+    if(!rm){onDone&&onDone();return}
+    if(Array.isArray(rm.custom))localStorage.setItem('rt_menu_custom',JSON.stringify(rm.custom))
+    if(rm.overrides&&typeof rm.overrides==='object')localStorage.setItem('rt_menu_overrides',JSON.stringify(rm.overrides))
+    if(Array.isArray(rm.deleted))localStorage.setItem('rt_menu_deleted',JSON.stringify(rm.deleted))
+    onDone&&onDone()
+  }).catch(()=>{onDone&&onDone()})
 }
 
 // ====================================================================
@@ -969,6 +1008,8 @@ function init(){
   // Retry any charges that failed to push in a previous session
   setTimeout(retryPendingCharges,3000)
   setInterval(retryPendingCharges,120000)  // retry every 2 min
+  // Pull latest menu from cloud so all devices stay in sync
+  _cloudLoadMenu(()=>{renderMenu();renderOrderPanel();renderTables()})
 }
 init()
 </script>

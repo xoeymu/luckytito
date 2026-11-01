@@ -1316,6 +1316,17 @@ function getCloudData(){
   // between our last cloudLoad and this save. Including them here would silently delete
   // any restaurant charges pushed after the last cloudLoad (the race condition that caused
   // morning charges to disappear when index.html did a periodic guest-data save).
+  //
+  // Restaurant history and menu are included as cached snapshots from the last cloudLoad.
+  // This prevents the full-replace POST from wiping them every 2 minutes.
+  // If restaurant.html adds new records between our last cloudLoad and this save, those
+  // records are preserved by _doPush / _cloudSaveMenu (both use read-modify-write), so
+  // a brief cloudSave window at worst temporarily reverts to the snapshot — and the next
+  // cloudLoad (within 2 min) immediately re-caches the latest version.
+  const _rhCache=localStorage.getItem('lt_restaurantHistoryCache')
+  if(_rhCache)try{extras.push(JSON.parse(_rhCache))}catch(e){}
+  const _rmCache=localStorage.getItem('lt_restaurantMenuCache')
+  if(_rmCache)try{extras.push(JSON.parse(_rmCache))}catch(e){}
   return[...customers,...extras]
 }
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
@@ -1512,6 +1523,13 @@ function cloudLoad(){
         }
       }
       renderRestaurantCharges()
+      // Cache restaurant history and menu so cloudSave can carry them in its payload.
+      // Without this, cloudSave (which is a full-replace POST) would wipe these records
+      // from the cloud every 2 minutes, making today's sales and menu edits disappear.
+      const _rhEntry=res.data.find(c=>c.id==='__restaurant_history__')
+      if(_rhEntry)localStorage.setItem('lt_restaurantHistoryCache',JSON.stringify(_rhEntry))
+      const _rmEntry=res.data.find(c=>c.id==='__restaurant_menu__')
+      if(_rmEntry)localStorage.setItem('lt_restaurantMenuCache',JSON.stringify(_rmEntry))
       const _cloudAll=res.data.filter(c=>c.id!=='__savelog__'&&c.id!=='__meta__'&&c.id!=='__restaurant_charges__'&&c.id!=='__restaurant_orders__')
       // Drop shell records (no name AND no custNo) that may have been pushed back by restaurant's
       // read-modify-write (restaurant loads full cloud data, only edits __restaurant_charges__, but
