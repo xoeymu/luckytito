@@ -466,6 +466,22 @@ function updatePendingBadge(){
   const n=loadPending().length
   b.style.display=n?'inline-block':'none';b.textContent=n
 }
+// Periodically push local history to cloud using read-modify-write so index.html's
+// full-replace cloudSave cannot permanently wipe today's sales records.
+function _syncHistoryToCloud(){
+  const url=getSyncUrl();if(!url)return
+  const localRecs=loadHistory();if(!localRecs.length)return
+  fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
+    if(!res||!res.ok||!Array.isArray(res.data))return
+    const data=res.data
+    let rh=data.find(x=>x.id==='__restaurant_history__')
+    if(!rh){rh={id:'__restaurant_history__',records:[]};data.push(rh)}
+    const localIds=new Set(localRecs.map(r=>r.id))
+    const cloudOnly=Array.isArray(rh.records)?rh.records.filter(r=>!localIds.has(r.id)):[]
+    rh.records=[...localRecs,...cloudOnly]
+    fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)})
+  }).catch(()=>{})
+}
 function _doPush(charge,onSuccess){
   const url=getSyncUrl();if(!url)return
   fetch(url+'?action=load',{method:'GET',mode:'cors'}).then(r=>r.json()).then(res=>{
@@ -1008,6 +1024,10 @@ function init(){
   // Retry any charges that failed to push in a previous session
   setTimeout(retryPendingCharges,3000)
   setInterval(retryPendingCharges,120000)  // retry every 2 min
+  // Periodically push local history to cloud so index.html's cloudSave (full-replace)
+  // cannot permanently wipe it — even if wiped, the next push restores it within 2 min.
+  setTimeout(_syncHistoryToCloud,5000)
+  setInterval(_syncHistoryToCloud,120000)
   // Pull latest menu from cloud so all devices stay in sync
   _cloudLoadMenu(()=>{renderMenu();renderOrderPanel();renderTables()})
 }
